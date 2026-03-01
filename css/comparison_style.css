@@ -1,0 +1,209 @@
+.comparison-container {
+    display: flex;
+    height: calc(100vh - 150px);
+    background-color: var(--bg-light);
+}
+
+/* Sidebar Styling */
+.comp-sidebar {
+    width: 350px;
+    background-color: white;
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.comp-sidebar-header {
+    padding: 20px;
+    border-bottom: 1px solid var(--border-color);
+    background: white;
+}
+
+.comp-sidebar-header h3 {
+    margin-bottom: 10px;
+    color: var(--main-color);
+}
+
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    text-decoration: none;
+    color: var(--text-light);
+    font-size: 0.9rem;
+    transition: color 0.2s;
+}
+
+.back-link:hover {
+    color: var(--main-color);
+}
+
+.metrics-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.metric-item {
+    padding: 12px 15px;
+    border-radius: 10px;
+    background: var(--bg-light);
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+}
+
+.metric-item:hover {
+    background: white;
+    border-color: var(--main-color);
+}
+
+.metric-item.active {
+    background-color: var(--main-color);
+    color: white;
+}
+
+/* Main Content Styling */
+.comp-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    gap: 20px;
+    overflow-y: auto;
+}
+
+.comp-top-section {
+    display: flex;
+    gap: 20px;
+    height: 400px;
+    min-height: 400px;
+}
+
+#compMapDiv {
+    flex: 2;
+    background: transparent;
+    border-radius: 20px;
+}
+
+.selection-info {
+    flex: 1;
+    background: white;
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    display: flex;
+    flex-direction: column;
+}
+
+.state-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 15px;
+    flex: 1;
+    overflow-y: auto;
+}
+
+.state-chip {
+    padding: 5px 12px;
+    background: var(--secondary-color);
+    color: var(--accent-dark);
+    border-radius: 15px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.clear-btn {
+    margin-top: 15px;
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px solid var(--border-color);
+    background: white;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.clear-btn:hover {
+    background: var(--bg-light);
+    border-color: var(--main-color);
+    color: var(--main-color);
+}
+
+/* Comparison Sidebar Tweaks: Hide Numbers */
+.metrics-section .metric-value {
+    display: none !important;
+}
+
+.metrics-section .metric-info {
+    justify-content: center;
+}
+
+.metrics-section .metric-card {
+    padding: 12px 20px;
+}
+
+#clearSelection {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    padding: 4px 10px;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+#clearSelection:hover {
+    border-color: var(--main-color);
+    background: var(--bg-light);
+    color: var(--main-color);
+}
+
+.comp-top-section {
+    display: flex;
+    gap: 20px;
+    height: 400px;
+    min-height: 400px;
+}
+
+.comp-bottom-section {
+    flex: 1;
+    min-height: 600px;
+    background: transparent;
+    border-radius: 20px;
+    padding: 20px;
+}
+
+#compChartDiv {
+    width: 100%;
+    height: 100%;
+}
+
+@media (max-width: 1200px) {
+    .comparison-container {
+        flex-direction: column;
+        height: auto;
+    }
+
+    .comp-sidebar {
+        width: 100%;
+        height: 300px;
+    }
+
+    .comp-top-section {
+        flex-direction: column;
+        height: auto;
+    }
+
+    #compMapDiv {
+        height: 400px;
+    }
+}
