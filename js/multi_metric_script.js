@@ -1,17 +1,16 @@
 // =========================================
-// MULTI-METRIC BUBBLE CHART LOGIC (amCharts 5)
+// MULTI-METRIC BUBBLE CHART — ALL ACS + PLACES Data
 // =========================================
 
 let stateData = [];
-let selectedStates = new Set(["US-WI", "US-IL", "US-MN", "US-IA"]); // Defaults
+let selectedStates = new Set(["US-WI", "US-IL", "US-MN", "US-IA"]);
 let selectedSlots = {
-    x: "employed_count",
-    y: "ups",
-    size: "city_population"
+    x: "pct_unemployment_rate",
+    y: "depression_prevalence",
+    size: "total_population_sum"
 };
 let activeSlot = "x";
 
-// Region Mapping from user reference
 const regionMapping = {
     "Central": ["ND", "SD", "KS", "IA", "NE", "OK", "MO", "MN", "WI", "IN", "MI", "IL", "TX"],
     "East": ["WV", "ME", "DC", "NH", "VT", "CT", "RI", "MD", "DE", "MA", "NJ", "OH", "PA", "NY"],
@@ -20,28 +19,51 @@ const regionMapping = {
 };
 
 const regionColors = {
-    "Central": "#0ea5e9", // Vibrant Blue
-    "East": "#10b981",    // Vibrant Green
-    "South": "#f59e0b",   // Vibrant Orange
-    "West": "#a855f7"     // Vibrant Purple
+    "Central": "#0ea5e9",
+    "East": "#10b981",
+    "South": "#f59e0b",
+    "West": "#a855f7"
 };
 
 function getRegion(stateAbbr) {
     for (const region in regionMapping) {
         if (regionMapping[region].includes(stateAbbr)) return region;
     }
-    return "West"; // Default
+    return "West";
 }
 
 let mapRoot, chartRoot;
 let mapPolygonSeries, xAxis, yAxis, series, xAxisLabel, yAxisLabel, legend;
 
+// =========================================
+// DATA LOADING — merge ACS + PLACES
+// =========================================
+
+async function loadAndMergeData() {
+    const [acsRes, placesRes] = await Promise.all([
+        fetch("data/ACS Data/state_acs_flat.json"),
+        fetch("data/PLACES Data/state_places_flat.json")
+    ]);
+    const acsData = await acsRes.json();
+    const placesData = await placesRes.json();
+
+    const placesLookup = {};
+    placesData.forEach(d => { placesLookup[d.id] = d; });
+
+    return acsData.map(acs => {
+        const places = placesLookup[acs.id] || {};
+        return { ...acs, ...places, id: acs.id, name: acs.name, state_abbr: acs.state_abbr };
+    });
+}
+
+// =========================================
+// INITIALIZATION
+// =========================================
+
 async function init() {
     try {
-        const response = await fetch("data/state_data_processed.json");
-        const data = await response.json();
+        const data = await loadAndMergeData();
 
-        // Map IDs to amCharts format (US.WI -> US-WI)
         stateData = data.map(d => ({
             ...d,
             id: d.id.replace(".", "-"),
@@ -65,7 +87,6 @@ function initMetricCardListeners() {
     cards.forEach(card => {
         const m = card.getAttribute("data-metric");
         if (!m) return;
-
         card.addEventListener("click", function () {
             assignToNextAvailableSlot(m);
         });
@@ -84,12 +105,9 @@ function initSlotListeners() {
 
 function assignToNextAvailableSlot(metric) {
     selectedSlots[activeSlot] = metric;
-
-    // Auto-advance to next slot for better UX
     const slots = ["x", "y", "size"];
     const currentIndex = slots.indexOf(activeSlot);
     activeSlot = slots[(currentIndex + 1) % slots.length];
-
     updateSlotUI();
     updateChart();
 }
@@ -100,7 +118,6 @@ function updateSlotUI() {
         const slotEl = document.querySelector(`.slot[data-slot="${s}"]`);
         const valEl = slotEl.querySelector(".slot-value");
 
-        // Highlight active slot
         slotEl.style.backgroundColor = (s === activeSlot) ? "rgba(200, 56, 48, 0.1)" : "transparent";
         slotEl.style.borderRadius = "8px";
 
@@ -110,7 +127,6 @@ function updateSlotUI() {
         }
     });
 
-    // Mark active cards
     document.querySelectorAll(".metric-card").forEach(card => {
         const m = card.getAttribute("data-metric");
         card.classList.remove("selected");
@@ -130,7 +146,10 @@ function clearAllSlots() {
     updateChart();
 }
 
-// Map Logic (State Selector)
+// =========================================
+// MAP (State Selector)
+// =========================================
+
 function initMap() {
     mapRoot = am5.Root.new("multiMapDiv");
     mapRoot.setThemes([am5themes_Animated.new(mapRoot)]);
@@ -163,7 +182,6 @@ function initMap() {
 
     mapPolygonSeries.data.setAll(stateData);
 
-    // Set initial active states
     mapPolygonSeries.events.on("datavalidated", () => {
         mapPolygonSeries.mapPolygons.each((polygon) => {
             const pId = polygon.dataItem.get("id");
@@ -187,7 +205,10 @@ function toggleStateSelection(id) {
     updateChart();
 }
 
-// Chart Logic (Bubble)
+// =========================================
+// BUBBLE CHART
+// =========================================
+
 let circleTemplate;
 
 function initChart() {
@@ -195,25 +216,16 @@ function initChart() {
     chartRoot.setThemes([am5themes_Animated.new(chartRoot)]);
 
     const chart = chartRoot.container.children.push(am5xy.XYChart.new(chartRoot, {
-        panX: true,
-        panY: true,
-        wheelY: "zoomXY",
-        pinchZoomX: true,
-        pinchZoomY: true,
+        panX: true, panY: true, wheelY: "zoomXY",
+        pinchZoomX: true, pinchZoomY: true,
         layout: chartRoot.verticalLayout
     }));
 
-    // Add Legend
     legend = chart.children.push(am5.Legend.new(chartRoot, {
-        centerX: am5.p50,
-        x: am5.p50,
+        centerX: am5.p50, x: am5.p50,
         layout: chartRoot.horizontalLayout,
-        nameField: "name",
-        fillField: "color",
-        strokeField: "color",
-        paddingTop: 15,
-        paddingBottom: 15,
-        clickTarget: "none"
+        nameField: "name", fillField: "color", strokeField: "color",
+        paddingTop: 15, paddingBottom: 15, clickTarget: "none"
     }));
 
     legend.data.setAll([
@@ -224,44 +236,31 @@ function initChart() {
     ]);
 
     xAxis = chart.xAxes.push(am5xy.ValueAxis.new(chartRoot, {
-        extraMax: 0.1,
-        extraMin: 0.1,
+        extraMax: 0.1, extraMin: 0.1,
         renderer: am5xy.AxisRendererX.new(chartRoot, { minGridDistance: 50 }),
         tooltip: am5.Tooltip.new(chartRoot, {})
     }));
 
     yAxis = chart.yAxes.push(am5xy.ValueAxis.new(chartRoot, {
-        extraMax: 0.1,
-        extraMin: 0.1,
+        extraMax: 0.1, extraMin: 0.1,
         renderer: am5xy.AxisRendererY.new(chartRoot, {}),
         tooltip: am5.Tooltip.new(chartRoot, {})
     }));
 
     xAxisLabel = am5.Label.new(chartRoot, {
-        text: "X Axis",
-        x: am5.p50,
-        centerX: am5.p50,
-        fontWeight: "bold"
+        text: "X Axis", x: am5.p50, centerX: am5.p50, fontWeight: "bold"
     });
     xAxis.children.push(xAxisLabel);
 
     yAxisLabel = am5.Label.new(chartRoot, {
-        rotation: -90,
-        text: "Y Axis",
-        y: am5.p50,
-        centerX: am5.p50,
-        fontWeight: "bold"
+        rotation: -90, text: "Y Axis", y: am5.p50, centerX: am5.p50, fontWeight: "bold"
     });
     yAxis.children.unshift(yAxisLabel);
 
     series = chart.series.push(am5xy.LineSeries.new(chartRoot, {
-        calculateAggregates: true,
-        minBulletDistance: 0,
-        xAxis: xAxis,
-        yAxis: yAxis,
-        valueYField: "y",
-        valueXField: "x",
-        valueField: "size",
+        calculateAggregates: true, minBulletDistance: 0,
+        xAxis: xAxis, yAxis: yAxis,
+        valueYField: "y", valueXField: "x", valueField: "size",
         seriesTooltipTarget: "bullet",
         tooltip: am5.Tooltip.new(chartRoot, {
             pointerOrientation: "horizontal",
@@ -271,10 +270,7 @@ function initChart() {
 
     series.strokes.template.set("visible", false);
 
-    // Bullet (Bubble)
     circleTemplate = am5.Template.new({});
-
-    // Adapter for Region Color
     circleTemplate.adapters.add("fill", function (fill, target) {
         const dataContext = target.dataItem.dataContext;
         if (dataContext && dataContext.region && regionColors[dataContext.region]) {
@@ -286,28 +282,19 @@ function initChart() {
     series.bullets.push(function () {
         return am5.Bullet.new(chartRoot, {
             sprite: am5.Circle.new(chartRoot, {
-                radius: 5,
-                fill: am5.color(0xc83830), // Default fill
-                fillOpacity: 0.7,
-                stroke: am5.color(0xffffff),
-                strokeWidth: 2
+                radius: 5, fill: am5.color(0xc83830),
+                fillOpacity: 0.7, stroke: am5.color(0xffffff), strokeWidth: 2
             }, circleTemplate)
         });
     });
 
-    // Heat Rules for Size
     series.set("heatRules", [{
-        target: circleTemplate,
-        min: 10,
-        max: 80,
-        dataField: "value",
-        key: "radius"
+        target: circleTemplate, min: 10, max: 80,
+        dataField: "value", key: "radius"
     }]);
 
     chart.set("cursor", am5xy.XYCursor.new(chartRoot, {
-        xAxis: xAxis,
-        yAxis: yAxis,
-        snapToSeries: [series]
+        xAxis: xAxis, yAxis: yAxis, snapToSeries: [series]
     }));
 
     updateChart();
@@ -332,40 +319,20 @@ function updateChart() {
             const getVal = (m) => {
                 if (!m) return 0;
                 let v = state[m];
-                return (v !== undefined && typeof v === 'number') ? v : generateRandomValue(state.id, m);
+                return (v !== undefined && typeof v === 'number') ? v : 0;
             };
-
-            const xVal = getVal(selectedSlots.x);
-            const yVal = getVal(selectedSlots.y);
-            const sizeVal = getVal(selectedSlots.size);
 
             chartData.push({
                 title: state.name,
                 region: state.region,
-                x: xVal,
-                y: yVal,
-                size: Math.max(0.1, sizeVal || 10)
+                x: getVal(selectedSlots.x),
+                y: getVal(selectedSlots.y),
+                size: Math.max(0.1, getVal(selectedSlots.size) || 10)
             });
         }
     });
 
     series.data.setAll(chartData);
-}
-
-function generateRandomValue(stateId, metric) {
-    // Seeded random based on stateId and metric name
-    let hash = 0;
-    const str = stateId + metric;
-    for (let i = 0; i < str.length; i++) {
-        hash = ((hash << 5) - hash) + str.charCodeAt(i);
-        hash |= 0;
-    }
-    const seed = Math.abs(hash);
-
-    if (metric.includes("income") || metric.includes("sales")) return (seed % 80000) + 20000;
-    if (metric.includes("population")) return (seed % 1000000) + 100000;
-    if (metric.includes("rate") || metric.includes("prevalence")) return (seed % 40);
-    return (seed % 1000);
 }
 
 init();
