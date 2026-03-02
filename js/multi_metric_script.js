@@ -3,7 +3,7 @@
 // =========================================
 
 let stateData = [];
-let selectedStates = new Set(["US-WI", "US-IL", "US-MN", "US-IA"]);
+let selectedStates = new Set();
 let selectedSlots = {
     x: "pct_unemployment_rate",
     y: "depression_prevalence",
@@ -188,6 +188,8 @@ function initMap() {
             if (selectedStates.has(pId)) polygon.set("active", true);
         });
     });
+
+    addCustomMapControls("multiMapDiv", mapChart, true);
 }
 
 function toggleStateSelection(id) {

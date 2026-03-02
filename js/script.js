@@ -223,6 +223,8 @@ hs.properties.fill = am4core.color("#c83830");
 var psActive = polygonTemplate.states.create("active");
 psActive.properties.fill = am4core.color("#c83830");
 
+addCustomMapControls("chartdiv", chart, false);
+
 // =========================================
 // COUNTY TOGGLE AND MAP CLICK
 // =========================================
@@ -697,6 +699,8 @@ function renderCountyMap(geodata) {
       }
     });
   }
+
+  addCustomMapControls("countychartdiv", countyChart, false);
 }
 
 function closeCountyPanel() {

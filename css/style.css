@@ -266,6 +266,7 @@ body {
 /* Toggle group (Heatmap + County side by side) */
 .toggle-group {
   display: flex;
+  justify-content: center;
   gap: 16px;
   align-items: center;
 }

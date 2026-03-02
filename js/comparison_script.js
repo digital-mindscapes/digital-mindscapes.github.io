@@ -41,6 +41,8 @@ const metrics = [
 let stateData = [];
 let selectedStates = new Set();
 let activeMetric = "pct_unemployment_rate";
+let regionMode = true;
+let verticalChartMode = false;
 
 const regionMapping = {
     "Central": ["ND", "SD", "KS", "IA", "NE", "OK", "MO", "MN", "WI", "IN", "MI", "IL", "TX"],
@@ -106,6 +108,31 @@ async function init() {
         initChart();
 
         document.getElementById("clearSelection").addEventListener("click", clearSelection);
+
+        const rToggle = document.getElementById("regionToggle");
+        if (rToggle) {
+            regionMode = !rToggle.checked;
+            rToggle.addEventListener("change", (e) => {
+                regionMode = !e.target.checked;
+                updateChart();
+                mapPolygonSeries.mapPolygons.each((polygon) => {
+                    if (polygon.get("active")) {
+                        polygon.set("active", false);
+                        polygon.set("active", true);
+                    }
+                });
+            });
+        }
+
+        const vToggle = document.getElementById("verticalToggle");
+        if (vToggle) {
+            verticalChartMode = vToggle.checked;
+            vToggle.addEventListener("change", (e) => {
+                verticalChartMode = e.target.checked;
+                initChart();
+                updateChart();
+            });
+        }
     } catch (err) {
         console.error("Failed to initialize:", err);
     }
@@ -157,6 +184,17 @@ function initMap() {
     mapPolygonSeries.mapPolygons.template.states.create("hover", { fill: am5.color(0xd3a29f) });
     mapPolygonSeries.mapPolygons.template.states.create("active", { fill: am5.color(0xc83830) });
 
+    mapPolygonSeries.mapPolygons.template.adapters.add("fill", function (fill, target) {
+        if (target.get("active")) {
+            const dataContext = target.dataItem.dataContext;
+            if (regionMode && dataContext && dataContext.region && regionColors[dataContext.region]) {
+                return am5.color(regionColors[dataContext.region]);
+            }
+            return am5.color(0xc83830);
+        }
+        return fill;
+    });
+
     mapPolygonSeries.mapPolygons.template.events.on("click", (ev) => {
         const dataItem = ev.target.dataItem;
         const id = dataItem.get("id");
@@ -170,6 +208,7 @@ function initMap() {
     });
 
     initMapData();
+    addCustomMapControls("compMapDiv", mapChart, true);
 }
 
 function initMapData() {
@@ -206,12 +245,20 @@ function clearSelection() {
 let yAxisLabel;
 
 function initChart() {
+    if (chartRoot) {
+        chartRoot.dispose();
+    }
+
     chartRoot = am5.Root.new("compChartDiv");
     chartRoot.setThemes([am5themes_Animated.new(chartRoot)]);
 
+    const isVert = verticalChartMode;
+
     const chart = chartRoot.container.children.push(am5xy.XYChart.new(chartRoot, {
         panX: false, panY: false, wheelX: "none", wheelY: "none",
-        layout: chartRoot.horizontalLayout, paddingLeft: 160
+        layout: chartRoot.horizontalLayout,
+        paddingLeft: isVert ? 0 : 160,
+        paddingBottom: isVert ? 100 : 0
     }));
 
     legend = chart.children.push(am5.Legend.new(chartRoot, {
@@ -219,37 +266,72 @@ function initChart() {
         marginLeft: 20, y: 20, layout: chartRoot.verticalLayout, clickTarget: "none"
     }));
 
-    yAxis = chart.yAxes.push(am5xy.CategoryAxis.new(chartRoot, {
-        categoryField: "name",
-        renderer: am5xy.AxisRendererY.new(chartRoot, { minGridDistance: 10, minorGridEnabled: true }),
-        tooltip: am5.Tooltip.new(chartRoot, {})
-    }));
+    if (isVert) {
+        xAxis = chart.xAxes.push(am5xy.CategoryAxis.new(chartRoot, {
+            categoryField: "name",
+            renderer: am5xy.AxisRendererX.new(chartRoot, { minGridDistance: 30 }),
+            tooltip: am5.Tooltip.new(chartRoot, {})
+        }));
+        xAxis.get("renderer").labels.template.setAll({ rotation: -45, centerY: am5.p50, centerX: am5.p100, paddingRight: 15 });
 
-    yAxis.get("renderer").labels.template.setAll({ fontSize: 12, location: 0.5 });
+        yAxis = chart.yAxes.push(am5xy.ValueAxis.new(chartRoot, {
+            renderer: am5xy.AxisRendererY.new(chartRoot, {}),
+            tooltip: am5.Tooltip.new(chartRoot, {})
+        }));
+    } else {
+        yAxis = chart.yAxes.push(am5xy.CategoryAxis.new(chartRoot, {
+            categoryField: "name",
+            renderer: am5xy.AxisRendererY.new(chartRoot, { minGridDistance: 10, minorGridEnabled: true }),
+            tooltip: am5.Tooltip.new(chartRoot, {})
+        }));
+        yAxis.get("renderer").labels.template.setAll({ fontSize: 12, location: 0.5 });
 
-    xAxis = chart.xAxes.push(am5xy.ValueAxis.new(chartRoot, {
-        renderer: am5xy.AxisRendererX.new(chartRoot, {}),
-        tooltip: am5.Tooltip.new(chartRoot, {})
-    }));
+        xAxis = chart.xAxes.push(am5xy.ValueAxis.new(chartRoot, {
+            renderer: am5xy.AxisRendererX.new(chartRoot, {}),
+            tooltip: am5.Tooltip.new(chartRoot, {})
+        }));
+    }
 
     barSeries = chart.series.push(am5xy.ColumnSeries.new(chartRoot, {
         xAxis: xAxis, yAxis: yAxis,
-        valueXField: "value", categoryYField: "name",
-        tooltip: am5.Tooltip.new(chartRoot, { pointerOrientation: "horizontal" })
+        valueXField: isVert ? undefined : "value",
+        valueYField: isVert ? "value" : undefined,
+        categoryXField: isVert ? "name" : undefined,
+        categoryYField: isVert ? undefined : "name",
+        tooltip: am5.Tooltip.new(chartRoot, { pointerOrientation: isVert ? "vertical" : "horizontal" })
     }));
 
     barSeries.columns.template.setAll({
-        tooltipText: "{categoryY}: [bold]{valueX}[/]",
+        tooltipText: isVert ? "{categoryX}: [bold]{valueY}[/]" : "{categoryY}: [bold]{valueX}[/]",
         width: am5.percent(90), strokeOpacity: 0
     });
 
     barSeries.columns.template.adapters.add("fill", function (fill, target) {
+        if (!regionMode) return am5.color(0xc83830);
         const dataContext = target.dataItem.dataContext;
         if (dataContext && dataContext.region && regionColors[dataContext.region]) {
             return am5.color(regionColors[dataContext.region]);
         }
         return fill;
     });
+
+    if (isVert) {
+        barSeries.bullets.push(function () {
+            return am5.Bullet.new(chartRoot, {
+                locationY: 1,
+                sprite: am5.Label.new(chartRoot, {
+                    text: "{valueY}",
+                    centerY: am5.p100,
+                    centerX: am5.p50,
+                    populateText: true,
+                    dy: -5,
+                    fontSize: 14,
+                    fontWeight: "bold",
+                    fill: am5.color(0x333333)
+                })
+            });
+        });
+    }
 
     barSeries.appear(1000);
     chart.appear(1000, 100);
@@ -271,19 +353,37 @@ function updateChart() {
         }
     });
 
-    regionOrder.forEach(region => {
-        selectedByRegion[region].sort((a, b) => a.value - b.value);
-        selectedByRegion[region].forEach(item => data.push(item));
-    });
+    if (regionMode) {
+        legend.show();
+        regionOrder.forEach(region => {
+            selectedByRegion[region].sort((a, b) => a.value - b.value);
+            selectedByRegion[region].forEach(item => data.push(item));
+        });
+    } else {
+        legend.hide();
+        let allItems = [];
+        regionOrder.forEach(region => {
+            selectedByRegion[region].forEach(item => allItems.push(item));
+        });
+        allItems.sort((a, b) => a.value - b.value);
+        allItems.forEach(item => data.push(item));
+    }
 
+    xAxis.data.setAll(data);
     yAxis.data.setAll(data);
     barSeries.data.setAll(data);
     updateChartExtras(selectedByRegion);
 }
 
 function updateChartExtras(selectedByRegion) {
-    yAxis.axisRanges.clear();
+    const catAxis = verticalChartMode ? xAxis : yAxis;
+    catAxis.axisRanges.clear();
     const legendData = [];
+
+    if (!regionMode) {
+        legend.data.setAll([]);
+        return;
+    }
 
     for (const region in selectedByRegion) {
         const states = selectedByRegion[region];
@@ -291,16 +391,26 @@ function updateChartExtras(selectedByRegion) {
             const lastState = states[states.length - 1].name;
             const color = am5.color(regionColors[region]);
 
-            const rangeDataItem = yAxis.makeDataItem({ category: lastState });
-            const range = yAxis.createAxisRange(rangeDataItem);
+            const rangeDataItem = catAxis.makeDataItem({ category: lastState });
+            const range = catAxis.createAxisRange(rangeDataItem);
 
-            rangeDataItem.get("label").setAll({
-                fill: color, text: region, location: 1, fontWeight: "bold", dx: -130
-            });
-            rangeDataItem.get("grid").setAll({ stroke: color, strokeOpacity: 1, location: 1 });
-            rangeDataItem.get("tick").setAll({
-                stroke: color, strokeOpacity: 1, location: 1, visible: true, length: 130
-            });
+            if (verticalChartMode) {
+                rangeDataItem.get("label").setAll({
+                    fill: color, text: region, location: 1, fontWeight: "bold", dy: 80, rotation: 0, centerX: am5.p50
+                });
+                rangeDataItem.get("grid").setAll({ stroke: color, strokeOpacity: 1, location: 1 });
+                rangeDataItem.get("tick").setAll({
+                    stroke: color, strokeOpacity: 1, location: 1, visible: true, length: 80
+                });
+            } else {
+                rangeDataItem.get("label").setAll({
+                    fill: color, text: region, location: 1, fontWeight: "bold", dx: -130
+                });
+                rangeDataItem.get("grid").setAll({ stroke: color, strokeOpacity: 1, location: 1 });
+                rangeDataItem.get("tick").setAll({
+                    stroke: color, strokeOpacity: 1, location: 1, visible: true, length: 130
+                });
+            }
 
             legendData.push({ name: region, color: color });
         }

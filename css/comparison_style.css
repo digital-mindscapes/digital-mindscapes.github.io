@@ -81,8 +81,7 @@
 .comp-top-section {
     display: flex;
     gap: 20px;
-    height: 400px;
-    min-height: 400px;
+    min-height: 520px;
 }
 
 #compMapDiv {
@@ -170,8 +169,7 @@
 .comp-top-section {
     display: flex;
     gap: 20px;
-    height: 400px;
-    min-height: 400px;
+    min-height: 520px;
 }
 
 .comp-bottom-section {
