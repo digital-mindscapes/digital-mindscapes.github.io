@@ -180,15 +180,16 @@
                             <span class="slider round"></span>
                         </label>
                     </div>
-                    <div class="toggle-container" style="display: flex; align-items: center; gap: 10px;">
-                        <span class="toggle-label" style="font-weight:600; font-size: 14px; color: #495057;">RUCC
-                            Filter:</span>
-                        <select id="ruccFilterSelect"
-                            style="padding: 4px 8px; border-radius: 4px; border: 1px solid #ccc; font-family: inherit; font-size: 13px;">
-                            <option value="All">All Counties</option>
-                            <option value="Metro">Metro (Urban)</option>
-                            <option value="Nonmetro">Nonmetro (Rural)</option>
-                        </select>
+                    <div class="toggle-container rucc-filter-container">
+                        <span class="toggle-label rucc-filter-label">RUCC Filter</span>
+                        <div class="rucc-select-wrapper">
+                            <select id="ruccFilterSelect" class="rucc-select">
+                                <option value="All">All Counties</option>
+                                <option value="Metro">Metro (Urban)</option>
+                                <option value="Nonmetro">Nonmetro (Rural)</option>
+                            </select>
+                            <span class="rucc-select-arrow">▾</span>
+                        </div>
                     </div>
                 </div>
             </div>

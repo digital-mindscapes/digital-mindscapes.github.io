@@ -15,22 +15,36 @@
 
 /* Scrollbar Styling */
 ::-webkit-scrollbar {
-  width: 16px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background-color: #f1f1f1;
-  border-left: 1px solid #d1d1d1;
+  background: rgba(30, 20, 20, 0.08);
+  border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: var(--main-color);
-  border-radius: 8px;
-  border: 3px solid #f1f1f1;
+  background: linear-gradient(180deg, #c83830 0%, #6f0600 100%);
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  transition: background 0.2s;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background-color: #a02820;
+  background: linear-gradient(180deg, #e04840 0%, #9a1008 100%);
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #c83830 rgba(30, 20, 20, 0.08);
 }
 
 * {
@@ -852,4 +866,69 @@ input:checked+.slider:before {
   background-color: var(--main-color);
   color: white;
   box-shadow: 0 4px 10px rgba(200, 56, 48, 0.3);
+}
+
+/* ---- RUCC Filter Dropdown ---- */
+.rucc-filter-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.rucc-filter-label {
+  color: #fff !important;
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  white-space: nowrap;
+}
+
+.rucc-select-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.rucc-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 8px;
+  padding: 6px 32px 6px 12px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  outline: none;
+  backdrop-filter: blur(6px);
+  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+  min-width: 140px;
+}
+
+.rucc-select:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.08);
+}
+
+.rucc-select:focus {
+  background: rgba(255, 255, 255, 0.22);
+  border-color: rgba(255, 255, 255, 0.6);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.12);
+}
+
+.rucc-select option {
+  background: #2c2c3e;
+  color: #fff;
+}
+
+.rucc-select-arrow {
+  position: absolute;
+  right: 10px;
+  pointer-events: none;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 14px;
+  line-height: 1;
 }
