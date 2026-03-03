@@ -118,13 +118,38 @@
     <div class="comparison-container">
         <!-- Metrics Section (Left Panel) -->
         <div class="metrics-section">
-            <div class="metrics-header" style="background: linear-gradient(135deg, #2c3e50 0%, #000000 100%);">
-                <h2>3-Variable Comparison</h2>
+            <div class="metrics-header">
+                <h2>State Data Comparison</h2>
+                <div class="toggle-group"
+                    style="display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 15px; margin-top: 25px; justify-content: center;">
+                    <div style="width: 100%; display: flex; justify-content: center;">
+                        <div class="view-toggle-bar" id="viewToggleBar" style="margin-top: 0;">
+                            <button class="view-toggle-btn active" id="btnChartView" onclick="switchView('chart')">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <path d="M21.21 15.89A10 10 0 1 1 8 2.83" />
+                                    <path d="M22 12A10 10 0 0 0 12 2v10z" />
+                                </svg>
+                                Chart View
+                            </button>
+                            <button class="view-toggle-btn" id="btnTableView" onclick="switchView('table')">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" />
+                                    <path d="M3 9h18M3 15h18M9 3v18" />
+                                </svg>
+                                Table View
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <!-- Selection Slots Area (Fixed at top of sidebar) -->
             <div style="padding: 15px 25px 0;">
-                <div id="selectionSlots"
-                    style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; background: rgba(0,0,0,0.05); padding: 15px; border-radius: 15px;">
+                <!-- Bubble Chart Slots -->
+                <div id="bubbleSlots"
+                    style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; background: rgba(0,0,0,0.05); padding: 15px; border-radius: 15px;">
                     <div class="slot" data-slot="x"
                         style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ddd; padding-bottom: 5px;">
                         <span style="font-weight: 700; color: #555;">X-Axis:</span>
@@ -144,10 +169,15 @@
                             metric...</span>
                     </div>
                 </div>
+                <!-- Radar Metric Chips -->
+                <div id="radarMetricChips"
+                    style="display: none; margin-bottom: 12px; background: rgba(0,0,0,0.05); padding: 15px; border-radius: 15px; min-height: 80px;">
+                    <p style="color:#999;font-size:0.85rem;text-align:center;padding:10px 0;margin:0;">Click metrics
+                        below to add (max 8)</p>
+                </div>
                 <button id="clearSelection"
-                    style="width: 100%; background-color: #c83830; color: white; border: none; padding: 12px; border-radius: 30px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 6px rgba(200,56,48,0.2); transition: all 0.2s;">
-                    Clear All Slots
-                </button>
+                    style="width: 100%; background-color: #c83830; color: white; border: none; padding: 12px; border-radius: 30px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 6px rgba(200,56,48,0.2); transition: all 0.2s;">Clear
+                    All</button>
             </div>
 
             <!-- Scrollable Metrics Grid -->
@@ -642,14 +672,81 @@
             <div class="comp-top-section">
                 <div id="multiMapDiv" style="flex: 1;"></div>
             </div>
-            <div class="comp-bottom-section">
-                <div id="bubbleChartDiv" style="width: 100%; height: 100%;"></div>
+            <div class="comp-bottom-section" id="chartSection" style="display:flex;flex-direction:column;">
+                <!-- Chart mode toggle -->
+                <div style="display:flex;gap:8px;padding:10px 16px 0;flex-shrink:0;">
+                    <button id="btnBubbleMode"
+                        style="display:flex;align-items:center;gap:6px;padding:7px 18px;border-radius:30px;border:1.5px solid #c83830;background:#c83830;color:#fff;font-weight:700;font-size:0.85rem;cursor:pointer;transition:all 0.2s;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2.5">
+                            <circle cx="6" cy="18" r="4" />
+                            <circle cx="18" cy="6" r="3" />
+                            <circle cx="13" cy="14" r="5" />
+                        </svg>
+                        Bubble Chart
+                    </button>
+                    <button id="btnRadarMode"
+                        style="display:flex;align-items:center;gap:6px;padding:7px 18px;border-radius:30px;border:1.5px solid #ddd;background:transparent;color:#555;font-weight:700;font-size:0.85rem;cursor:pointer;transition:all 0.2s;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2.5">
+                            <polygon points="12 2 19 21 12 17 5 21 12 2" />
+                        </svg>
+                        Radar Chart
+                    </button>
+                </div>
+                <div id="bubbleChartDiv" style="width:100%;flex:1;min-height:0;"></div>
+
+                <div id="radarInfoPanel"
+                    style="display:none; flex-shrink:0; margin:100px 16px 20px; background:linear-gradient(135deg,#fff 0%,#fafafa 100%); border:1px solid #e8e8e8; border-radius:12px; padding:16px 22px; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+                    <div style="display:flex; align-items:flex-start; gap:14px;">
+                        <!-- Icon -->
+                        <div
+                            style="flex-shrink:0; width:34px; height:34px; background:#c83830; border-radius:50%; display:flex; align-items:center; justify-content:center;">
+                            <span style="color:white; font-size:16px; font-style:italic; font-weight:900;">i</span>
+                        </div>
+                        <!-- Content -->
+                        <div style="flex:1;">
+                            <div style="font-weight:700; font-size:15px; color:#222; margin-bottom:12px;">How Normalized
+                                Scores Are Calculated</div>
+                            <!-- Formula -->
+                            <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+                                <span style="font-size:15px; font-weight:700; color:#444;">Score&nbsp;=</span>
+                                <div style="display:inline-flex; flex-direction:column; align-items:center; gap:2px;">
+                                    <span
+                                        style="font-size:14px; color:#333; border-bottom:1.5px solid #555; padding-bottom:4px; padding-left:8px; padding-right:8px; white-space:nowrap;">Raw
+                                        Value &minus; Min<sub style="font-size:10px;">(all states)</sub></span>
+                                    <span
+                                        style="font-size:14px; color:#333; padding-top:4px; padding-left:8px; padding-right:8px; white-space:nowrap;">Max<sub
+                                            style="font-size:10px;">(all states)</sub> &minus; Min<sub
+                                            style="font-size:10px;">(all states)</sub></span>
+                                </div>
+                                <span style="font-size:15px; font-weight:700; color:#444;">&times;&nbsp;100</span>
+                                <span
+                                    style="font-size:13px; color:#888; background:#f4f4f4; border-radius:6px; padding:4px 10px; white-space:nowrap;">per
+                                    metric</span>
+                            </div>
+                            <p style="margin:12px 0 0; font-size:13px; color:#777; line-height:1.6;">
+                                Min and Max are computed <strong>independently for each metric</strong> across all 50
+                                U.S. states.
+                                A score of <strong>0</strong> means the lowest value among all states;
+                                <strong>100</strong> means the highest.
+                                This lets metrics with different units and scales be compared on the same radar chart.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Table Section (multi-metric table) -->
+            <div id="tableSection" class="comp-table-section"
+                style="display:none; padding:10px 16px; min-height:800px;">
+                <div id="multiMetricTableDiv"></div>
             </div>
         </div>
-    </div>
 
-    <script src="js/map_controls.js"></script>
-    <script src="js/multi_metric_script.js"></script>
+        <script src="js/map_controls.js"></script>
+        <script src="js/comparison_table.js"></script>
+        <script src="js/multi_metric_script.js"></script>
 </body>
 
 </html>
