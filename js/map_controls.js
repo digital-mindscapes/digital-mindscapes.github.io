@@ -7,7 +7,6 @@ function addCustomMapControls(targetContainerId, mapInstance, isAmCharts5 = fals
     }
 
     const homePath = "M16,8 L14,8 L14,16 L10,16 L10,10 L6,10 L6,16 L2,16 L2,8 L0,8 L8,0 L16,8 Z M16,8";
-    const exportPath = "M3,2 L13,2 L13,6 L15,8 L15,14 L3,14 L3,2 Z M11,2 L11,6 L15,6 L11,2 Z M4,11 L12,11 L12,12 L4,12 L4,11 Z M4,8 L10,8 L10,9 L4,9 L4,8 Z";
 
     if (isAmCharts5) {
         let root = mapInstance.root;
@@ -19,31 +18,8 @@ function addCustomMapControls(targetContainerId, mapInstance, isAmCharts5 = fals
 
         let zoomControl = mapInstance.set("zoomControl", am5map.ZoomControl.new(root, {}));
 
-        // Export SVG Button (placed above Home)
-        let exportButton = zoomControl.children.insertIndex(0, am5.Button.new(root, {
-            paddingTop: 10,
-            paddingBottom: 10,
-            tooltipText: "Export SVG",
-            icon: am5.Graphics.new(root, {
-                svgPath: exportPath,
-                fill: am5.color(0x333333)
-            })
-        }));
-
-        exportButton.events.on("click", function () {
-            if (typeof am5exporting !== "undefined") {
-                let exporting = am5exporting.Exporting.new(root, {
-                    filePrefix: "map_export_" + new Date().getTime(),
-                    dataSource: mapInstance.data
-                });
-                exporting.download("svg");
-            } else {
-                console.error("amCharts 5 Export plugin not loaded.");
-            }
-        });
-
         // Home Button
-        let homeButton = zoomControl.children.insertIndex(1, am5.Button.new(root, {
+        let homeButton = zoomControl.children.insertIndex(0, am5.Button.new(root, {
             paddingTop: 10,
             paddingBottom: 10,
             tooltipText: "Reset Map",
@@ -67,7 +43,7 @@ function addCustomMapControls(targetContainerId, mapInstance, isAmCharts5 = fals
         });
 
         // Styling loop to match site theme
-        [zoomControl.get("plusButton"), zoomControl.get("minusButton"), homeButton, exportButton].forEach(btn => {
+        [zoomControl.get("plusButton"), zoomControl.get("minusButton"), homeButton].forEach(btn => {
             if (!btn) return;
             btn.get("background").setAll({
                 fill: am5.color(0xffffff),
@@ -106,32 +82,14 @@ function addCustomMapControls(targetContainerId, mapInstance, isAmCharts5 = fals
         homeButton.parent = mapInstance.zoomControl;
         homeButton.insertBefore(mapInstance.zoomControl.plusButton);
 
-        // Export SVG Button (placed above Home)
-        var exportButton = new am4core.Button();
-        exportButton.events.on("hit", function () {
-            if (typeof am4plugins_export !== "undefined") {
-                if (!mapInstance.exporting) {
-                    mapInstance.exporting = new am4plugins_export.Exporting();
-                }
-                mapInstance.exporting.export("svg");
-            } else {
-                console.error("amCharts 4 Export plugin not loaded.");
-            }
-        });
-        exportButton.icon = new am4core.Sprite();
-        exportButton.padding(7, 5, 7, 5);
-        exportButton.width = 30;
-        exportButton.icon.path = exportPath;
-        exportButton.marginBottom = 5;
-        exportButton.parent = mapInstance.zoomControl;
-        exportButton.insertBefore(homeButton);
+
 
         // Set grab cursor to clarify map panning
         mapInstance.cursorOverStyle = am4core.MouseCursorStyle.grab;
         mapInstance.cursorDownStyle = am4core.MouseCursorStyle.grabbing;
 
         // Apply theme styling
-        let buttons = [mapInstance.zoomControl.plusButton, mapInstance.zoomControl.minusButton, homeButton, exportButton];
+        let buttons = [mapInstance.zoomControl.plusButton, mapInstance.zoomControl.minusButton, homeButton];
         buttons.forEach(btn => {
             if (!btn) return;
             // Native state

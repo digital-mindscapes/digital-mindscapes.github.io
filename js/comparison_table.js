@@ -292,7 +292,7 @@ function copyTableLaTeX(activeMetric) {
     latex += "% \\def\\mybar#1{{\\color{gray}\\rule{#1cm}{8pt}}}\n\n";
     latex += "\\begin{table}[htbp]\n";
     latex += "  \\centering\n";
-    latex += `  \\caption{Geographic Comparison: ${cleanLabel} (2026)}\n`;
+    latex += `  \\caption{Geographic Comparison: ${cleanLabel}}\n`;
     latex += "  \\begin{tabular}{rllll}\n";
     latex += "    \\toprule\n";
     latex += `    Rank & Location & Region/Class & ${cleanLabel}${unitText} & Distribution \\\\\n`;
@@ -665,7 +665,7 @@ function renderComparisonTable(containerId, rows, activeMetric) {
 
     html += `</tbody></table></div>
     <div class="ct-watermark">
-        <strong>Digital Mindscapes Research</strong> | Datta, A., Rubiya, S., Chakrabarti, A., & Banerjee, A. (2026)
+        <strong>Digital Mindscapes</strong> | Datta, A., Rubiya, S., Chakrabarti, A., & Banerjee, A. (2026)
     </div>`;
     container.innerHTML = html;
 

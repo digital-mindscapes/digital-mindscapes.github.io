@@ -362,7 +362,26 @@ function updateMapData() {
         const county = lookup[stateAbbr + "_" + norm];
 
         const region = getRegion(stateAbbr);
-        countyDataLookup[pId] = county ? { ...county, region } : { name: name, state: stateAbbr, region: region }; // Store for chart
+
+        // Build a full state name lookup to ensure group-by-state always shows full names
+        const stateNameMap = {
+            "AL": "Alabama", "AK": "Alaska", "AZ": "Arizona", "AR": "Arkansas", "CA": "California",
+            "CO": "Colorado", "CT": "Connecticut", "DE": "Delaware", "FL": "Florida", "GA": "Georgia",
+            "HI": "Hawaii", "ID": "Idaho", "IL": "Illinois", "IN": "Indiana", "IA": "Iowa",
+            "KS": "Kansas", "KY": "Kentucky", "LA": "Louisiana", "ME": "Maine", "MD": "Maryland",
+            "MA": "Massachusetts", "MI": "Michigan", "MN": "Minnesota", "MS": "Mississippi", "MO": "Missouri",
+            "MT": "Montana", "NE": "Nebraska", "NV": "Nevada", "NH": "New Hampshire", "NJ": "New Jersey",
+            "NM": "New Mexico", "NY": "New York", "NC": "North Carolina", "ND": "North Dakota", "OH": "Ohio",
+            "OK": "Oklahoma", "OR": "Oregon", "PA": "Pennsylvania", "RI": "Rhode Island", "SC": "South Carolina",
+            "SD": "South Dakota", "TN": "Tennessee", "TX": "Texas", "UT": "Utah", "VT": "Vermont",
+            "VA": "Virginia", "WA": "Washington", "WV": "West Virginia", "WI": "Wisconsin", "WY": "Wyoming",
+            "DC": "District of Columbia"
+        };
+        const resolvedStateName = (county && county.state_name) || stateNameMap[stateAbbr.toUpperCase()] || stateAbbr;
+
+        countyDataLookup[pId] = county
+            ? { ...county, region, state_name: resolvedStateName, state_abbr: county.state_abbr || stateAbbr }
+            : { name: name, state: stateAbbr, state_abbr: stateAbbr, state_name: resolvedStateName, region: region };
 
         let val = null;
         if (county && county[activeMetric] !== undefined && county[activeMetric] !== null) {
