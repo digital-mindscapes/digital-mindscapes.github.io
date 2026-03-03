@@ -176,12 +176,20 @@ function renderComparisonTable(containerId, rows, activeMetric) {
     if (window.tableGroupMode === undefined) window.tableGroupMode = false;
     const isGrouped = window.tableGroupMode;
 
+    // Detect if we are in Urban-Rural mode (if rucc_class exists in data)
+    const isUrbanRural = rows.length > 0 && ('rucc_class' in rows[0]);
+    const groupField = isUrbanRural ? "rucc_class" : "region";
+    const groupLabel = isUrbanRural ? "Group Urban/Rural" : "Group Regions";
+
     // Sort logic
     if (isGrouped) {
-        const regionOrderMap = { "Central": 0, "East": 1, "South": 2, "West": 3 };
+        const groupOrderMap = isUrbanRural
+            ? { "Metro": 0, "Nonmetro": 1 }
+            : { "Central": 0, "East": 1, "South": 2, "West": 3 };
+
         withVals.sort((a, b) => {
-            const ra = regionOrderMap[a.region] ?? 99;
-            const rb = regionOrderMap[b.region] ?? 99;
+            const ra = groupOrderMap[a[groupField]] ?? 99;
+            const rb = groupOrderMap[b[groupField]] ?? 99;
             if (ra !== rb) return ra - rb;
             // secondary: value desc
             if (isNaN(a._val) && isNaN(b._val)) return 0;
@@ -201,6 +209,9 @@ function renderComparisonTable(containerId, rows, activeMetric) {
 
     const regionColorMap = {
         "Central": "#0ea5e9", "East": "#10b981", "South": "#f59e0b", "West": "#a855f7"
+    };
+    const ruccColorMap = {
+        "Metro": "#3b82f6", "Nonmetro": "#eab308"
     };
 
     const unitLabel = meta.unit ? ` (${meta.unit})` : "";
@@ -222,7 +233,7 @@ function renderComparisonTable(containerId, rows, activeMetric) {
                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M3 6h18M3 12h18M3 18h18"/>
                 </svg>
-                Group Regions
+                ${groupLabel}
             </button>
         </div>
         <span class="ct-row-count">${withVals.length} location${withVals.length !== 1 ? "s" : ""}</span>
@@ -233,7 +244,7 @@ function renderComparisonTable(containerId, rows, activeMetric) {
             <tr>
                 <th class="ct-th ct-th-rank">#</th>
                 <th class="ct-th ct-th-name">Location</th>
-                <th class="ct-th ct-th-region">Region</th>
+                <th class="ct-th ct-th-region">${isUrbanRural ? 'Classification' : 'Region'}</th>
                 <th class="ct-th ct-th-value">${meta.label}${unitLabel}</th>
                 <th class="ct-th ct-th-bar">Relative</th>
             </tr>
@@ -246,7 +257,12 @@ function renderComparisonTable(containerId, rows, activeMetric) {
         const bg = isValid ? heatColor(norm, meta.higherIsBad) : "transparent";
         const barPct = isValid && range > 0 ? Math.round(norm * 100) : 0;
         const barColor = isValid ? heatColor(norm, meta.higherIsBad).replace("0.22", "0.65") : "#eee";
-        const regionColor = regionColorMap[row.region] || "#888";
+
+        const groupVal = row[groupField] || "—";
+        const badgeColor = isUrbanRural
+            ? (ruccColorMap[groupVal] || "#888")
+            : (regionColorMap[groupVal] || "#888");
+
         const valDisplay = formatValue(row._val, meta.fmt);
 
         html += `
@@ -255,8 +271,8 @@ function renderComparisonTable(containerId, rows, activeMetric) {
             <td class="ct-td ct-td-name" title="${row.name}">${row.name}</td>
             <td class="ct-td ct-td-region">
                 <span class="ct-region-badge"
-                      style="background:${regionColor}20;color:${regionColor};border:1px solid ${regionColor}40">
-                    ${row.region || "—"}
+                      style="background:${badgeColor}20;color:${badgeColor};border:1px solid ${badgeColor}40">
+                    ${groupVal}
                 </span>
             </td>
             <td class="ct-td ct-td-value" style="background:${bg}">${valDisplay}</td>

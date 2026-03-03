@@ -164,6 +164,30 @@
             <div class="metrics-header">
                 <h2>Urban-Rural Comparison</h2>
                 <div class="toggle-group" style="display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 10px;">
+                    <div class="view-toggle-bar">
+                        <button class="view-toggle-btn active" id="btnChartView" onclick="switchView('chart')">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path d="M12 20V10" />
+                                <path d="M18 20V4" />
+                                <path d="M6 20v-4" />
+                            </svg>
+                            Chart View
+                        </button>
+                        <button class="view-toggle-btn" id="btnTableView" onclick="switchView('table')">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path d="M3 3h18v18H3z" />
+                                <path d="M3 9h18" />
+                                <path d="M3 15h18" />
+                                <path d="M9 3v18" />
+                            </svg>
+                            Table View
+                        </button>
+                    </div>
+
                     <div class="toggle-container">
                         <span class="toggle-label">Heatmap Mode</span>
                         <label class="switch">
@@ -701,17 +725,23 @@
         </div>
 
         <div class="comp-main">
-            <div class="comp-top-section">
-                <div id="chartdiv" style="width:100%;height:500px;"></div>
+            <div id="chartSection">
+                <div class="comp-top-section">
+                    <div id="chartdiv" style="width:100%;height:500px;"></div>
+                </div>
+                <div class="comp-bottom-section">
+                    <div id="compChartDiv"></div>
+                </div>
             </div>
-            <div class="comp-bottom-section">
-                <div id="compChartDiv"></div>
+            <div id="tableSection" class="comp-table-section" style="display:none;">
+                <div id="compTableDiv"></div>
             </div>
         </div>
     </div>
 
     <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
     <script src="js/map_controls.js"></script>
+    <script src="js/comparison_table.js"></script>
     <script src="js/urban_rural_comparison.js"></script>
 </body>
 

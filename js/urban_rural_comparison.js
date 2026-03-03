@@ -514,7 +514,7 @@ function initChart() {
         wheelY: "none",
         layout: chartRoot.verticalLayout,
         paddingLeft: 0,
-        paddingTop: 30,
+        paddingTop: isVert ? 70 : 30,
         paddingBottom: isVert ? 100 : 0
     }));
 
@@ -701,6 +701,9 @@ function updateChart() {
     barSeries.data.setAll(data);
 
     updateChartExtras(selectedByRucc);
+
+    // Keep table in sync whenever the chart updates
+    if (typeof currentView !== 'undefined' && currentView === 'table') refreshTable();
 }
 
 function updateChartExtras(selectedByRucc) {
@@ -794,3 +797,49 @@ function initMetricCardListeners() {
 am5.ready(function () {
     init();
 });
+
+// =========================================
+// VIEW TOGGLE  (Chart ↔ Table)
+// =========================================
+
+let currentView = 'chart';
+
+function switchView(view) {
+    currentView = view;
+    const chartSection = document.getElementById('chartSection');
+    const tableSection = document.getElementById('tableSection');
+    const btnChart = document.getElementById('btnChartView');
+    const btnTable = document.getElementById('btnTableView');
+
+    if (view === 'chart') {
+        if (chartSection) chartSection.style.display = '';
+        if (tableSection) tableSection.style.display = 'none';
+        btnChart && btnChart.classList.add('active');
+        btnTable && btnTable.classList.remove('active');
+    } else {
+        if (chartSection) chartSection.style.display = 'none';
+        if (tableSection) tableSection.style.display = 'flex';
+        btnChart && btnChart.classList.remove('active');
+        btnTable && btnTable.classList.add('active');
+        refreshTable();
+    }
+}
+
+function refreshTable() {
+    const rows = [];
+    selectedCounties.forEach(id => {
+        const data = countyDataLookup[id];
+        if (data) {
+            let shortName = (data.name || id)
+                .replace(/ County$/i, '')
+                .replace(/ Parish$/i, '');
+            if (data.state_abbr || data.state) {
+                shortName += ', ' + (data.state_abbr || data.state);
+            }
+            rows.push({ ...data, name: shortName });
+        }
+    });
+    if (typeof renderComparisonTable === 'function') {
+        renderComparisonTable('compTableDiv', rows, activeMetric);
+    }
+}
