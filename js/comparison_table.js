@@ -174,7 +174,10 @@ function renderComparisonTable(containerId, rows, activeMetric) {
 
     // grouping state
     if (window.tableGroupMode === undefined) window.tableGroupMode = false;
+    if (window.tableGroupStateMode === undefined) window.tableGroupStateMode = false;
+
     const isGrouped = window.tableGroupMode;
+    const isStateGrouped = window.tableGroupStateMode;
 
     // Detect if we are in Urban-Rural mode (if rucc_class exists in data)
     const isUrbanRural = rows.length > 0 && ('rucc_class' in rows[0]);
@@ -182,7 +185,19 @@ function renderComparisonTable(containerId, rows, activeMetric) {
     const groupLabel = isUrbanRural ? "Group Urban/Rural" : "Group Regions";
 
     // Sort logic
-    if (isGrouped) {
+    if (isStateGrouped) {
+        // Group by State (State Name Alpha, then Value Desc)
+        withVals.sort((a, b) => {
+            const sa = a.state_name || a.state || "";
+            const sb = b.state_name || b.state || "";
+            if (sa !== sb) return sa.localeCompare(sb);
+
+            if (isNaN(a._val) && isNaN(b._val)) return 0;
+            if (isNaN(a._val)) return 1;
+            if (isNaN(b._val)) return -1;
+            return b._val - a._val;
+        });
+    } else if (isGrouped) {
         const groupOrderMap = isUrbanRural
             ? { "Metro": 0, "Nonmetro": 1 }
             : { "Central": 0, "East": 1, "South": 2, "West": 3 };
@@ -219,6 +234,8 @@ function renderComparisonTable(containerId, rows, activeMetric) {
         : meta.higherIsBad === false ? " ↑ better"
             : "";
 
+    const hasStateData = rows.length > 0 && (rows[0].state_name || rows[0].state);
+
     let html = `
     <div class="ct-single-header">
         <div style="display:flex; align-items:center; gap:12px;">
@@ -228,13 +245,23 @@ function renderComparisonTable(containerId, rows, activeMetric) {
                 ${dirLabel ? `<span class="ct-metric-dir">${dirLabel}</span>` : ""}
             </div>
             <button class="ct-group-toggle ${isGrouped ? 'active' : ''}" 
-                    onclick="window.tableGroupMode = !window.tableGroupMode; if(typeof refreshTable==='function') refreshTable();">
+                    onclick="window.tableGroupStateMode = false; window.tableGroupMode = !window.tableGroupMode; if(typeof refreshTable==='function') refreshTable();">
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" 
                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M3 6h18M3 12h18M3 18h18"/>
                 </svg>
                 ${groupLabel}
             </button>
+            ${hasStateData ? `
+            <button class="ct-group-toggle ${isStateGrouped ? 'active' : ''}" 
+                    onclick="window.tableGroupMode = false; window.tableGroupStateMode = !window.tableGroupStateMode; if(typeof refreshTable==='function') refreshTable();">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" 
+                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                    <circle cx="12" cy="10" r="3"></circle>
+                </svg>
+                Group by State
+            </button>` : ''}
         </div>
         <span class="ct-row-count">${withVals.length} location${withVals.length !== 1 ? "s" : ""}</span>
     </div>
@@ -251,7 +278,29 @@ function renderComparisonTable(containerId, rows, activeMetric) {
         </thead>
         <tbody>`;
 
+    let lastState = null;
     withVals.forEach((row, i) => {
+        const currentState = row.state_name || row.state || "Unknown State";
+
+        if (isStateGrouped && currentState !== lastState) {
+            const stateAbbr = (row.state_abbr || "").toLowerCase();
+            // FlagCDN is very reliable and provides US state flags via us-[abbr]
+            const flagUrl = stateAbbr ? `https://flagcdn.com/w40/us-${stateAbbr}.png` : "";
+
+            html += `
+            <tr class="ct-group-header">
+                <td colspan="5" style="background: #f8fafc; padding: 10px 15px; border-bottom: 2px solid #e2e8f0; font-weight: 800; color: var(--main-color); font-size: 0.9rem; letter-spacing: 0.5px;">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        ${flagUrl ? `<img src="${flagUrl}" alt="${currentState}" 
+                             style="width: 22px; height: auto; border-radius: 2px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #ddd;"
+                             onerror="this.style.visibility='hidden'">` : ""}
+                        ${currentState.toUpperCase()}
+                    </div>
+                </td>
+            </tr>`;
+            lastState = currentState;
+        }
+
         const isValid = !isNaN(row._val);
         const norm = isValid && range > 0 ? (row._val - minVal) / range : 0.5;
         const bg = isValid ? heatColor(norm, meta.higherIsBad) : "transparent";
@@ -264,11 +313,12 @@ function renderComparisonTable(containerId, rows, activeMetric) {
             : (regionColorMap[groupVal] || "#888");
 
         const valDisplay = formatValue(row._val, meta.fmt);
+        const displayName = isStateGrouped ? row.name.split(',')[0].trim() : row.name;
 
         html += `
         <tr class="ct-row">
             <td class="ct-td ct-td-rank">${i + 1}</td>
-            <td class="ct-td ct-td-name" title="${row.name}">${row.name}</td>
+            <td class="ct-td ct-td-name" title="${row.name}">${displayName}</td>
             <td class="ct-td ct-td-region">
                 <span class="ct-region-badge"
                       style="background:${badgeColor}20;color:${badgeColor};border:1px solid ${badgeColor}40">

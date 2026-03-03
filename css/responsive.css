@@ -1,0 +1,202 @@
+/* ==========================================================================
+   RESPONSIVE OVERRIDES
+   ========================================================================== */
+
+/* ── Global Tweaks ── */
+@media (max-width: 1024px) {
+
+    /* Header centering for tablets */
+    .header-content {
+        flex-direction: column !important;
+        text-align: center !important;
+        gap: 20px !important;
+    }
+
+    .app-logo {
+        height: 120px !important;
+    }
+
+    .banner-logos-row {
+        flex-direction: row !important;
+        justify-content: center !important;
+        gap: 20px !important;
+    }
+
+    .banner-logos-bottom {
+        margin-top: 0 !important;
+    }
+
+    /* Main layout adjustment */
+    .container,
+    .comparison-container {
+        flex-direction: column !important;
+        height: auto !important;
+        min-height: 100vh !important;
+        padding: 15px !important;
+    }
+
+    /* Sidebars */
+    .metrics-section,
+    .comp-sidebar {
+        flex: none !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        height: auto !important;
+        max-height: 450px !important;
+        border-right: none !important;
+        border-bottom: 2px solid var(--border-color) !important;
+    }
+
+    .comp-main,
+    .main-section {
+        width: 100% !important;
+        padding: 10px !important;
+    }
+
+    /* Fixed panels in index.html */
+    .side-panel {
+        position: fixed !important;
+        bottom: 0 !important;
+        right: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: 70% !important;
+        margin: 0 !important;
+        border-radius: 20px 20px 0 0 !important;
+        z-index: 1000 !important;
+        transform: none !important;
+    }
+}
+
+/* ── Mobile Layouts ── */
+@media (max-width: 768px) {
+    .header {
+        padding: 15px 10px !important;
+    }
+
+    .header h1 {
+        font-size: 20px !important;
+    }
+
+    .authors {
+        font-size: 13px !important;
+    }
+
+    .affiliations {
+        font-size: 11px !important;
+    }
+
+    /* Stack comparison sections */
+    .comp-top-section {
+        flex-direction: column !important;
+        min-height: auto !important;
+    }
+
+    #compMapDiv,
+    #compChartDiv,
+    #chartdiv,
+    #heatchartdiv {
+        height: 400px !important;
+        min-height: 350px !important;
+    }
+
+    .selection-info {
+        height: auto !important;
+        min-height: 250px !important;
+    }
+
+    /* Table responsiveness */
+    .ct-scroll {
+        max-height: 400px !important;
+        overflow-x: auto !important;
+    }
+
+    .ct-table {
+        min-width: 600px !important;
+    }
+
+    .ct-single-header {
+        flex-direction: column !important;
+        gap: 10px !important;
+        align-items: flex-start !important;
+    }
+
+    /* Metric cards in sidebar */
+    .metrics-list {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 8px !important;
+    }
+
+    .metric-card {
+        padding: 10px !important;
+        font-size: 0.85rem !important;
+        flex-direction: column !important;
+        text-align: center !important;
+    }
+
+    .metric-icon {
+        width: 30px !important;
+        height: 30px !important;
+        margin-bottom: 5px !important;
+    }
+
+    .metric-value {
+        font-size: 0.95rem !important;
+    }
+
+    /* Comparison pills */
+    .comparison-pills {
+        flex-wrap: wrap !important;
+        justify-content: center !important;
+        gap: 6px !important;
+        margin: 10px 0 !important;
+    }
+
+    .comparison-pill {
+        padding: 6px 10px !important;
+        font-size: 0.7rem !important;
+    }
+}
+
+/* ── Extra Small Devices ── */
+@media (max-width: 480px) {
+    .metrics-list {
+        grid-template-columns: 1fr !important;
+    }
+
+    .banner-logos-row {
+        flex-direction: column !important;
+        gap: 10px !important;
+    }
+
+    .app-logo {
+        height: 80px !important;
+    }
+
+    .header h1 {
+        font-size: 17px !important;
+    }
+
+    /* Charts/Table buttons wrap better */
+    .view-toggle-btn {
+        padding: 6px 10px !important;
+        font-size: 0.7rem !important;
+    }
+
+    .view-toggle-bar {
+        gap: 4px !important;
+    }
+
+    .toggle-group {
+        gap: 8px !important;
+    }
+
+    .selection-info {
+        padding: 15px !important;
+    }
+
+    .state-chips {
+        max-height: 120px !important;
+    }
+}

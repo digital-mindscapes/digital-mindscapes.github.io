@@ -7,6 +7,7 @@
     <title>County Comparison - US Geographic Data</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/comparison_style.css">
+    <link rel="stylesheet" href="css/responsive.css">
 
     <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
     <script src="https://cdn.amcharts.com/lib/5/map.js"></script>
@@ -163,29 +164,32 @@
         <div class="metrics-section">
             <div class="metrics-header">
                 <h2>Urban-Rural Comparison</h2>
-                <div class="toggle-group" style="display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 10px;">
-                    <div class="view-toggle-bar">
-                        <button class="view-toggle-btn active" id="btnChartView" onclick="switchView('chart')">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round">
-                                <path d="M12 20V10" />
-                                <path d="M18 20V4" />
-                                <path d="M6 20v-4" />
-                            </svg>
-                            Chart View
-                        </button>
-                        <button class="view-toggle-btn" id="btnTableView" onclick="switchView('table')">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round">
-                                <path d="M3 3h18v18H3z" />
-                                <path d="M3 9h18" />
-                                <path d="M3 15h18" />
-                                <path d="M9 3v18" />
-                            </svg>
-                            Table View
-                        </button>
+                <div class="toggle-group"
+                    style="display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 15px; margin-top: 25px; justify-content: center;">
+                    <div style="width: 100%; display: flex; justify-content: center;">
+                        <div class="view-toggle-bar" style="margin-top: 0;">
+                            <button class="view-toggle-btn active" id="btnChartView" onclick="switchView('chart')">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <path d="M12 20V10" />
+                                    <path d="M18 20V4" />
+                                    <path d="M6 20v-4" />
+                                </svg>
+                                Chart View
+                            </button>
+                            <button class="view-toggle-btn" id="btnTableView" onclick="switchView('table')">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <path d="M3 3h18v18H3z" />
+                                    <path d="M3 9h18" />
+                                    <path d="M3 15h18" />
+                                    <path d="M9 3v18" />
+                                </svg>
+                                Table View
+                            </button>
+                        </div>
                     </div>
 
                     <div class="toggle-container">
