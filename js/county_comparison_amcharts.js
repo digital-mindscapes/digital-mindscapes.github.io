@@ -241,11 +241,14 @@ async function init() {
         const rToggle = document.getElementById("regionToggle");
         if (rToggle) {
             regionMode = rToggle.checked;
+            window.tableGroupMode = regionMode;
             rToggle.addEventListener("change", (e) => {
                 regionMode = e.target.checked;
-                if (regionMode && ruccGroupMode) {
-                    document.getElementById("ruccGroupToggle").checked = false;
-                    ruccGroupMode = false;
+                window.tableGroupMode = regionMode;
+                if (regionMode) {
+                    window.tableGroupStateMode = false;
+                    const sToggle = document.getElementById("stateGroupToggle");
+                    if (sToggle) sToggle.checked = false;
                 }
                 initChart();
                 updateChart();
@@ -257,6 +260,21 @@ async function init() {
                         polygon.markDirtyKey("fill");
                     }
                 });
+            });
+        }
+
+        const sToggle = document.getElementById("stateGroupToggle");
+        if (sToggle) {
+            window.tableGroupStateMode = sToggle.checked;
+            sToggle.addEventListener("change", (e) => {
+                window.tableGroupStateMode = e.target.checked;
+                if (window.tableGroupStateMode) {
+                    window.tableGroupMode = false;
+                    regionMode = false;
+                    if (rToggle) rToggle.checked = false;
+                }
+                updateChart();
+                if (currentView === 'table') refreshTable();
             });
         }
 

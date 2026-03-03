@@ -237,11 +237,34 @@ async function init() {
         }
 
         const ruccGroupToggle = document.getElementById("ruccGroupToggle");
+        const sToggle = document.getElementById("stateGroupToggle");
+
         if (ruccGroupToggle) {
             ruccGroupMode = ruccGroupToggle.checked;
+            window.tableGroupMode = ruccGroupMode;
             ruccGroupToggle.addEventListener("change", (e) => {
                 ruccGroupMode = e.target.checked;
+                window.tableGroupMode = ruccGroupMode;
+                if (ruccGroupMode) {
+                    window.tableGroupStateMode = false;
+                    if (sToggle) sToggle.checked = false;
+                }
                 updateChart();
+                if (currentView === 'table') refreshTable();
+            });
+        }
+
+        if (sToggle) {
+            window.tableGroupStateMode = sToggle.checked;
+            sToggle.addEventListener("change", (e) => {
+                window.tableGroupStateMode = e.target.checked;
+                if (window.tableGroupStateMode) {
+                    window.tableGroupMode = false;
+                    ruccGroupMode = false;
+                    if (ruccGroupToggle) ruccGroupToggle.checked = false;
+                }
+                updateChart();
+                if (currentView === 'table') refreshTable();
             });
         }
 
@@ -252,6 +275,7 @@ async function init() {
                 ruccFilter = e.target.value;
                 updateMapData();
                 updateChart();
+                if (currentView === 'table') refreshTable();
             });
         }
 
@@ -830,6 +854,10 @@ function refreshTable() {
     selectedCounties.forEach(id => {
         const data = countyDataLookup[id];
         if (data) {
+            // Apply RUCC Filter
+            let rc = data.rucc_class || "Unknown";
+            if (ruccFilter !== "All" && rc !== ruccFilter) return;
+
             let shortName = (data.name || id)
                 .replace(/ County$/i, '')
                 .replace(/ Parish$/i, '');

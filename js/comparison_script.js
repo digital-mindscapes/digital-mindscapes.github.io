@@ -112,9 +112,12 @@ async function init() {
         const rToggle = document.getElementById("regionToggle");
         if (rToggle) {
             regionMode = !rToggle.checked;
+            window.tableGroupMode = regionMode;
             rToggle.addEventListener("change", (e) => {
                 regionMode = !e.target.checked;
+                window.tableGroupMode = regionMode;
                 updateChart();
+                if (currentView === 'table') refreshTable();
                 mapPolygonSeries.mapPolygons.each((polygon) => {
                     if (polygon.get("active")) {
                         polygon.set("active", false);

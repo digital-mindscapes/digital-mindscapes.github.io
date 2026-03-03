@@ -147,7 +147,18 @@ function heatColor(normalised, higherIsBad) {
  * @param {Array}   rows         – [{name, region, ...metricValues}]
  * @param {string}  activeMetric – the single metric key to display
  */
+function syncTableToggles() {
+    const sGroup = document.getElementById("stateGroupToggle");
+    const rGroup = document.getElementById("regionToggle");
+    const ruGroup = document.getElementById("ruccGroupToggle");
+
+    if (sGroup) sGroup.checked = !!window.tableGroupStateMode;
+    if (rGroup) rGroup.checked = !!window.tableGroupMode;
+    if (ruGroup) ruGroup.checked = !!window.tableGroupMode;
+}
+
 function renderComparisonTable(containerId, rows, activeMetric) {
+    syncTableToggles();
     const container = document.getElementById(containerId);
     if (!container) return;
 
@@ -245,7 +256,7 @@ function renderComparisonTable(containerId, rows, activeMetric) {
                 ${dirLabel ? `<span class="ct-metric-dir">${dirLabel}</span>` : ""}
             </div>
             <button class="ct-group-toggle ${isGrouped ? 'active' : ''}" 
-                    onclick="window.tableGroupStateMode = false; window.tableGroupMode = !window.tableGroupMode; if(typeof refreshTable==='function') refreshTable();">
+                    onclick="window.tableGroupStateMode = false; window.tableGroupMode = !window.tableGroupMode; syncTableToggles(); if(typeof refreshTable==='function') refreshTable();">
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" 
                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M3 6h18M3 12h18M3 18h18"/>
@@ -254,7 +265,7 @@ function renderComparisonTable(containerId, rows, activeMetric) {
             </button>
             ${hasStateData ? `
             <button class="ct-group-toggle ${isStateGrouped ? 'active' : ''}" 
-                    onclick="window.tableGroupMode = false; window.tableGroupStateMode = !window.tableGroupStateMode; if(typeof refreshTable==='function') refreshTable();">
+                    onclick="window.tableGroupMode = false; window.tableGroupStateMode = !window.tableGroupStateMode; syncTableToggles(); if(typeof refreshTable==='function') refreshTable();">
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" 
                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
@@ -278,27 +289,51 @@ function renderComparisonTable(containerId, rows, activeMetric) {
         </thead>
         <tbody>`;
 
-    let lastState = null;
+    const groupIcons = {
+        "Metro": `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.8;"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><line x1="9" y1="22" x2="9" y2="2"></line><line x1="15" y1="22" x2="15" y2="2"></line><line x1="4" y1="6" x2="20" y2="6"></line><line x1="4" y1="10" x2="20" y2="10"></line><line x1="4" y1="14" x2="20" y2="14"></line><line x1="4" y1="18" x2="20" y2="18"></line></svg>`,
+        "Nonmetro": `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.8;"><path d="M12 3l8 11h-16l8-11z"></path><path d="M12 17v4"></path></svg>`,
+        "Default": `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.8;"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg>`
+    };
+
+    let lastGroup = null;
     withVals.forEach((row, i) => {
-        const currentState = row.state_name || row.state || "Unknown State";
+        const currentGroup = isStateGrouped
+            ? (row.state_name || row.state || "Unknown State")
+            : (isGrouped ? (row[groupField] || "Unknown") : null);
 
-        if (isStateGrouped && currentState !== lastState) {
-            const stateAbbr = (row.state_abbr || "").toLowerCase();
-            // FlagCDN is very reliable and provides US state flags via us-[abbr]
-            const flagUrl = stateAbbr ? `https://flagcdn.com/w40/us-${stateAbbr}.png` : "";
+        if (currentGroup && currentGroup !== lastGroup) {
+            if (isStateGrouped) {
+                const stateAbbr = (row.state_abbr || "").toLowerCase();
+                const flagUrl = stateAbbr ? `https://flagcdn.com/w40/us-${stateAbbr}.png` : "";
 
-            html += `
-            <tr class="ct-group-header">
-                <td colspan="5" style="background: #f8fafc; padding: 10px 15px; border-bottom: 2px solid #e2e8f0; font-weight: 800; color: var(--main-color); font-size: 0.9rem; letter-spacing: 0.5px;">
-                    <div style="display:flex; align-items:center; gap:10px;">
-                        ${flagUrl ? `<img src="${flagUrl}" alt="${currentState}" 
-                             style="width: 22px; height: auto; border-radius: 2px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #ddd;"
-                             onerror="this.style.visibility='hidden'">` : ""}
-                        ${currentState.toUpperCase()}
-                    </div>
-                </td>
-            </tr>`;
-            lastState = currentState;
+                html += `
+                <tr class="ct-group-header">
+                    <td colspan="5" style="background: #f8fafc; padding: 10px 15px; border-bottom: 2px solid #e2e8f0; font-weight: 800; color: var(--main-color); font-size: 0.9rem; letter-spacing: 0.5px;">
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            ${flagUrl ? `<img src="${flagUrl}" alt="${currentGroup}" 
+                                 style="width: 22px; height: auto; border-radius: 2px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #ddd;"
+                                 onerror="this.style.visibility='hidden'">` : ""}
+                            ${currentGroup.toUpperCase()}
+                        </div>
+                    </td>
+                </tr>`;
+            } else if (isGrouped) {
+                const icon = groupIcons[currentGroup] || groupIcons["Default"];
+                const badgeColor = isUrbanRural
+                    ? (ruccColorMap[currentGroup] || "#64748b")
+                    : (regionColorMap[currentGroup] || "#64748b");
+
+                html += `
+                <tr class="ct-group-header">
+                    <td colspan="5" style="background: #f8fafc; padding: 10px 15px; border-bottom: 2px solid ${badgeColor}40; font-weight: 800; color: ${badgeColor}; font-size: 0.9rem; letter-spacing: 0.5px;">
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            ${icon}
+                            ${currentGroup.toUpperCase()}
+                        </div>
+                    </td>
+                </tr>`;
+            }
+            lastGroup = currentGroup;
         }
 
         const isValid = !isNaN(row._val);
