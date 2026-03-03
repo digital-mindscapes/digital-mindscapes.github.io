@@ -205,3 +205,269 @@
         height: 400px;
     }
 }
+
+/* ============================================
+   TABLE VIEW TOGGLE BUTTON
+   ============================================ */
+.view-toggle-bar {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    width: fit-content;
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 25px;
+    padding: 3px;
+    margin-top: 12px;
+}
+
+.view-toggle-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 18px;
+    border: none;
+    border-radius: 22px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.75);
+    transition: all 0.22s ease;
+    white-space: nowrap;
+}
+
+.view-toggle-btn.active {
+    background: white;
+    color: var(--main-color);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.view-toggle-btn svg {
+    flex-shrink: 0;
+}
+
+/* ============================================
+   TABLE CONTAINER
+   ============================================ */
+.comp-table-section {
+    display: none;
+    flex-direction: column;
+    background: white;
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+    overflow: visible;
+}
+
+.comp-table-section.active {
+    display: flex;
+}
+
+/* ============================================
+   SINGLE-METRIC TABLE STYLES
+   ============================================ */
+.ct-single-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+    flex-shrink: 0;
+}
+
+.ct-metric-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, var(--main-color), #a02820);
+    color: white;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+}
+
+.ct-metric-name {
+    font-weight: 700;
+}
+
+.ct-metric-unit {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 1px 7px;
+    border-radius: 10px;
+    font-size: 0.75rem;
+}
+
+.ct-metric-dir {
+    font-size: 0.72rem;
+    opacity: 0.85;
+    font-style: italic;
+}
+
+.ct-group-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    padding: 6px 12px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.ct-group-toggle:hover {
+    background: #e2e8f0;
+    color: #475569;
+}
+
+.ct-group-toggle.active {
+    background: #64748b;
+    color: white;
+    border-color: #64748b;
+}
+
+.ct-group-toggle svg {
+    opacity: 0.7;
+}
+
+.ct-row-count {
+    font-size: 0.8rem;
+    color: #888;
+}
+
+.ct-scroll {
+    overflow-y: scroll;
+    max-height: calc(100vh - 420px);
+    min-height: 200px;
+    border-radius: 12px;
+    border: 1px solid #eee;
+}
+
+.ct-table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 0.85rem;
+}
+
+.ct-th {
+    position: sticky;
+    top: 0;
+    background: #f5f5f5;
+    padding: 11px 14px;
+    text-align: left;
+    font-weight: 700;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: #555;
+    border-bottom: 2px solid #e0e0e0;
+    white-space: nowrap;
+    z-index: 2;
+}
+
+.ct-th-rank {
+    width: 42px;
+    text-align: center;
+}
+
+.ct-th-name {
+    min-width: 140px;
+}
+
+.ct-th-region {
+    width: 110px;
+}
+
+.ct-th-value {
+    width: 120px;
+    text-align: right;
+    color: var(--main-color);
+}
+
+.ct-th-bar {
+    min-width: 120px;
+}
+
+.ct-row {
+    transition: filter 0.15s;
+}
+
+.ct-row:hover {
+    filter: brightness(0.93);
+}
+
+.ct-td {
+    padding: 10px 14px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    vertical-align: middle;
+}
+
+.ct-td-rank {
+    text-align: center;
+    font-weight: 700;
+    color: #aaa;
+    font-size: 0.78rem;
+}
+
+.ct-td-name {
+    font-weight: 600;
+    color: #222;
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ct-td-region {
+    text-align: center;
+}
+
+.ct-region-badge {
+    display: inline-block;
+    padding: 2px 9px;
+    border-radius: 10px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.ct-td-value {
+    text-align: right;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    font-size: 0.9rem;
+    color: #222;
+}
+
+.ct-td-bar {
+    padding-right: 16px;
+}
+
+.ct-bar-track {
+    background: #f0f0f0;
+    border-radius: 4px;
+    height: 10px;
+    width: 100%;
+    overflow: hidden;
+}
+
+.ct-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.4s ease;
+    min-width: 2px;
+}
+
+.ct-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    padding: 60px 30px;
+    color: #888;
+    text-align: center;
+    font-size: 0.95rem;
+}

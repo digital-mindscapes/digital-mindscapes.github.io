@@ -258,6 +258,7 @@ function initChart() {
         panX: false, panY: false, wheelX: "none", wheelY: "none",
         layout: chartRoot.horizontalLayout,
         paddingLeft: isVert ? 0 : 160,
+        paddingTop: isVert ? 70 : 20,
         paddingBottom: isVert ? 100 : 0
     }));
 
@@ -373,6 +374,9 @@ function updateChart() {
     yAxis.data.setAll(data);
     barSeries.data.setAll(data);
     updateChartExtras(selectedByRegion);
+
+    // Keep table in sync whenever the chart updates
+    if (currentView === 'table') refreshTable();
 }
 
 function updateChartExtras(selectedByRegion) {
@@ -419,3 +423,44 @@ function updateChartExtras(selectedByRegion) {
 }
 
 init();
+
+// =========================================
+// VIEW TOGGLE  (Chart ↔ Table)
+// =========================================
+
+let currentView = 'chart';
+
+function switchView(view) {
+    currentView = view;
+    const chartSection = document.getElementById('chartSection');
+    const tableSection = document.getElementById('tableSection');
+    const btnChart = document.getElementById('btnChartView');
+    const btnTable = document.getElementById('btnTableView');
+
+    if (view === 'chart') {
+        chartSection && chartSection.classList.remove('active') || (chartSection && (chartSection.style.display = ''));
+        tableSection && tableSection.classList.remove('active');
+        btnChart && btnChart.classList.add('active');
+        btnTable && btnTable.classList.remove('active');
+        // restore original comp-bottom-section display
+        if (chartSection) chartSection.style.display = '';
+        if (tableSection) tableSection.style.display = 'none';
+    } else {
+        if (chartSection) chartSection.style.display = 'none';
+        if (tableSection) { tableSection.style.display = 'flex'; }
+        btnChart && btnChart.classList.remove('active');
+        btnTable && btnTable.classList.add('active');
+        refreshTable();
+    }
+}
+
+function refreshTable() {
+    const rows = [];
+    selectedStates.forEach(id => {
+        const state = stateData.find(s => s.id === id);
+        if (state) rows.push({ ...state, name: state.name });
+    });
+    if (typeof renderComparisonTable === 'function') {
+        renderComparisonTable('compTableDiv', rows, activeMetric);
+    }
+}

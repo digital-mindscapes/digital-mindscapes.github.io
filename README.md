@@ -18,12 +18,14 @@
 
 **Digital Mindscapes** is an academic data visualization project exploring the intersection of public health, socioeconomic conditions, and community wellbeing across the United States. The platform provides interactive choropleth maps, customizable metric comparisons, and county-level filtering to support research-driven storytelling.
 
-Built as part of ongoing research at **Marquette University** in collaboration with **UW-Milwaukee**.
+Built as part of ongoing research at **Marquette University**, in collaboration with **UW-Milwaukee** and the **Medical College of Wisconsin (MCW)**.
 
 <div align="center">
-  <img src="assets/marquette_logo.png" alt="Marquette University" height="50" style="margin-right: 20px"/>
+  <img src="assets/marquette_logo.png" alt="Marquette University" height="50"/>
   &nbsp;&nbsp;&nbsp;
   <img src="assets/uwm_logo.png" alt="UW-Milwaukee" height="50"/>
+  &nbsp;&nbsp;&nbsp;
+  <img src="assets/mcw_logo.png" alt="Medical College of Wisconsin" height="50"/>
 </div>
 
 ---
@@ -96,6 +98,14 @@ digital-mindscapes.github.io/
 - **HTML5 / CSS3 / Vanilla JavaScript** — no build tools required
 - **[amCharts 5](https://www.amcharts.com/)** — interactive maps and charts
 - **CDC PLACES + U.S. Census ACS** — pre-processed into flat JSON for fast client-side loading
+
+---
+
+## 👥 Team
+
+| Name | Affiliation | Role |
+|------|-------------|------|
+| **Anjishnu Banerjee** | Medical College of Wisconsin (MCW) | Research Collaborator |
 
 ---
 
