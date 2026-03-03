@@ -141,6 +141,213 @@ function heatColor(normalised, higherIsBad) {
     return `rgba(${r},${g},${b},0.22)`;
 }
 
+// ── Export and Search State ────────────────────────────────────────────────
+if (window.tableSearchQuery === undefined) window.tableSearchQuery = "";
+
+function exportTableToCSV(rows, activeMetric) {
+    const meta = tableMetricMeta[activeMetric] || { label: activeMetric, unit: "" };
+    const unitLabel = meta.unit ? ` (${meta.unit})` : "";
+    const headers = ["Rank", "Location", "Classification/Region", `${meta.label}${unitLabel}`];
+
+    let csvContent = headers.join(",") + "\n";
+
+    rows.forEach((row, i) => {
+        const val = formatValue(row[activeMetric], meta.fmt).replace(/,/g, '');
+        const line = [
+            i + 1,
+            `"${row.name}"`,
+            `"${row.rucc_class || row.region || ''}"`,
+            val
+        ];
+        csvContent += line.join(",") + "\n";
+    });
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `comparison_data_${activeMetric}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+function copyTableHTML(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    // Clone the container to manipulate it
+    const clone = container.cloneNode(true);
+
+    // Remove UI elements we don't want in the export
+    const toolbar = clone.querySelector('.ct-toolbar');
+    if (toolbar) toolbar.remove();
+
+    const existingWatermark = clone.querySelector('.ct-watermark');
+    if (existingWatermark) existingWatermark.remove();
+
+    // Collect relevant CSS rules
+    let cssText = "";
+    const sheets = document.styleSheets;
+    for (let i = 0; i < sheets.length; i++) {
+        try {
+            const rules = sheets[i].cssRules || sheets[i].rules;
+            for (let j = 0; j < rules.length; j++) {
+                const rule = rules[j];
+                // Keep .ct- styles, root variables, and specific animations
+                if (rule.selectorText && (
+                    rule.selectorText.includes('.ct-') ||
+                    rule.selectorText.includes(':root') ||
+                    rule.selectorText.includes('var(--')
+                )) {
+                    cssText += rule.cssText + "\n";
+                }
+            }
+        } catch (e) { /* Skip CORS restricted sheets */ }
+    }
+
+    // Build self-sufficient HTML snippet
+    const finalHTML = `
+<!-- Comparison Table Export -->
+<div class="ct-export-context" style="background:white; padding:15px; border-radius:12px; font-family: system-ui, -apple-system, sans-serif;">
+    <style>
+        ${cssText}
+        .ct-scroll { max-height: none !important; overflow: visible !important; border: none !important; }
+        .ct-single-header { margin-top: 0 !important; }
+        .ct-table { width: 100% !important; border: 1px solid #f1f5f9; border-radius: 8px; border-collapse: separate; border-spacing: 0; }
+        .ct-watermark { 
+            margin-top: 15px; 
+            padding-top: 10px; 
+            border-top: 1px solid #eee; 
+            text-align: right; 
+            font-size: 11px; 
+            color: #94a3b8;
+            font-style: italic;
+        }
+    </style>
+    ${clone.innerHTML}
+    <div class="ct-watermark" style="text-align: right; margin-top: 15px; padding-top: 12px; border-top: 1px solid #eee; font-size: 11px; color: #64748b; font-family: system-ui, sans-serif; line-height: 1.6;">
+        <strong>Digital Mindscapes: An Interactive Public Health & Socioeconomic Data Visualization Platform</strong><br>
+        Datta, A., Rubiya, S., Chakrabarti, A., & Banerjee, A. (2026)
+    </div>
+</div>
+<!-- End Export -->`;
+
+    navigator.clipboard.writeText(finalHTML).then(() => {
+        const btn = document.querySelector('.ct-action-btn[title="Copy HTML"]');
+        showCopyFeedback(btn);
+    }).catch(err => {
+        console.error('Failed to copy HTML:', err);
+    });
+}
+
+function copyTableLaTeX(activeMetric) {
+    const rows = window.selectedTableRows || [];
+    if (rows.length === 0) return;
+
+    const meta = tableMetricMeta[activeMetric] || { label: activeMetric, unit: "", fmt: "dec", higherIsBad: null };
+    const cleanLabel = meta.label.replace(/_/g, '\\_').replace(/%/g, '\\%').replace(/&/g, '\\&');
+    const unitText = meta.unit ? ` (${meta.unit.replace(/%/g, '\\%')})` : "";
+
+    // Calculate range for heat coloring
+    const nums = rows.map(r => parseFloat(r[activeMetric])).filter(v => !isNaN(v));
+    const minVal = Math.min(...nums);
+    const maxVal = Math.max(...nums);
+    const range = maxVal - minVal;
+
+    const getLaTeXColor = (val) => {
+        if (isNaN(val)) return "";
+        const norm = range > 0 ? (val - minVal) / range : 0.5;
+        let r, g, b, a = 0.22;
+
+        if (meta.higherIsBad === null) {
+            r = 14; g = 165; b = 233;
+            a = 0.08 + norm * 0.22;
+        } else {
+            const t = meta.higherIsBad ? norm : 1 - norm;
+            if (t < 0.5) {
+                r = Math.round(2 * t * 245);
+                g = Math.round(167 + (1 - 2 * t) * 20);
+                b = Math.round(66 * (1 - 2 * t));
+            } else {
+                r = Math.round(245 - (2 * t - 1) * 45);
+                g = Math.round((1 - (2 * t - 1)) * 167);
+                b = 0;
+            }
+        }
+        // Mix with white background
+        const fR = Math.round(r * a + 255 * (1 - a));
+        const fG = Math.round(g * a + 255 * (1 - a));
+        const fB = Math.round(b * a + 255 * (1 - a));
+        const hex = (fR << 16 | fG << 8 | fB).toString(16).padStart(6, '0').toUpperCase();
+        return `\\cellcolor[HTML]{${hex}}`;
+    };
+
+    let latex = "% --- LaTeX Table Setup ---\n";
+    latex += "% Add these to your preamble:\n";
+    latex += "% \\usepackage{booktabs}\n";
+    latex += "% \\usepackage{caption}\n";
+    latex += "% \\usepackage[table]{xcolor}\n";
+    latex += "% \\def\\mybar#1{{\\color{gray}\\rule{#1cm}{8pt}}}\n\n";
+    latex += "\\begin{table}[htbp]\n";
+    latex += "  \\centering\n";
+    latex += `  \\caption{Geographic Comparison: ${cleanLabel} (2026)}\n`;
+    latex += "  \\begin{tabular}{rllll}\n";
+    latex += "    \\toprule\n";
+    latex += `    Rank & Location & Region/Class & ${cleanLabel}${unitText} & Distribution \\\\\n`;
+    latex += "    \\midrule\n";
+
+    rows.forEach((row, i) => {
+        const name = row.name.replace(/&/g, '\\&').replace(/_/g, '\\_').replace(/%/g, '\\%');
+        const reg = (row.rucc_class || row.region || "").replace(/&/g, '\\&').replace(/_/g, '\\_').replace(/%/g, '\\%');
+        const valNum = parseFloat(row[activeMetric]);
+        const valStr = formatValue(valNum, meta.fmt).replace(/%/g, '\\%').replace(/&/g, '\\&');
+        const cellColor = getLaTeXColor(valNum);
+
+        // Normalized value for \mybar (max 2cm)
+        const norm = !isNaN(valNum) && range > 0 ? (valNum - minVal) / range : 0;
+        const normVal = (!isNaN(valNum) && range > 0 ? (norm * 2.0).toFixed(2) : "0.00");
+
+        latex += `    ${i + 1} & ${name} & ${reg} & ${cellColor} ${valStr} & \\mybar{${normVal}} \\\\\n`;
+    });
+
+    latex += "    \\bottomrule\n";
+    latex += "  \\end{tabular}\n";
+    latex += "  \\par\\smallskip\n";
+    latex += "  \\tiny\\itshape Source: Datta, A., Rubiya, S., Chakrabarti, A., \\& Banerjee, A. (2026). Digital Mindscapes Project.\n";
+    latex += "\\end{table}";
+
+    navigator.clipboard.writeText(latex).then(() => {
+        const btn = document.querySelector('.ct-action-btn[title="Copy LaTeX"]');
+        showCopyFeedback(btn);
+    }).catch(err => {
+        console.error('Failed to copy LaTeX:', err);
+    });
+}
+
+
+function showCopyFeedback(btn) {
+    if (!btn) return;
+    const originalHTML = btn.innerHTML;
+    const originalBorder = btn.style.borderColor;
+    const originalColor = btn.style.color;
+
+    btn.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+        Copied!
+    `;
+    btn.style.borderColor = "#10b981";
+    btn.style.color = "#10b981";
+    setTimeout(() => {
+        btn.innerHTML = originalHTML;
+        btn.style.borderColor = originalBorder;
+        btn.style.color = originalColor;
+    }, 2000);
+}
+
 // ── Main render — shows ONLY the active metric ────────────────────────────────
 /**
  * @param {string}  containerId  – id of the <div> to render into
@@ -177,11 +384,34 @@ function renderComparisonTable(containerId, rows, activeMetric) {
     const meta = tableMetricMeta[activeMetric] || { label: activeMetric, unit: "", fmt: "dec", higherIsBad: null };
 
     // Compute values and min/max for heat coloring
-    const withVals = rows.map(r => ({ ...r, _val: parseFloat(r[activeMetric]) }));
+    let withVals = rows.map(r => ({ ...r, _val: parseFloat(r[activeMetric]) }));
+
+    // Apply Global Search Filter
+    if (window.tableSearchQuery) {
+        const q = window.tableSearchQuery.toLowerCase();
+        withVals = withVals.filter(r =>
+            (r.name && r.name.toLowerCase().includes(q)) ||
+            (r.region && r.region.toLowerCase().includes(q)) ||
+            (r.rucc_class && r.rucc_class.toLowerCase().includes(q)) ||
+            (r.state_name && r.state_name.toLowerCase().includes(q))
+        );
+    }
+
     const nums = withVals.map(r => r._val).filter(v => !isNaN(v));
     const minVal = Math.min(...nums);
     const maxVal = Math.max(...nums);
     const range = maxVal - minVal;
+
+    // Calculate Summary Stats
+    const sum = nums.reduce((a, b) => a + b, 0);
+    const mean = nums.length > 0 ? sum / nums.length : 0;
+    const sortedNums = [...nums].sort((a, b) => a - b);
+    const median = sortedNums.length > 0
+        ? (sortedNums.length % 2 === 0
+            ? (sortedNums[sortedNums.length / 2 - 1] + sortedNums[sortedNums.length / 2]) / 2
+            : sortedNums[Math.floor(sortedNums.length / 2)])
+        : 0;
+
 
     // grouping state
     if (window.tableGroupMode === undefined) window.tableGroupMode = false;
@@ -248,6 +478,56 @@ function renderComparisonTable(containerId, rows, activeMetric) {
     const hasStateData = rows.length > 0 && (rows[0].state_name || rows[0].state);
 
     let html = `
+    <div class="ct-toolbar">
+        <div class="ct-search-box">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+            </svg>
+            <input type="text" placeholder="Search locations..." id="ctSearchInput" value="${window.tableSearchQuery}"
+                   oninput="window.tableSearchQuery = this.value; if(typeof refreshTable==='function') refreshTable();">
+        </div>
+        <div class="ct-actions">
+            <button class="ct-action-btn" onclick="exportTableToCSV(selectedTableRows, '${activeMetric}')" title="Export CSV">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                CSV
+            </button>
+            <button class="ct-action-btn" onclick="copyTableHTML('${containerId}')" title="Copy HTML">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+                HTML
+            </button>
+            <button class="ct-action-btn" onclick="copyTableLaTeX('${activeMetric}')" title="Copy LaTeX">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline>
+                </svg>
+                LaTeX
+            </button>
+        </div>
+    </div>
+
+    <div class="ct-summary-stats">
+        <div class="ct-stat-card">
+            <span class="label">Average</span>
+            <span class="value">${formatValue(mean, meta.fmt)}</span>
+        </div>
+        <div class="ct-stat-card">
+            <span class="label">Median</span>
+            <span class="value">${formatValue(median, meta.fmt)}</span>
+        </div>
+        <div class="ct-stat-card">
+            <span class="label">Range (Min - Max)</span>
+            <span class="value">${formatValue(minVal, meta.fmt)} - ${formatValue(maxVal, meta.fmt)}</span>
+        </div>
+        <div class="ct-stat-card">
+            <span class="label">Selected</span>
+            <span class="value">${nums.length}</span>
+        </div>
+    </div>
+
+
     <div class="ct-single-header">
         <div style="display:flex; align-items:center; gap:12px;">
             <div class="ct-metric-pill">
@@ -274,7 +554,7 @@ function renderComparisonTable(containerId, rows, activeMetric) {
                 Group by State
             </button>` : ''}
         </div>
-        <span class="ct-row-count">${withVals.length} location${withVals.length !== 1 ? "s" : ""}</span>
+        <span class="ct-row-count">${withVals.length} matching location${withVals.length !== 1 ? "s" : ""}</span>
     </div>
     <div class="ct-scroll">
     <table class="ct-table">
@@ -302,6 +582,14 @@ function renderComparisonTable(containerId, rows, activeMetric) {
             : (isGrouped ? (row[groupField] || "Unknown") : null);
 
         if (currentGroup && currentGroup !== lastGroup) {
+            // Calculate Group Average
+            const groupRows = withVals.filter(r =>
+                isStateGrouped ? (r.state_name || r.state) === currentGroup : r[groupField] === currentGroup
+            );
+            const gNums = groupRows.map(r => r._val).filter(v => !isNaN(v));
+            const gAvg = gNums.length > 0 ? (gNums.reduce((a, b) => a + b, 0) / gNums.length) : 0;
+            const gAvgDisplay = gNums.length > 0 ? `Avg: ${formatValue(gAvg, meta.fmt)}` : "";
+
             if (isStateGrouped) {
                 const stateAbbr = (row.state_abbr || "").toLowerCase();
                 const flagUrl = stateAbbr ? `https://flagcdn.com/w40/us-${stateAbbr}.png` : "";
@@ -309,11 +597,14 @@ function renderComparisonTable(containerId, rows, activeMetric) {
                 html += `
                 <tr class="ct-group-header">
                     <td colspan="5" style="background: #f8fafc; padding: 10px 15px; border-bottom: 2px solid #e2e8f0; font-weight: 800; color: var(--main-color); font-size: 0.9rem; letter-spacing: 0.5px;">
-                        <div style="display:flex; align-items:center; gap:10px;">
-                            ${flagUrl ? `<img src="${flagUrl}" alt="${currentGroup}" 
-                                 style="width: 22px; height: auto; border-radius: 2px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #ddd;"
-                                 onerror="this.style.visibility='hidden'">` : ""}
-                            ${currentGroup.toUpperCase()}
+                        <div style="display:flex; align-items:center; justify-content:space-between; width:100%;">
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                ${flagUrl ? `<img src="${flagUrl}" alt="${currentGroup}" 
+                                     style="width: 22px; height: auto; border-radius: 2px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #ddd;"
+                                     onerror="this.style.visibility='hidden'">` : ""}
+                                ${currentGroup.toUpperCase()}
+                            </div>
+                            <span style="font-size:0.75rem; font-weight:600; color:#64748b;">${gAvgDisplay}</span>
                         </div>
                     </td>
                 </tr>`;
@@ -326,9 +617,12 @@ function renderComparisonTable(containerId, rows, activeMetric) {
                 html += `
                 <tr class="ct-group-header">
                     <td colspan="5" style="background: #f8fafc; padding: 10px 15px; border-bottom: 2px solid ${badgeColor}40; font-weight: 800; color: ${badgeColor}; font-size: 0.9rem; letter-spacing: 0.5px;">
-                        <div style="display:flex; align-items:center; gap:10px;">
-                            ${icon}
-                            ${currentGroup.toUpperCase()}
+                        <div style="display:flex; align-items:center; justify-content:space-between; width:100%;">
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                ${icon}
+                                ${currentGroup.toUpperCase()}
+                            </div>
+                            <span style="font-size:0.75rem; font-weight:600; opacity:0.8;">${gAvgDisplay}</span>
                         </div>
                     </td>
                 </tr>`;
@@ -369,7 +663,19 @@ function renderComparisonTable(containerId, rows, activeMetric) {
         </tr>`;
     });
 
-    html += `</tbody></table></div>`;
+    html += `</tbody></table></div>
+    <div class="ct-watermark">
+        <strong>Digital Mindscapes Research</strong> | Datta, A., Rubiya, S., Chakrabarti, A., & Banerjee, A. (2026)
+    </div>`;
     container.innerHTML = html;
-}
 
+    // Auto-focus search if it was active
+    const searchInput = document.getElementById('ctSearchInput');
+    if (searchInput && window.tableSearchQuery) {
+        searchInput.focus();
+        searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length);
+    }
+
+    // Store rows globally for export
+    window.selectedTableRows = withVals;
+}
