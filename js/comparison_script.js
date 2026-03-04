@@ -65,8 +65,10 @@ function getRegion(stateAbbr) {
     return "West";
 }
 
+let currentView = "chart";
+let chartType = "bar";
 let mapRoot, chartRoot;
-let mapPolygonSeries, barSeries, xAxis, yAxis, legend;
+let mapPolygonSeries, barSeries, treeSeries, xAxis, yAxis, legend, activeState;
 
 // =========================================
 // DATA LOADING — merge ACS + PLACES
@@ -309,21 +311,38 @@ function clearSelection() {
 let yAxisLabel;
 let currentChartDiv = "compChartDiv";
 
-function initChart() {
+function initChart(isModal = false) {
     if (chartRoot) {
         chartRoot.dispose();
+        chartRoot = null;
     }
 
-    chartRoot = am5.Root.new(currentChartDiv);
-    chartRoot.setThemes([am5themes_Animated.new(chartRoot)]);
+    const containerId = isModal ? "chartModalDiv" : "compChartDiv";
+    chartRoot = am5.Root.new(containerId);
 
-    const isVert = verticalChartMode;
+    const myTheme = am5.Theme.new(chartRoot);
+    myTheme.rule("HierarchyNode", ["depth0"]).setAll({ forceHidden: true });
+    myTheme.rule("HierarchyNode", ["depth1"]).setAll({ forceHidden: true });
 
+    chartRoot.setThemes([
+        myTheme,
+        am5themes_Animated.new(chartRoot)
+    ]);
+
+    if (chartType === "bar") {
+        initBarChart(isModal);
+    } else {
+        initTreeMap(isModal);
+    }
+}
+
+function initBarChart(isModal) {
     const isMobileChart = window.innerWidth <= 768;
+    const isVert = verticalChartMode;
 
     const chart = chartRoot.container.children.push(am5xy.XYChart.new(chartRoot, {
         panX: false, panY: false, wheelX: "none", wheelY: "none",
-        layout: isMobileChart ? chartRoot.verticalLayout : chartRoot.horizontalLayout,
+        layout: chartRoot.verticalLayout,
         paddingLeft: isVert ? 0 : (isMobileChart ? 40 : 160),
         paddingTop: isVert ? (isMobileChart ? 10 : 70) : 20,
         paddingBottom: isVert ? (isMobileChart ? 40 : 100) : 0
@@ -331,10 +350,10 @@ function initChart() {
 
     // On mobile vertical, give the chart div enough height for the bars
     if (isMobileChart && isVert) {
-        const el = document.getElementById("compChartDiv");
+        const el = document.getElementById(isModal ? "chartModalDiv" : "compChartDiv");
         if (el) el.style.minHeight = "550px";
     } else if (isMobileChart) {
-        const el = document.getElementById("compChartDiv");
+        const el = document.getElementById(isModal ? "chartModalDiv" : "compChartDiv");
         if (el) el.style.minHeight = "";
     }
 
@@ -425,7 +444,97 @@ function initChart() {
     chart.appear(1000, 100);
 }
 
+function initTreeMap(isModal) {
+    const isMobileChart = window.innerWidth <= 768;
+    if (isMobileChart) {
+        const el = document.getElementById(isModal ? "chartModalDiv" : "compChartDiv");
+        if (el) el.style.minHeight = "450px";
+    }
+    const container = chartRoot.container.children.push(
+        am5.Container.new(chartRoot, {
+            width: am5.percent(100),
+            height: am5.percent(100),
+            layout: chartRoot.verticalLayout
+        })
+    );
+
+    treeSeries = container.children.push(
+        am5hierarchy.Treemap.new(chartRoot, {
+            singleBranchOnly: false,
+            sort: "descending",
+            valueField: "value",
+            categoryField: "name",
+            childDataField: "children",
+            initialDepth: 2,
+            nodePaddingOuter: 0,
+            nodePaddingInner: 2
+        })
+    );
+
+    treeSeries.rectangles.template.setAll({
+        strokeWidth: 2,
+        stroke: am5.color(0xffffff),
+        cornerRadiusTL: 4,
+        cornerRadiusTR: 4,
+        cornerRadiusBL: 4,
+        cornerRadiusBR: 4,
+        tooltipText: "{name}: [bold]{value}[/]"
+    });
+
+    treeSeries.rectangles.template.adapters.add("fill", function (fill, target) {
+        const dataContext = target.dataItem.dataContext;
+        if (dataContext && dataContext.region && regionColors[dataContext.region]) {
+            return am5.color(regionColors[dataContext.region]);
+        }
+        return fill;
+    });
+
+    treeSeries.labels.template.setAll({
+        centerY: am5.p0,
+        y: 10,
+        fontSize: 14,
+        fontWeight: "600"
+    });
+
+    treeSeries.bullets.push(function (root, series, dataItem) {
+        const isMobile = window.innerWidth <= 768;
+        if (isMobile) return;
+
+        const dataContext = dataItem.dataContext;
+        if (dataContext && dataContext.abbr) {
+            const container = am5.Container.new(root, {
+                centerX: am5.p50,
+                centerY: am5.p100,
+                y: -10
+            });
+
+            container.children.push(am5.Picture.new(root, {
+                width: 30,
+                height: 20,
+                centerX: am5.p50,
+                src: `https://flagcdn.com/w40/us-${dataContext.abbr.toLowerCase()}.png`
+            }));
+
+            return am5.Bullet.new(root, {
+                locationX: 0.5,
+                locationY: 0.5,
+                sprite: container
+            });
+        }
+    });
+
+    treeSeries.appear(1000, 100);
+}
+
 function updateChart() {
+    if (chartType === "bar") {
+        updateBarChart();
+    } else {
+        updateTreeMap();
+    }
+}
+
+function updateBarChart() {
     const data = [];
     const regionOrder = ["Central", "East", "South", "West"];
     const selectedByRegion = { "Central": [], "East": [], "South": [], "West": [] };
@@ -457,10 +566,52 @@ function updateChart() {
         allItems.forEach(item => data.push(item));
     }
 
-    xAxis.data.setAll(data);
-    yAxis.data.setAll(data);
     barSeries.data.setAll(data);
+    if (xAxis && xAxis.get("categoryField")) xAxis.data.setAll(data);
+    if (yAxis && yAxis.get("categoryField")) yAxis.data.setAll(data);
     updateChartExtras(selectedByRegion);
+
+    // Keep table in sync whenever the chart updates
+    if (currentView === 'table') refreshTable();
+}
+
+function updateTreeMap() {
+    if (!treeSeries) return;
+
+    const rootData = {
+        name: "Root",
+        children: []
+    };
+
+    const regions = ["Central", "East", "South", "West"];
+    const regionNodes = {};
+
+    regions.forEach(r => {
+        regionNodes[r] = {
+            name: r,
+            region: r,
+            children: []
+        };
+    });
+
+    selectedStates.forEach(id => {
+        const state = stateData.find(s => s.id === id);
+        if (state) {
+            let val = state[activeMetric] || 0;
+            regionNodes[state.region].children.push({
+                name: state.name,
+                value: val,
+                region: state.region,
+                abbr: state.state_abbr
+            });
+        }
+    });
+
+    rootData.children = regions
+        .filter(r => regionNodes[r].children.length > 0)
+        .map(r => regionNodes[r]);
+
+    treeSeries.data.setAll([rootData]);
 
     // Keep table in sync whenever the chart updates
     if (currentView === 'table') refreshTable();
@@ -515,7 +666,7 @@ init();
 // VIEW TOGGLE  (Chart ↔ Table)
 // =========================================
 
-let currentView = 'chart';
+
 
 function switchView(view) {
     currentView = view;
@@ -523,22 +674,39 @@ function switchView(view) {
     const tableSection = document.getElementById('tableSection');
     const btnChart = document.getElementById('btnChartView');
     const btnTable = document.getElementById('btnTableView');
+    const chartTypeToggle = document.getElementById('chartTypeToggleBar');
 
     if (view === 'chart') {
-        chartSection && chartSection.classList.remove('active') || (chartSection && (chartSection.style.display = ''));
-        tableSection && tableSection.classList.remove('active');
-        btnChart && btnChart.classList.add('active');
-        btnTable && btnTable.classList.remove('active');
-        // restore original comp-bottom-section display
         if (chartSection) chartSection.style.display = '';
         if (tableSection) tableSection.style.display = 'none';
+        if (chartTypeToggle) chartTypeToggle.style.display = 'flex';
+        btnChart && btnChart.classList.add('active');
+        btnTable && btnTable.classList.remove('active');
     } else {
         if (chartSection) chartSection.style.display = 'none';
-        if (tableSection) { tableSection.style.display = 'flex'; }
+        if (tableSection) tableSection.style.display = 'flex';
+        if (chartTypeToggle) chartTypeToggle.style.display = 'none';
         btnChart && btnChart.classList.remove('active');
         btnTable && btnTable.classList.add('active');
         refreshTable();
     }
+}
+
+function switchChartType(type) {
+    chartType = type;
+    const btnBar = document.getElementById('btnBarChart');
+    const btnTree = document.getElementById('btnTreeMap');
+
+    if (type === 'bar') {
+        btnBar && btnBar.classList.add('active');
+        btnTree && btnTree.classList.remove('active');
+    } else {
+        btnBar && btnBar.classList.remove('active');
+        btnTree && btnTree.classList.add('active');
+    }
+
+    initChart(currentChartDiv === "chartModalDiv");
+    updateChart();
 }
 
 function refreshTable() {
@@ -564,7 +732,7 @@ function openChartModal() {
     document.body.style.overflow = "hidden"; // Prevent background scrolling
 
     currentChartDiv = "chartModalDiv";
-    initChart();
+    initChart(true);
     updateChart();
 }
 
@@ -579,7 +747,7 @@ function closeChartModal(event) {
         document.body.style.overflow = "";
 
         currentChartDiv = "compChartDiv";
-        initChart();
+        initChart(false);
         updateChart();
     }
 }
