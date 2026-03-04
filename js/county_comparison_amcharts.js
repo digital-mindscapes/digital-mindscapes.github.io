@@ -478,6 +478,8 @@ function initMap() {
         strokeWidth: 2
     });
 
+
+
     mapPolygonSeries.mapPolygons.template.adapters.add("fill", function (fill, target) {
         if (!target.dataItem) {
             return am5.color(0xe0e0e0);

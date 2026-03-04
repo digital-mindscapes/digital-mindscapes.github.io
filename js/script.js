@@ -366,7 +366,6 @@ function formatMetricValue(metric, raw) {
 
 var heatmapMode = false;
 var currentMetric = null;
-var heatRoot = null;
 
 document.getElementById("heatmapToggle").addEventListener("change", function (e) {
   heatmapMode = e.target.checked;
@@ -404,7 +403,10 @@ function initMetricCardListeners() {
 initMetricCardListeners();
 
 function activateHeatmap(metricName) {
+  // Dispose of the existing series and any active heatmap legends to avoid overlaps
   chart.series.removeIndex(0).dispose();
+  var legends = chart.children.values.filter(c => c instanceof am4maps.HeatLegend);
+  legends.forEach(l => l.dispose());
 
   var heatPolySeries = chart.series.push(new am4maps.MapPolygonSeries());
   heatPolySeries.useGeodata = true;
@@ -459,6 +461,31 @@ function activateHeatmap(metricName) {
   heatLegend.marginBottom = 20;
   heatLegend.minValue = minVal;
   heatLegend.maxValue = maxVal;
+  heatLegend.valueAxis.renderer.labels.template.fontSize = 11;
+  heatLegend.valueAxis.renderer.labels.template.fontWeight = "bold";
+
+  // Add unit formatting to the scale labels using our central renderer
+  heatLegend.valueAxis.renderer.labels.template.adapter.add("text", function (text, target) {
+    if (target.dataItem && target.dataItem.value !== undefined) {
+      return formatMetricValue(metricName, target.dataItem.value);
+    }
+    return text;
+  });
+
+  // Set up heat legend tooltips with proper units
+  polyHeatTempl.events.on("over", function (ev) {
+    if (ev.target.dataItem.value !== undefined && !isNaN(ev.target.dataItem.value)) {
+      heatLegend.valueAxis.showTooltipAt(ev.target.dataItem.value);
+      // Ensure tooltip itself uses formatted text
+      heatLegend.valueAxis.tooltip.label.text = formatMetricValue(metricName, ev.target.dataItem.value);
+    } else {
+      heatLegend.valueAxis.hideTooltip();
+    }
+  });
+
+  polyHeatTempl.events.on("out", function (ev) {
+    heatLegend.valueAxis.hideTooltip();
+  });
 
   polygonSeries = heatPolySeries;
   polygonSeries.mapPolygons.template.events.on("hit", function (ev) {
@@ -682,6 +709,30 @@ function renderCountyMap(geodata) {
       heatLegend.marginBottom = 20;
       heatLegend.minValue = minVal;
       heatLegend.maxValue = maxVal;
+      heatLegend.valueAxis.renderer.labels.template.fontSize = 11;
+      heatLegend.valueAxis.renderer.labels.template.fontWeight = "bold";
+
+      // Add unit formatting to county scale labels
+      heatLegend.valueAxis.renderer.labels.template.adapter.add("text", function (text, target) {
+        if (target.dataItem && target.dataItem.value !== undefined) {
+          return formatMetricValue(currentMetric, target.dataItem.value);
+        }
+        return text;
+      });
+
+      // Set up heat legend tooltips for counties with units
+      countyPoly.events.on("over", function (ev) {
+        if (ev.target.dataItem.value !== undefined && !isNaN(ev.target.dataItem.value)) {
+          heatLegend.valueAxis.showTooltipAt(ev.target.dataItem.value);
+          heatLegend.valueAxis.tooltip.label.text = formatMetricValue(currentMetric, ev.target.dataItem.value);
+        } else {
+          heatLegend.valueAxis.hideTooltip();
+        }
+      });
+
+      countyPoly.events.on("out", function (ev) {
+        heatLegend.valueAxis.hideTooltip();
+      });
     } else {
       countyPoly.fill = am4core.color("#e8ddd6");
       countyPoly.stroke = am4core.color("#ffffff");
