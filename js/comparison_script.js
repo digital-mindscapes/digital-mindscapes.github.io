@@ -104,8 +104,8 @@ async function init() {
         }));
 
         initMetricCardListeners();
+        initMobileMetricDropdown();
         initMap();
-        initChart();
 
         document.getElementById("clearSelection").addEventListener("click", clearSelection);
 
@@ -127,6 +127,7 @@ async function init() {
             });
         }
 
+        // Set vertical mode BEFORE building the chart
         const vToggle = document.getElementById("verticalToggle");
         if (vToggle) {
             verticalChartMode = vToggle.checked;
@@ -136,6 +137,9 @@ async function init() {
                 updateChart();
             });
         }
+
+        // Now init the chart with the correct vertical mode
+        initChart();
     } catch (err) {
         console.error("Failed to initialize:", err);
     }
@@ -154,8 +158,65 @@ function initMetricCardListeners() {
             card.classList.add("active");
             activeMetric = m;
             updateChart();
+            // Sync mobile dropdown if it exists
+            const dd = document.getElementById("mobileMetricSelect");
+            if (dd) dd.value = m;
         };
     });
+}
+
+// =========================================
+// MOBILE METRIC DROPDOWN
+// =========================================
+
+function initMobileMetricDropdown() {
+    const grid = document.getElementById("metricsGrid");
+    const header = document.querySelector(".metrics-header");
+    if (!grid || !header) return;
+
+    // Build grouped select from DOM
+    const select = document.createElement("select");
+    select.id = "mobileMetricSelect";
+    select.className = "mobile-metric-dropdown";
+
+    let currentGroup = null;
+
+    Array.from(grid.children).forEach(child => {
+        if (child.classList.contains("section-header")) {
+            const h3 = child.querySelector("h3");
+            if (h3) {
+                currentGroup = document.createElement("optgroup");
+                currentGroup.label = h3.textContent.trim();
+                select.appendChild(currentGroup);
+            }
+        } else if (child.classList.contains("metric-card")) {
+            const metric = child.getAttribute("data-metric");
+            const label = child.querySelector(".metric-label");
+            if (metric && label) {
+                const option = document.createElement("option");
+                option.value = metric;
+                option.textContent = label.textContent.trim();
+                if (metric === activeMetric) option.selected = true;
+                if (currentGroup) {
+                    currentGroup.appendChild(option);
+                } else {
+                    select.appendChild(option);
+                }
+            }
+        }
+    });
+
+    select.addEventListener("change", (e) => {
+        activeMetric = e.target.value;
+        // Sync desktop cards
+        document.querySelectorAll(".metric-card").forEach(el => el.classList.remove("active"));
+        const activeCard = document.querySelector(`.metric-card[data-metric="${activeMetric}"]`);
+        if (activeCard) activeCard.classList.add("active");
+        updateChart();
+    });
+
+    // Insert after the header content
+    header.appendChild(select);
 }
 
 // =========================================
@@ -257,18 +318,30 @@ function initChart() {
 
     const isVert = verticalChartMode;
 
+    const isMobileChart = window.innerWidth <= 768;
+
     const chart = chartRoot.container.children.push(am5xy.XYChart.new(chartRoot, {
         panX: false, panY: false, wheelX: "none", wheelY: "none",
-        layout: chartRoot.horizontalLayout,
-        paddingLeft: isVert ? 0 : 160,
-        paddingTop: isVert ? 70 : 20,
+        layout: isMobileChart ? chartRoot.verticalLayout : chartRoot.horizontalLayout,
+        paddingLeft: isVert ? 0 : (isMobileChart ? 40 : 160),
+        paddingTop: isVert ? (isMobileChart ? 20 : 70) : 20,
         paddingBottom: isVert ? 100 : 0
     }));
 
-    legend = chart.children.push(am5.Legend.new(chartRoot, {
-        nameField: "name", fillField: "color", strokeField: "color",
-        marginLeft: 20, y: 20, layout: chartRoot.verticalLayout, clickTarget: "none"
-    }));
+    if (isMobileChart) {
+        legend = chart.children.push(am5.Legend.new(chartRoot, {
+            nameField: "name", fillField: "color", strokeField: "color",
+            centerX: am5.p50, x: am5.p50,
+            layout: chartRoot.horizontalLayout,
+            clickTarget: "none",
+            marginTop: 30
+        }));
+    } else {
+        legend = chart.children.push(am5.Legend.new(chartRoot, {
+            nameField: "name", fillField: "color", strokeField: "color",
+            marginLeft: 20, y: 20, layout: chartRoot.verticalLayout, clickTarget: "none"
+        }));
+    }
 
     if (isVert) {
         xAxis = chart.xAxes.push(am5xy.CategoryAxis.new(chartRoot, {
@@ -276,7 +349,7 @@ function initChart() {
             renderer: am5xy.AxisRendererX.new(chartRoot, { minGridDistance: 30 }),
             tooltip: am5.Tooltip.new(chartRoot, {})
         }));
-        xAxis.get("renderer").labels.template.setAll({ rotation: -45, centerY: am5.p50, centerX: am5.p100, paddingRight: 15 });
+        xAxis.get("renderer").labels.template.setAll({ rotation: -45, centerY: am5.p50, centerX: am5.p100, paddingRight: 15, fontSize: isMobileChart ? 9 : 14, fontWeight: isMobileChart ? "bold" : "normal" });
 
         yAxis = chart.yAxes.push(am5xy.ValueAxis.new(chartRoot, {
             renderer: am5xy.AxisRendererY.new(chartRoot, {}),
@@ -288,7 +361,7 @@ function initChart() {
             renderer: am5xy.AxisRendererY.new(chartRoot, { minGridDistance: 10, minorGridEnabled: true }),
             tooltip: am5.Tooltip.new(chartRoot, {})
         }));
-        yAxis.get("renderer").labels.template.setAll({ fontSize: 12, location: 0.5 });
+        yAxis.get("renderer").labels.template.setAll({ fontSize: isMobileChart ? 9 : 12, fontWeight: isMobileChart ? "bold" : "normal", location: 0.5 });
 
         xAxis = chart.xAxes.push(am5xy.ValueAxis.new(chartRoot, {
             renderer: am5xy.AxisRendererX.new(chartRoot, {}),
@@ -305,9 +378,10 @@ function initChart() {
         tooltip: am5.Tooltip.new(chartRoot, { pointerOrientation: isVert ? "vertical" : "horizontal" })
     }));
 
+    const isMobile = window.innerWidth <= 768;
     barSeries.columns.template.setAll({
         tooltipText: isVert ? "{categoryX}: [bold]{valueY}[/]" : "{categoryY}: [bold]{valueX}[/]",
-        width: am5.percent(90), strokeOpacity: 0
+        width: am5.percent(isMobile ? 60 : 90), strokeOpacity: 0
     });
 
     barSeries.columns.template.adapters.add("fill", function (fill, target) {

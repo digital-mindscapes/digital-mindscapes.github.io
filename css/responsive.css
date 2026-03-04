@@ -1,15 +1,23 @@
 /* ==========================================================================
-   RESPONSIVE OVERRIDES
+   RESPONSIVE OVERHAUL — Mobile & Tablet
+   Desktop layout (>1024px) is NOT touched.
    ========================================================================== */
 
-/* ── Global Tweaks ── */
+/* Hide mobile-only elements on desktop */
+.mobile-metric-dropdown {
+    display: none;
+}
+
+/* ─────────────────────────────────────────────
+   TABLET  (≤ 1024px)
+   ───────────────────────────────────────────── */
 @media (max-width: 1024px) {
 
-    /* Header centering for tablets */
+    /* ── Header ── */
     .header-content {
         flex-direction: column !important;
         text-align: center !important;
-        gap: 20px !important;
+        gap: 15px !important;
     }
 
     .app-logo {
@@ -26,7 +34,7 @@
         margin-top: 0 !important;
     }
 
-    /* Main layout adjustment */
+    /* ── Main layout stacks ── */
     .container,
     .comparison-container {
         flex-direction: column !important;
@@ -35,25 +43,27 @@
         padding: 15px !important;
     }
 
-    /* Sidebars */
+    /* ── Sidebars ── */
     .metrics-section,
     .comp-sidebar {
         flex: none !important;
         width: 100% !important;
         max-width: 100% !important;
         height: auto !important;
-        max-height: 450px !important;
+        max-height: 400px !important;
         border-right: none !important;
         border-bottom: 2px solid var(--border-color) !important;
+        order: -1 !important;
     }
 
     .comp-main,
     .main-section {
         width: 100% !important;
         padding: 10px !important;
+        order: 1 !important;
     }
 
-    /* Fixed panels in index.html */
+    /* ── Side panel (county detail) ── */
     .side-panel {
         position: fixed !important;
         bottom: 0 !important;
@@ -66,62 +76,114 @@
         z-index: 1000 !important;
         transform: none !important;
     }
-}
 
-/* ── Mobile Layouts ── */
-@media (max-width: 768px) {
-    .header {
-        padding: 15px 10px !important;
-    }
-
-    .header h1 {
-        font-size: 20px !important;
-    }
-
-    .authors {
-        font-size: 13px !important;
-    }
-
-    .affiliations {
-        font-size: 11px !important;
-    }
-
-    /* Stack comparison sections */
+    /* ── Comparison top section stacks ── */
     .comp-top-section {
         flex-direction: column !important;
         min-height: auto !important;
     }
 
-    #compMapDiv,
-    #compChartDiv,
-    #chartdiv,
-    #heatchartdiv {
+    #compMapDiv {
         height: 400px !important;
         min-height: 350px !important;
     }
 
     .selection-info {
         height: auto !important;
-        min-height: 250px !important;
+        min-height: 200px !important;
     }
 
-    /* Table responsiveness */
-    .ct-scroll {
-        max-height: 400px !important;
+    /* ── Comparison main area: allow natural scroll ── */
+    .comp-main {
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        flex: 1 1 auto !important;
+        min-height: 0 !important;
+    }
+
+    /* ── Bar chart: reduce min-height, ensure it shows ── */
+    .comp-bottom-section {
+        min-height: 450px !important;
+        height: 500px !important;
+        flex-shrink: 0 !important;
+    }
+
+    #compChartDiv {
+        width: 100% !important;
+        height: 100% !important;
+        min-height: 400px !important;
+    }
+
+    /* ── Table section ── */
+    .comp-table-section {
+        min-height: auto !important;
+    }
+}
+
+/* ─────────────────────────────────────────────
+   MOBILE  (≤ 768px)
+   ───────────────────────────────────────────── */
+@media (max-width: 768px) {
+
+    /* ── Header: hide logos, compact title ── */
+    .header {
+        padding: 12px 15px !important;
+    }
+
+    .app-logo-container {
+        display: none !important;
+    }
+
+    .banner-logos-row {
+        display: none !important;
+    }
+
+    .header h1 {
+        font-size: 16px !important;
+        line-height: 1.4 !important;
+    }
+
+    .authors {
+        font-size: 12px !important;
+    }
+
+    .affiliations {
+        font-size: 10px !important;
+    }
+
+    /* ── Navigation: scrollable horizontal strip ── */
+    .navigation-bar {
+        flex-wrap: nowrap !important;
         overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+        gap: 8px !important;
+        padding: 10px 12px !important;
+        justify-content: flex-start !important;
+        scrollbar-width: none;
     }
 
-    .ct-table {
-        min-width: 600px !important;
+    .navigation-bar::-webkit-scrollbar {
+        display: none;
     }
 
-    .ct-single-header {
-        flex-direction: column !important;
-        gap: 10px !important;
-        align-items: flex-start !important;
+    .comparison-pill {
+        padding: 7px 14px !important;
+        font-size: 0.72rem !important;
+        white-space: nowrap !important;
+        flex-shrink: 0 !important;
     }
 
-    /* Metric cards in sidebar */
+    .comparison-pill svg {
+        display: none !important;
+    }
+
+    /* ── Sidebars short on mobile ── */
+    .metrics-section,
+    .comp-sidebar {
+        max-height: 300px !important;
+    }
+
+    /* ── Metric cards: 2-col grid ── */
     .metrics-list {
         display: grid !important;
         grid-template-columns: 1fr 1fr !important;
@@ -130,73 +192,206 @@
 
     .metric-card {
         padding: 10px !important;
-        font-size: 0.85rem !important;
+        font-size: 0.82rem !important;
         flex-direction: column !important;
         text-align: center !important;
     }
 
     .metric-icon {
-        width: 30px !important;
-        height: 30px !important;
-        margin-bottom: 5px !important;
+        width: 28px !important;
+        height: 28px !important;
+        margin-bottom: 4px !important;
     }
 
     .metric-value {
-        font-size: 0.95rem !important;
+        font-size: 0.9rem !important;
     }
 
-    /* Comparison pills */
+    /* ── Mobile metric dropdown: show on mobile, hide grid ── */
+    .mobile-metric-dropdown {
+        display: block !important;
+        width: 100% !important;
+        padding: 10px 14px !important;
+        margin-top: 12px !important;
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        border-radius: 10px !important;
+        background: rgba(255, 255, 255, 0.15) !important;
+        color: white !important;
+        font-size: 0.85rem !important;
+        font-weight: 600 !important;
+        appearance: auto !important;
+        cursor: pointer !important;
+    }
+
+    .mobile-metric-dropdown option,
+    .mobile-metric-dropdown optgroup {
+        background: #a02820 !important;
+        color: white !important;
+    }
+
+    .metrics-grid {
+        display: none !important;
+    }
+
+    .metrics-section {
+        max-height: none !important;
+        height: auto !important;
+        overflow: visible !important;
+    }
+
+    .metrics-section>div[style*="padding: 15px 25px"] {
+        display: none !important;
+    }
+
+    /* ── Charts / Maps ── */
+    #compMapDiv,
+    #chartdiv,
+    #heatchartdiv {
+        height: 380px !important;
+        min-height: 320px !important;
+    }
+
+    /* ── Comparison chart section: ensure visible ── */
+    .comp-bottom-section {
+        min-height: 400px !important;
+        height: 450px !important;
+        flex-shrink: 0 !important;
+        padding: 10px !important;
+    }
+
+    #compChartDiv {
+        width: 100% !important;
+        height: 100% !important;
+        min-height: 380px !important;
+    }
+
+    .comp-main {
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+    }
+
+    /* ── Tables ── */
+    .ct-scroll {
+        max-height: 400px !important;
+        overflow-x: auto !important;
+    }
+
+    .ct-table {
+        min-width: 550px !important;
+    }
+
+    .ct-single-header {
+        flex-direction: column !important;
+        gap: 10px !important;
+        align-items: flex-start !important;
+    }
+
+    .ct-toolbar {
+        flex-direction: column !important;
+        align-items: stretch !important;
+    }
+
+    .ct-search-box {
+        max-width: 100% !important;
+    }
+
+    .ct-actions {
+        justify-content: flex-start !important;
+        flex-wrap: wrap !important;
+    }
+
+    .ct-summary-stats {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+
+    /* ── Toggle groups ── */
+    .toggle-group {
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+    }
+
+    .view-toggle-btn {
+        padding: 6px 12px !important;
+        font-size: 0.75rem !important;
+    }
+
+    /* ── Comparison pills (in sidebar header) ── */
     .comparison-pills {
         flex-wrap: wrap !important;
         justify-content: center !important;
         gap: 6px !important;
         margin: 10px 0 !important;
     }
-
-    .comparison-pill {
-        padding: 6px 10px !important;
-        font-size: 0.7rem !important;
-    }
 }
 
-/* ── Extra Small Devices ── */
+/* ─────────────────────────────────────────────
+   SMALL MOBILE  (≤ 480px)
+   ───────────────────────────────────────────── */
 @media (max-width: 480px) {
+
+    /* ── Header: even more compact ── */
+    .header {
+        padding: 10px 12px !important;
+    }
+
+    .header h1 {
+        font-size: 14px !important;
+    }
+
+    .authors {
+        font-size: 11px !important;
+    }
+
+    .affiliations {
+        display: none !important;
+    }
+
+    /* ── Nav pills: smaller ── */
+    .comparison-pill {
+        padding: 6px 10px !important;
+        font-size: 0.65rem !important;
+    }
+
+    /* ── Metric cards: single column ── */
     .metrics-list {
         grid-template-columns: 1fr !important;
     }
 
-    .banner-logos-row {
-        flex-direction: column !important;
-        gap: 10px !important;
-    }
-
-    .app-logo {
-        height: 80px !important;
-    }
-
-    .header h1 {
-        font-size: 17px !important;
-    }
-
-    /* Charts/Table buttons wrap better */
-    .view-toggle-btn {
-        padding: 6px 10px !important;
-        font-size: 0.7rem !important;
-    }
-
-    .view-toggle-bar {
-        gap: 4px !important;
-    }
-
-    .toggle-group {
-        gap: 8px !important;
+    /* ── Charts even shorter ── */
+    #compMapDiv,
+    #compChartDiv,
+    #chartdiv,
+    #heatchartdiv {
+        height: 300px !important;
+        min-height: 250px !important;
     }
 
     .selection-info {
-        padding: 15px !important;
+        padding: 12px !important;
     }
 
     .state-chips {
-        max-height: 120px !important;
+        max-height: 100px !important;
+    }
+
+    /* ── Table cells tighter ── */
+    .ct-td {
+        padding: 7px 8px !important;
+        font-size: 0.78rem !important;
+    }
+
+    .ct-th {
+        padding: 8px 8px !important;
+        font-size: 0.7rem !important;
+    }
+
+    .ct-action-btn {
+        padding: 6px 10px !important;
+        font-size: 0.72rem !important;
+    }
+
+    /* ── Side panel county wrapper ── */
+    .county-wrapper {
+        padding: 10px 15px !important;
     }
 }
