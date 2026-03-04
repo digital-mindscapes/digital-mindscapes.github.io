@@ -751,13 +751,35 @@
                 <div class="comp-top-section">
                     <div id="chartdiv" style="width:100%;height:500px;"></div>
                 </div>
-                <div class="comp-bottom-section">
+                <div class="comp-bottom-section" id="chartSection">
+                    <button class="chart-expand-btn" id="chartExpandBtn" onclick="openChartModal()"
+                        title="Maximize chart">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="15 3 21 3 21 9" />
+                            <polyline points="9 21 3 21 3 15" />
+                            <line x1="21" y1="3" x2="14" y2="10" />
+                            <line x1="3" y1="21" x2="10" y2="14" />
+                        </svg>
+                        Expand
+                    </button>
                     <div id="compChartDiv"></div>
                 </div>
             </div>
             <div id="tableSection" class="comp-table-section" style="display:none;">
                 <div id="compTableDiv"></div>
             </div>
+        </div>
+    </div>
+
+    <!-- Chart Modal -->
+    <div id="chartModal" class="chart-modal-overlay" onclick="closeChartModal(event)" style="display:none;">
+        <div class="chart-modal-box" onclick="event.stopPropagation()">
+            <div class="chart-modal-header">
+                <span class="chart-modal-title">Bar Chart — Expanded View</span>
+                <button class="chart-modal-close" onclick="closeChartModal()" title="Close">&times;</button>
+            </div>
+            <div id="chartModalDiv"></div>
         </div>
     </div>
 

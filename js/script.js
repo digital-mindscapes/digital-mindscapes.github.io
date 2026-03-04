@@ -571,6 +571,13 @@ function openCountyPanel(stateName, stateAbbr) {
   sidePanel.classList.add("active");
   if (stateTitle) stateTitle.textContent = stateName;
 
+  // Auto-scroll on mobile so user sees the county map unblocked
+  if (window.innerWidth <= 1024) {
+    setTimeout(() => {
+      sidePanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  }
+
   if (countyChart) { countyChart.dispose(); countyChart = null; }
 
   var geoKey = "am4geodata_region_usa_" + stateAbbr + "Low";

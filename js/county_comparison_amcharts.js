@@ -193,6 +193,7 @@ async function init() {
         document.getElementById("chartdiv").innerHTML = '';
 
         initMetricCardListeners();
+        initMobileMetricDropdown();
 
         // Initialize empty containers first
         initMap();
@@ -533,14 +534,17 @@ function initMap() {
 // BAR CHART (amCharts 5)
 // =========================================
 
+let currentChartDiv = "compChartDiv";
+
 function initChart() {
     if (chartRoot) {
         chartRoot.dispose();
     }
-    chartRoot = am5.Root.new("compChartDiv");
+    chartRoot = am5.Root.new(currentChartDiv);
     chartRoot.setThemes([am5themes_Animated.new(chartRoot)]);
 
     const isVert = verticalChartMode;
+    const isMobileChart = window.innerWidth <= 768;
 
     const chart = chartRoot.container.children.push(am5xy.XYChart.new(chartRoot, {
         panX: false,
@@ -549,9 +553,18 @@ function initChart() {
         wheelY: "none",
         layout: chartRoot.verticalLayout,
         paddingLeft: 0,
-        paddingTop: isVert ? 70 : 30,
-        paddingBottom: isVert ? 100 : 0
+        paddingTop: isVert ? (isMobileChart ? 10 : 70) : 30,
+        paddingBottom: isVert ? (isMobileChart ? 40 : 100) : 0
     }));
+
+    // On mobile, ensure the chart div is tall enough for vertical bars
+    if (isMobileChart && isVert) {
+        const el = document.getElementById("compChartDiv");
+        if (el) el.style.minHeight = "550px";
+    } else if (isMobileChart) {
+        const el = document.getElementById("compChartDiv");
+        if (el) el.style.minHeight = "";
+    }
 
     // Add Label for Metric
     chart.children.unshift(am5.Label.new(chartRoot, {
@@ -563,10 +576,20 @@ function initChart() {
         centerX: am5.percent(50)
     }));
 
-    legend = chart.rightAxesContainer.children.push(am5.Legend.new(chartRoot, {
-        nameField: "name", fillField: "color", strokeField: "color",
-        marginLeft: 20, y: 20, layout: chartRoot.verticalLayout, clickTarget: "none"
-    }));
+    if (isMobileChart) {
+        legend = chart.children.push(am5.Legend.new(chartRoot, {
+            nameField: "name", fillField: "color", strokeField: "color",
+            centerX: am5.p50, x: am5.p50,
+            layout: am5.GridLayout.new(chartRoot, { maxColumns: 2, fixedWidthGrid: true }),
+            clickTarget: "none",
+            marginTop: 30
+        }));
+    } else {
+        legend = chart.rightAxesContainer.children.push(am5.Legend.new(chartRoot, {
+            nameField: "name", fillField: "color", strokeField: "color",
+            marginLeft: 20, y: 20, layout: chartRoot.verticalLayout, clickTarget: "none"
+        }));
+    }
 
     if (isVert) {
         xAxis = chart.xAxes.push(am5xy.CategoryAxis.new(chartRoot, {
@@ -574,7 +597,14 @@ function initChart() {
             renderer: am5xy.AxisRendererX.new(chartRoot, { minGridDistance: 30 }),
             tooltip: am5.Tooltip.new(chartRoot, {})
         }));
-        xAxis.get("renderer").labels.template.setAll({ rotation: -45, centerY: am5.p50, centerX: am5.p100, paddingRight: 15, fontSize: 11 });
+        xAxis.get("renderer").labels.template.setAll({
+            rotation: isMobileChart ? -90 : -45,
+            centerY: isMobileChart ? am5.p50 : am5.p50,
+            centerX: isMobileChart ? am5.p100 : am5.p100,
+            paddingRight: 15,
+            fontSize: isMobileChart ? 9 : 11,
+            fontWeight: isMobileChart ? "bold" : "normal"
+        });
 
         yAxis = chart.yAxes.push(am5xy.ValueAxis.new(chartRoot, {
             renderer: am5xy.AxisRendererY.new(chartRoot, {}),
@@ -586,7 +616,7 @@ function initChart() {
             renderer: am5xy.AxisRendererY.new(chartRoot, { minGridDistance: 10 }),
             tooltip: am5.Tooltip.new(chartRoot, {})
         }));
-        yAxis.get("renderer").labels.template.setAll({ fontSize: 11 });
+        yAxis.get("renderer").labels.template.setAll({ fontSize: isMobileChart ? 9 : 11, fontWeight: isMobileChart ? "bold" : "normal" });
 
         xAxis = chart.xAxes.push(am5xy.ValueAxis.new(chartRoot, {
             renderer: am5xy.AxisRendererX.new(chartRoot, {}),
@@ -794,6 +824,10 @@ function initMetricCardListeners() {
             card.classList.add("active");
             activeMetric = m;
 
+            // Sync mobile dropdown if it exists
+            const dd = document.getElementById("mobileMetricSelect");
+            if (dd) dd.value = m;
+
             // Re-evaluate map data points logic
             const savedSelections = new Set(selectedCounties);
             updateMapData();
@@ -812,6 +846,70 @@ function initMetricCardListeners() {
             updateChart();
         };
     });
+}
+
+// =========================================
+// MOBILE METRIC DROPDOWN
+// =========================================
+
+function initMobileMetricDropdown() {
+    const grid = document.getElementById("metricsGrid");
+    const header = document.querySelector(".metrics-header");
+    if (!grid || !header) return;
+
+    const select = document.createElement("select");
+    select.id = "mobileMetricSelect";
+    select.className = "mobile-metric-dropdown";
+
+    let currentGroup = null;
+
+    Array.from(grid.children).forEach(child => {
+        if (child.classList.contains("section-header")) {
+            const h3 = child.querySelector("h3");
+            if (h3) {
+                currentGroup = document.createElement("optgroup");
+                currentGroup.label = h3.textContent.trim();
+                select.appendChild(currentGroup);
+            }
+        } else if (child.classList.contains("metric-card")) {
+            const metric = child.getAttribute("data-metric");
+            const label = child.querySelector(".metric-label");
+            if (metric && label) {
+                const option = document.createElement("option");
+                option.value = metric;
+                option.textContent = label.textContent.trim();
+                if (metric === activeMetric) option.selected = true;
+                if (currentGroup) {
+                    currentGroup.appendChild(option);
+                } else {
+                    select.appendChild(option);
+                }
+            }
+        }
+    });
+
+    select.addEventListener("change", (e) => {
+        activeMetric = e.target.value;
+        document.querySelectorAll(".metric-card").forEach(el => el.classList.remove("active"));
+        const activeCard = document.querySelector(`.metric-card[data-metric="${activeMetric}"]`);
+        if (activeCard) activeCard.classList.add("active");
+
+        const savedSelections = new Set(selectedCounties);
+        updateMapData();
+        selectedCounties = savedSelections;
+        mapPolygonSeries.mapPolygons.each(p => {
+            const di = p.dataItem;
+            if (di) {
+                const pid = di.get("id");
+                if (selectedCounties.has(pid)) {
+                    p.set("active", true);
+                }
+            }
+        });
+        updateChart();
+    });
+
+    header.appendChild(select);
 }
 
 // =========================================
@@ -864,5 +962,37 @@ function refreshTable() {
     });
     if (typeof renderComparisonTable === 'function') {
         renderComparisonTable('compTableDiv', rows, activeMetric);
+    }
+}
+
+// =========================================
+// MODAL FUNCTIONS
+// =========================================
+
+function openChartModal() {
+    const modal = document.getElementById("chartModal");
+    if (!modal) return;
+
+    modal.style.display = "flex";
+    document.body.style.overflow = "hidden"; // Prevent background scrolling
+
+    currentChartDiv = "chartModalDiv";
+    initChart();
+    updateChart();
+}
+
+function closeChartModal(event) {
+    if (event && event.target !== event.currentTarget && !event.target.classList.contains('chart-modal-close')) {
+        return;
+    }
+
+    const modal = document.getElementById("chartModal");
+    if (modal) {
+        modal.style.display = "none";
+        document.body.style.overflow = "";
+
+        currentChartDiv = "compChartDiv";
+        initChart();
+        updateChart();
     }
 }

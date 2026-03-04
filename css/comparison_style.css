@@ -636,3 +636,152 @@
 .ct-watermark strong {
     color: var(--main-color);
 }
+
+/* ── Chart Maximize Modal ── */
+.comp-bottom-section {
+    position: relative;
+}
+
+.chart-expand-btn {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-color);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    opacity: 0;
+    transition: opacity 0.2s, background 0.2s;
+    z-index: 10;
+}
+
+.comp-bottom-section:hover .chart-expand-btn {
+    opacity: 1;
+}
+
+.chart-expand-btn:hover {
+    background: #f8f9fa;
+}
+
+@media (max-width: 768px) {
+    .chart-expand-btn {
+        opacity: 1;
+        /* Always visible on mobile since no hover */
+        top: 5px;
+        right: 10px;
+        padding: 5px 10px;
+        font-size: 12px;
+    }
+}
+
+.chart-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(4px);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: modalFadeIn 0.2s ease;
+}
+
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.chart-modal-box {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.35);
+    width: 90vw;
+    height: 85vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: modalSlideUp 0.25s ease;
+}
+
+@keyframes modalSlideUp {
+    from {
+        transform: translateY(30px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.chart-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    border-bottom: 1px solid #eee;
+    background: linear-gradient(135deg, #c83830, #a02820);
+    color: white;
+    flex-shrink: 0;
+}
+
+.chart-modal-title {
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.chart-modal-close {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    font-size: 1.4rem;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    transition: background 0.2s;
+}
+
+.chart-modal-close:hover {
+    background: rgba(255, 255, 255, 0.35);
+}
+
+#chartModalDiv {
+    flex: 1;
+    min-height: 0;
+    padding: 15px 15px 20px 15px;
+    /* Reduced bottom padding */
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+/* Ensure the amCharts canvas has room to grow inside the scrolling div */
+#chartModalDiv>div {
+    min-height: 100%;
+}
+
+@media (max-width: 768px) {
+    .chart-modal-box {
+        width: 98vw;
+        height: 90vh;
+        border-radius: 8px;
+    }
+}

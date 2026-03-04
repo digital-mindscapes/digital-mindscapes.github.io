@@ -16,6 +16,55 @@ const MAX_RADAR_METRICS = 8;
 // --- Mode ---
 let currentChartMode = "bubble";
 let currentView = "chart";
+let currentChartDiv = "bubbleChartDiv";
+
+let radarInfoPanelCached = null;
+document.addEventListener("DOMContentLoaded", () => {
+    radarInfoPanelCached = document.getElementById("radarInfoPanel");
+});
+
+function safeClearDiv(divId) {
+    const div = document.getElementById(divId);
+    if (!div) return;
+    if (radarInfoPanelCached && radarInfoPanelCached.parentNode === div) {
+        div.removeChild(radarInfoPanelCached);
+    }
+    div.innerHTML = "";
+}
+
+function updateRadarInfoPanel() {
+    if (!radarInfoPanelCached) radarInfoPanelCached = document.getElementById("radarInfoPanel");
+    if (!radarInfoPanelCached) return;
+
+    if (currentChartMode === "radar" && currentView === "chart") {
+        radarInfoPanelCached.style.display = "block";
+        const container = document.getElementById(currentChartDiv);
+        if (currentChartDiv === "chartModalDiv") {
+            radarInfoPanelCached.style.marginTop = "40px";
+            radarInfoPanelCached.style.marginBottom = "10px";
+            radarInfoPanelCached.style.maxWidth = "900px";
+            radarInfoPanelCached.style.width = "95%";
+            radarInfoPanelCached.style.marginLeft = "auto";
+            radarInfoPanelCached.style.marginRight = "auto";
+            radarInfoPanelCached.style.boxSizing = "border-box";
+            if (container) container.appendChild(radarInfoPanelCached);
+        } else {
+            radarInfoPanelCached.style.marginTop = "100px";
+            radarInfoPanelCached.style.marginBottom = "20px";
+            radarInfoPanelCached.style.maxWidth = "";
+            radarInfoPanelCached.style.width = "";
+            radarInfoPanelCached.style.marginLeft = "16px";
+            radarInfoPanelCached.style.marginRight = "16px";
+            const section = document.getElementById("chartSection");
+            if (section) section.appendChild(radarInfoPanelCached);
+        }
+    } else {
+        radarInfoPanelCached.style.display = "none";
+        if (radarInfoPanelCached.parentNode) {
+            radarInfoPanelCached.parentNode.removeChild(radarInfoPanelCached);
+        }
+    }
+}
 
 // --- Table Sorting & Grouping ---
 let multiTableSortBy = "name";
@@ -181,14 +230,15 @@ function switchMode(mode) {
         drawMultiMetricTable();
         return;
     }
-    const chartDiv = document.getElementById("bubbleChartDiv");
+    const chartDiv = document.getElementById(currentChartDiv);
     if (mode === "bubble") {
-        if (chartDiv) chartDiv.innerHTML = "";
+        safeClearDiv(currentChartDiv);
         initBubbleChart();
     } else {
         if (chartRoot) { chartRoot.dispose(); chartRoot = null; }
         drawRadarChart();
     }
+    updateRadarInfoPanel();
 }
 
 function switchView(view) {
@@ -216,6 +266,7 @@ function switchView(view) {
         tableSec.style.display = "block";
         drawMultiMetricTable();
     }
+    updateRadarInfoPanel();
 }
 
 function drawMultiMetricTable() {
@@ -580,7 +631,7 @@ function toggleState(id) {
 // BUBBLE CHART
 // =========================================
 function initBubbleChart() {
-    chartRoot = am5.Root.new("bubbleChartDiv");
+    chartRoot = am5.Root.new(currentChartDiv);
     chartRoot.setThemes([am5themes_Animated.new(chartRoot)]);
     const chart = chartRoot.container.children.push(am5xy.XYChart.new(chartRoot, { panX: true, panY: true, wheelY: "zoomXY", pinchZoomX: true, pinchZoomY: true, layout: chartRoot.verticalLayout }));
     const legend = chart.children.push(am5.Legend.new(chartRoot, { centerX: am5.p50, x: am5.p50, layout: chartRoot.horizontalLayout, nameField: "name", fillField: "color", strokeField: "color", paddingTop: 15, paddingBottom: 15, clickTarget: "none" }));
@@ -625,9 +676,9 @@ function updateBubbleChart() {
 // RADAR CHART (pure SVG)
 // =========================================
 function drawRadarChart() {
-    const div = document.getElementById("bubbleChartDiv");
+    const div = document.getElementById(currentChartDiv);
     if (!div) return;
-    div.innerHTML = "";
+    safeClearDiv(currentChartDiv);
     div.style.position = "relative";
 
     if (selectedRadarMetrics.length < 2 || selectedStates.size === 0) {
@@ -638,8 +689,13 @@ function drawRadarChart() {
         return;
     }
 
-    const W = div.clientWidth || 800;
-    const H = div.clientHeight || 600;
+    let W = div.clientWidth || 800;
+    let H = div.clientHeight || 600;
+
+    // In modal, ensure we have a decent height since it's scrollable
+    if (currentChartDiv === "chartModalDiv") {
+        if (H < 700) H = 700;
+    }
     const statesArr = Array.from(selectedStates);
     const N = selectedRadarMetrics.length;
     const LEVELS = 5;
@@ -779,6 +835,64 @@ function drawRadarChart() {
     });
 
     div.appendChild(svg);
+    updateRadarInfoPanel();
 }
 
 init();
+
+// =========================================
+// MODAL FUNCTIONS
+// =========================================
+
+function openChartModal() {
+    const modal = document.getElementById("chartModal");
+    if (!modal) return;
+
+    modal.style.display = "flex";
+    document.body.style.overflow = "hidden"; // Prevent background scrolling
+
+    currentChartDiv = "chartModalDiv";
+
+    // Clear out current container before re-rendering
+    safeClearDiv("bubbleChartDiv");
+
+    // Use a small timeout to ensure the modal is laid out before drawing
+    setTimeout(() => {
+        if (currentChartMode === "bubble") {
+            if (chartRoot) { chartRoot.dispose(); chartRoot = null; }
+            initBubbleChart();
+            updateBubbleChart();
+        } else {
+            if (chartRoot) { chartRoot.dispose(); chartRoot = null; }
+            drawRadarChart();
+        }
+        updateRadarInfoPanel();
+    }, 50);
+}
+
+function closeChartModal(event) {
+    if (event && event.target !== event.currentTarget && !event.target.classList.contains('chart-modal-close')) {
+        return;
+    }
+
+    const modal = document.getElementById("chartModal");
+    if (modal) {
+        modal.style.display = "none";
+        document.body.style.overflow = "";
+
+        currentChartDiv = "bubbleChartDiv";
+
+        // Clear out modal container
+        safeClearDiv("chartModalDiv");
+
+        if (currentChartMode === "bubble") {
+            if (chartRoot) { chartRoot.dispose(); chartRoot = null; }
+            initBubbleChart();
+            updateBubbleChart();
+        } else {
+            if (chartRoot) { chartRoot.dispose(); chartRoot = null; }
+            drawRadarChart();
+        }
+        updateRadarInfoPanel();
+    }
+}

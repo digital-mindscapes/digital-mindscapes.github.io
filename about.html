@@ -101,6 +101,20 @@
             }
         }
 
+        @keyframes revealLogo {
+            0% {
+                opacity: 0.4;
+                filter: blur(5px) drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+                transform: scale(0.9);
+            }
+
+            100% {
+                opacity: 1;
+                filter: blur(0px) drop-shadow(0 30px 60px rgba(0, 0, 0, 0.5));
+                transform: scale(1);
+            }
+        }
+
         .about-hero {
             background: linear-gradient(135deg, rgba(200, 56, 48, 0.05) 0%, rgba(200, 56, 48, 0.1) 100%);
             border-radius: 16px;
@@ -295,40 +309,86 @@
 
         /* ── About Page Responsive ── */
         @media (max-width: 768px) {
+            .about-mobile-toggle {
+                display: flex !important;
+                align-items: center;
+                gap: 10px;
+                padding: 12px 20px;
+                background: white;
+                border-bottom: 1px solid #e9ecef;
+                cursor: pointer;
+                position: relative;
+                z-index: 99;
+                color: #c83830;
+                font-weight: 700;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            }
 
-            /* Convert sidebar to horizontal tab bar */
             .about-container {
                 flex-direction: column !important;
                 height: auto !important;
             }
 
             .about-sidebar {
-                width: 100% !important;
-                flex-direction: row !important;
-                overflow-x: auto !important;
-                overflow-y: hidden !important;
-                padding: 10px 12px !important;
-                gap: 8px !important;
-                border-right: none !important;
-                border-bottom: 1px solid #e9ecef;
-                -webkit-overflow-scrolling: touch;
-                scrollbar-width: none;
+                position: fixed !important;
+                top: 0 !important;
+                left: -100% !important;
+                width: 280px !important;
+                height: 100% !important;
+                z-index: 2000 !important;
+                transition: left 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+                box-shadow: 10px 0 30px rgba(0, 0, 0, 0.1) !important;
+                border-right: 1px solid #e9ecef !important;
+                display: flex !important;
+                flex-direction: column !important;
+                padding: 60px 20px 20px !important;
+                background: white !important;
             }
 
-            .about-sidebar::-webkit-scrollbar {
+            .about-sidebar.open {
+                left: 0 !important;
+            }
+
+            /* Overlay when menu is open */
+            .about-sidebar-overlay {
                 display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 1000;
+                backdrop-filter: blur(2px);
+            }
+
+            .about-sidebar-overlay.active {
+                display: block;
+            }
+
+            .about-sidebar-close {
+                display: flex !important;
+                position: absolute;
+                top: 15px;
+                right: 15px;
+                cursor: pointer;
+                padding: 8px;
+                background: #f8f9fa;
+                border: 1px solid #e9ecef;
+                border-radius: 8px;
+                color: #888;
             }
 
             .about-nav-item {
-                white-space: nowrap !important;
-                flex-shrink: 0 !important;
-                padding: 10px 16px !important;
-                margin-bottom: 0 !important;
-                font-size: 0.8rem !important;
+                margin-bottom: 12px !important;
+                padding: 14px 20px !important;
+                font-size: 0.9rem !important;
+                display: flex !important;
+                gap: 12px !important;
             }
 
             .about-nav-item svg {
-                display: none !important;
+                display: flex !important;
             }
 
             /* Main content area */
@@ -340,25 +400,20 @@
                 padding: 20px !important;
             }
 
-            .about-content-section h2 {
-                font-size: 1.5rem !important;
+            /* Hero section: show logo on mobile */
+            .about-hero>div:first-child {
+                display: flex !important;
+                max-height: none !important;
+                margin-bottom: 20px !important;
             }
 
-            /* Hero section: hide logo on mobile */
-            .about-hero>div:first-child {
-                display: none !important;
+            .about-hero img {
+                max-width: 250px !important;
+                margin-bottom: 0 !important;
             }
 
             .about-hero {
                 padding: 20px !important;
-            }
-
-            .about-hero h3 {
-                font-size: 1.3rem !important;
-            }
-
-            .about-hero h3 span {
-                font-size: 0.95rem !important;
             }
 
             /* Team & Tools grids */
@@ -369,62 +424,24 @@
             .tools-grid {
                 grid-template-columns: 1fr 1fr !important;
             }
-
-            /* Stepper compact */
-            .stepper {
-                padding-left: 40px !important;
-            }
-
-            .step-number {
-                left: -40px !important;
-                width: 28px !important;
-                height: 28px !important;
-                font-size: 12px !important;
-            }
-
-            .step-item::after {
-                left: -27px !important;
-            }
-
-            .step-content {
-                padding: 14px !important;
-            }
-
-            .step-content h5 {
-                font-size: 0.95rem !important;
-            }
-
-            .step-content p {
-                font-size: 0.85rem !important;
-            }
-
-            .stepper-title {
-                font-size: 1.1rem !important;
-            }
         }
 
         @media (max-width: 480px) {
-
-            .about-nav-item {
-                padding: 8px 12px !important;
-                font-size: 0.72rem !important;
-            }
-
             .about-content-section {
                 padding: 15px !important;
-            }
-
-            .about-content-section h2 {
-                font-size: 1.25rem !important;
             }
 
             .tools-grid {
                 grid-template-columns: 1fr !important;
             }
+        }
 
-            .about-section-title {
-                font-size: 1.1rem !important;
-            }
+        .about-mobile-toggle {
+            display: none;
+        }
+
+        .about-sidebar-close {
+            display: none;
         }
     </style>
 </head>
@@ -519,9 +536,27 @@
         </a>
     </div>
 
+    <div class="about-sidebar-overlay" id="aboutOverlay"></div>
+    <div class="about-mobile-toggle" id="aboutMobileToggle">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+        <span>Information Menu</span>
+    </div>
+
     <div class="about-container">
         <!-- Sidebar -->
-        <div class="about-sidebar">
+        <div class="about-sidebar" id="aboutSidebar">
+            <div class="about-sidebar-close" id="aboutCloseBtn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </div>
             <h2 style="font-size: 1.2rem; margin-top: 0; margin-bottom: 20px; color: #2b2e31; padding-left: 5px;">
                 Information</h2>
 
@@ -635,12 +670,12 @@
                         <div
                             style="margin-bottom: 5px; overflow: hidden; max-height: 200px; display: flex; justify-content: center; align-items: flex-start;">
                             <img src="assets/app_logo.png" alt="App Logo"
-                                style="max-width: 250px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1)); margin-bottom: -15px;">
+                                style="max-width: 250px; filter: drop-shadow(0 30px 60px rgba(0,0,0,0.5)); margin-bottom: -15px; opacity: 0; animation: revealLogo 2.5s ease-out 0.2s forwards;">
                         </div>
                         <h3
                             style="color: #2b2e31; font-size: 1.8rem; margin-bottom: 20px; font-weight: 800; line-height: 1.3; min-height: 40px;">
                             <span id="typing-title"
-                                style="border-right: 3px solid #c83830; padding-right: 5px;"></span><br>
+                                style="border-right: 3px solid #c83830; padding-right: 5px; text-shadow: 0 2px 4px rgba(0,0,0,0.15);"></span><br>
                             <span style="font-size: 1.2rem; font-weight: 600; color: #495057;">An Interactive Public
                                 Health & Socioeconomic Data Visualization Platform</span>
                         </h3>
@@ -1029,6 +1064,17 @@
 
     <!-- Simple JS to switch between tabs -->
     <script>
+        function toggleAboutMenu() {
+            const sidebar = document.getElementById('aboutSidebar');
+            const overlay = document.getElementById('aboutOverlay');
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('active');
+        }
+
+        document.getElementById('aboutMobileToggle').addEventListener('click', toggleAboutMenu);
+        document.getElementById('aboutCloseBtn').addEventListener('click', toggleAboutMenu);
+        document.getElementById('aboutOverlay').addEventListener('click', toggleAboutMenu);
+
         function switchAboutTab(tabId, el) {
             // Update sidebar active classes
             document.querySelectorAll('.about-nav-item').forEach(item => item.classList.remove('active'));
@@ -1039,6 +1085,11 @@
                 section.classList.remove('active');
             });
             document.getElementById('content_' + tabId).classList.add('active');
+
+            // Close menu on mobile after selection
+            if (window.innerWidth <= 768) {
+                toggleAboutMenu();
+            }
         }
 
         // Typing Animation for Title

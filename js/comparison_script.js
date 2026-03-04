@@ -307,13 +307,14 @@ function clearSelection() {
 // =========================================
 
 let yAxisLabel;
+let currentChartDiv = "compChartDiv";
 
 function initChart() {
     if (chartRoot) {
         chartRoot.dispose();
     }
 
-    chartRoot = am5.Root.new("compChartDiv");
+    chartRoot = am5.Root.new(currentChartDiv);
     chartRoot.setThemes([am5themes_Animated.new(chartRoot)]);
 
     const isVert = verticalChartMode;
@@ -324,15 +325,24 @@ function initChart() {
         panX: false, panY: false, wheelX: "none", wheelY: "none",
         layout: isMobileChart ? chartRoot.verticalLayout : chartRoot.horizontalLayout,
         paddingLeft: isVert ? 0 : (isMobileChart ? 40 : 160),
-        paddingTop: isVert ? (isMobileChart ? 20 : 70) : 20,
-        paddingBottom: isVert ? 100 : 0
+        paddingTop: isVert ? (isMobileChart ? 10 : 70) : 20,
+        paddingBottom: isVert ? (isMobileChart ? 40 : 100) : 0
     }));
+
+    // On mobile vertical, give the chart div enough height for the bars
+    if (isMobileChart && isVert) {
+        const el = document.getElementById("compChartDiv");
+        if (el) el.style.minHeight = "550px";
+    } else if (isMobileChart) {
+        const el = document.getElementById("compChartDiv");
+        if (el) el.style.minHeight = "";
+    }
 
     if (isMobileChart) {
         legend = chart.children.push(am5.Legend.new(chartRoot, {
             nameField: "name", fillField: "color", strokeField: "color",
             centerX: am5.p50, x: am5.p50,
-            layout: chartRoot.horizontalLayout,
+            layout: am5.GridLayout.new(chartRoot, { maxColumns: 2, fixedWidthGrid: true }),
             clickTarget: "none",
             marginTop: 30
         }));
@@ -539,5 +549,37 @@ function refreshTable() {
     });
     if (typeof renderComparisonTable === 'function') {
         renderComparisonTable('compTableDiv', rows, activeMetric);
+    }
+}
+
+// =========================================
+// MODAL FUNCTIONS
+// =========================================
+
+function openChartModal() {
+    const modal = document.getElementById("chartModal");
+    if (!modal) return;
+
+    modal.style.display = "flex";
+    document.body.style.overflow = "hidden"; // Prevent background scrolling
+
+    currentChartDiv = "chartModalDiv";
+    initChart();
+    updateChart();
+}
+
+function closeChartModal(event) {
+    if (event && event.target !== event.currentTarget && !event.target.classList.contains('chart-modal-close')) {
+        return;
+    }
+
+    const modal = document.getElementById("chartModal");
+    if (modal) {
+        modal.style.display = "none";
+        document.body.style.overflow = "";
+
+        currentChartDiv = "compChartDiv";
+        initChart();
+        updateChart();
     }
 }

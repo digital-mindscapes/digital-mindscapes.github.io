@@ -17,11 +17,11 @@
     .header-content {
         flex-direction: column !important;
         text-align: center !important;
-        gap: 15px !important;
+        gap: 5px !important;
     }
 
     .app-logo {
-        height: 120px !important;
+        height: 240px !important;
     }
 
     .banner-logos-row {
@@ -39,21 +39,41 @@
     .comparison-container {
         flex-direction: column !important;
         height: auto !important;
-        min-height: 100vh !important;
+        min-height: auto !important;
         padding: 15px !important;
+        justify-content: flex-start !important;
+        align-items: stretch !important;
+        gap: 15px !important;
     }
 
     /* ── Sidebars ── */
+    .metrics-header {
+        order: -1 !important;
+        width: 100% !important;
+        background: linear-gradient(135deg, var(--main-color) 0%, #a02820 100%) !important;
+        z-index: 10 !important;
+    }
+
     .metrics-section,
     .comp-sidebar {
-        flex: none !important;
-        width: 100% !important;
-        max-width: 100% !important;
+        display: contents !important;
+    }
+
+    .metrics-grid {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 12px !important;
+        order: 2 !important;
+        padding: 20px 15px !important;
         height: auto !important;
-        max-height: 400px !important;
-        border-right: none !important;
-        border-bottom: 2px solid var(--border-color) !important;
-        order: -1 !important;
+        overflow: visible !important;
+        max-height: none !important;
+        background: var(--bg-light) !important;
+    }
+
+    /* Hide the redundant dropdown since cards are back */
+    .mobile-metric-dropdown {
+        display: none !important;
     }
 
     .comp-main,
@@ -61,20 +81,60 @@
         width: 100% !important;
         padding: 10px !important;
         order: 1 !important;
+        height: auto !important;
+        flex: none !important;
+        justify-content: flex-start !important;
     }
 
-    /* ── Side panel (county detail) ── */
-    .side-panel {
-        position: fixed !important;
-        bottom: 0 !important;
-        right: 0 !important;
-        left: 0 !important;
+    .map-wrapper,
+    .map-box {
+        height: auto !important;
         width: 100% !important;
-        height: 70% !important;
         margin: 0 !important;
-        border-radius: 20px 20px 0 0 !important;
-        z-index: 1000 !important;
+        padding: 0 !important;
+        display: block !important;
+    }
+
+    /* ── Side panel (county detail): Stack below instead of blocking ── */
+    .side-panel {
+        position: relative !important;
+        width: 100% !important;
+        height: auto !important;
+        min-height: 500px !important;
+        margin: 20px 0 !important;
+        border-radius: 15px !important;
+        z-index: 100 !important;
         transform: none !important;
+        order: 3 !important;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1) !important;
+        flex: none !important;
+    }
+
+    #countychartdiv {
+        height: 400px !important;
+        min-height: 400px !important;
+    }
+
+    .county-wrapper {
+        height: auto !important;
+        min-height: 450px !important;
+        padding: 15px !important;
+    }
+
+    .side-panel-header {
+        padding: 12px 15px !important;
+    }
+
+    .side-panel-header h2 {
+        font-size: 1.1rem !important;
+    }
+
+    .panel-subtitle {
+        font-size: 0.75rem !important;
+    }
+
+    .county-map {
+        min-height: 350px !important;
     }
 
     /* ── Comparison top section stacks ── */
@@ -131,7 +191,12 @@
     }
 
     .app-logo-container {
-        display: none !important;
+        display: block !important;
+        margin: 0 auto 0 !important;
+    }
+
+    .app-logo {
+        height: 240px !important;
     }
 
     .banner-logos-row {
@@ -151,30 +216,39 @@
         font-size: 10px !important;
     }
 
-    /* ── Navigation: scrollable horizontal strip ── */
+    /* ── Navigation: stacked wrap layout ── */
     .navigation-bar {
-        flex-wrap: nowrap !important;
-        overflow-x: auto !important;
-        -webkit-overflow-scrolling: touch;
-        gap: 8px !important;
-        padding: 10px 12px !important;
-        justify-content: flex-start !important;
-        scrollbar-width: none;
+        flex-wrap: wrap !important;
+        overflow-x: visible !important;
+        gap: 10px !important;
+        padding: 12px 15px !important;
+        justify-content: center !important;
+        scrollbar-width: auto;
     }
 
     .navigation-bar::-webkit-scrollbar {
-        display: none;
+        display: block;
     }
 
     .comparison-pill {
-        padding: 7px 14px !important;
-        font-size: 0.72rem !important;
-        white-space: nowrap !important;
-        flex-shrink: 0 !important;
+        padding: 10px 15px !important;
+        font-size: 0.8rem !important;
+        white-space: normal !important;
+        /* Allow internal wrap if name is long */
+        text-align: center !important;
+        min-width: calc(50% - 10px) !important;
+        /* Force 2 per row */
+        flex-grow: 1 !important;
+        max-width: 100% !important;
+        border-radius: 30px !important;
+        justify-content: center !important;
     }
 
+
+
     .comparison-pill svg {
-        display: none !important;
+        display: inline-block !important;
+        flex-shrink: 0 !important;
     }
 
     /* ── Sidebars short on mobile ── */
@@ -195,6 +269,7 @@
         font-size: 0.82rem !important;
         flex-direction: column !important;
         text-align: center !important;
+        border-radius: 8px !important;
     }
 
     .metric-icon {
@@ -207,30 +282,18 @@
         font-size: 0.9rem !important;
     }
 
-    /* ── Mobile metric dropdown: show on mobile, hide grid ── */
-    .mobile-metric-dropdown {
-        display: block !important;
-        width: 100% !important;
-        padding: 10px 14px !important;
-        margin-top: 12px !important;
-        border: 1px solid rgba(255, 255, 255, 0.3) !important;
-        border-radius: 10px !important;
-        background: rgba(255, 255, 255, 0.15) !important;
-        color: white !important;
-        font-size: 0.85rem !important;
-        font-weight: 600 !important;
-        appearance: auto !important;
-        cursor: pointer !important;
-    }
-
-    .mobile-metric-dropdown option,
-    .mobile-metric-dropdown optgroup {
-        background: #a02820 !important;
-        color: white !important;
+    .metric-value span {
+        border-radius: 5px !important;
     }
 
     .metrics-grid {
-        display: none !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 10px !important;
+    }
+
+    .metrics-section {
+        display: contents !important;
     }
 
     .metrics-section {
@@ -239,8 +302,8 @@
         overflow: visible !important;
     }
 
-    .metrics-section>div[style*="padding: 15px 25px"] {
-        display: none !important;
+    .metrics-header {
+        padding: 15px !important;
     }
 
     /* ── Charts / Maps ── */
@@ -328,6 +391,26 @@
    SMALL MOBILE  (≤ 480px)
    ───────────────────────────────────────────── */
 @media (max-width: 480px) {
+    .container {
+        height: auto !important;
+        min-height: auto !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+
+    .main-section {
+        min-height: auto !important;
+        height: auto !important;
+        flex: none !important;
+    }
+
+    .metrics-grid {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 10px !important;
+        padding: 15px !important;
+        order: 2 !important;
+    }
 
     /* ── Header: even more compact ── */
     .header {
@@ -361,7 +444,8 @@
     #compMapDiv,
     #compChartDiv,
     #chartdiv,
-    #heatchartdiv {
+    #heatchartdiv,
+    #countychartdiv {
         height: 300px !important;
         min-height: 250px !important;
     }
@@ -393,5 +477,7 @@
     /* ── Side panel county wrapper ── */
     .county-wrapper {
         padding: 10px 15px !important;
+        height: auto !important;
+        min-height: 320px !important;
     }
 }

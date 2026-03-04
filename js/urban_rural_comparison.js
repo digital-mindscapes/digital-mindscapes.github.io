@@ -522,11 +522,13 @@ function initMap() {
 // BAR CHART (amCharts 5)
 // =========================================
 
+let currentChartDiv = "compChartDiv";
+
 function initChart() {
     if (chartRoot) {
         chartRoot.dispose();
     }
-    chartRoot = am5.Root.new("compChartDiv");
+    chartRoot = am5.Root.new(currentChartDiv);
     chartRoot.setThemes([am5themes_Animated.new(chartRoot)]);
 
     const isVert = verticalChartMode;
@@ -869,5 +871,37 @@ function refreshTable() {
     });
     if (typeof renderComparisonTable === 'function') {
         renderComparisonTable('compTableDiv', rows, activeMetric);
+    }
+}
+
+// =========================================
+// MODAL FUNCTIONS
+// =========================================
+
+function openChartModal() {
+    const modal = document.getElementById("chartModal");
+    if (!modal) return;
+
+    modal.style.display = "flex";
+    document.body.style.overflow = "hidden"; // Prevent background scrolling
+
+    currentChartDiv = "chartModalDiv";
+    initChart();
+    updateChart();
+}
+
+function closeChartModal(event) {
+    if (event && event.target !== event.currentTarget && !event.target.classList.contains('chart-modal-close')) {
+        return;
+    }
+
+    const modal = document.getElementById("chartModal");
+    if (modal) {
+        modal.style.display = "none";
+        document.body.style.overflow = "";
+
+        currentChartDiv = "compChartDiv";
+        initChart();
+        updateChart();
     }
 }
