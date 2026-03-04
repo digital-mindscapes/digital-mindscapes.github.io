@@ -1009,54 +1009,277 @@
 
             <div id="content_datapreparation" class="about-content-section">
                 <h2>Data Preparation</h2>
-                <div class="content-body" style="min-height: 200px;">
-                    <p style="text-align:center; color:#888; font-style:italic; margin-top:50px;">Please provide
-                        instructions to fill this section.</p>
+                <div class="content-body">
+                    <div
+                        style="background: #ffffff; border: 1px solid #e9ecef; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02); margin-bottom: 30px;">
+                        <p style="font-size: 1.05rem; color: #495057; line-height: 1.7; margin-bottom: 20px;">
+                            The accuracy and reliability of the Digital Mindscapes platform depend on meticulous data
+                            preparation. Our data pipeline involves several key steps to ensure seamlessly integration
+                            between diverse data sources.
+                        </p>
+                        <h4 style="color: #c83830; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                                <polyline points="2 17 12 22 22 17"></polyline>
+                                <polyline points="2 12 12 17 22 12"></polyline>
+                            </svg>
+                            Key Steps in Preparation
+                        </h4>
+                        <ul
+                            style="list-style-type: none; padding-left: 0; color: #495057; font-size: 1.05rem; line-height: 1.8;">
+                            <li style="margin-bottom: 10px;"><strong>1. Data Cleaning:</strong> Raw files from sources
+                                like CDC PLACES and the US Census ACS are carefully inspected. Missing values (N/A) and
+                                erroneous entries are flagged. Where appropriate, missing numerical datasets are handled
+                                through logical interpolation or omission based on statistical best practices.</li>
+                            <li style="margin-bottom: 10px;"><strong>2. Standardization:</strong> Datasets from
+                                different sources often use varied naming conventions or geographic IDs. FIPS codes
+                                (Federal Information Processing Standards) are rigorously verified and formatted to a
+                                consistent 5-digit string to serve as the unified geographic key uniting all health and
+                                socio-economic variables.</li>
+                            <li style="margin-bottom: 10px;"><strong>3. Structural Alignment:</strong> Variables are
+                                mapped out to follow a consistent naming schema within structured dictionaries. This
+                                ensures that a metric like "Average Income" aligns perfectly across states and counties.
+                            </li>
+                        </ul>
+                    </div>
                 </div>
             </div>
 
             <div id="content_dataprocessing" class="about-content-section">
                 <h2>Data Processing</h2>
-                <div class="content-body" style="min-height: 200px;">
-                    <p style="text-align:center; color:#888; font-style:italic; margin-top:50px;">Please provide
-                        instructions to fill this section.</p>
+                <div class="content-body">
+                    <div
+                        style="background: #ffffff; border: 1px solid #e9ecef; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);">
+                        <p style="font-size: 1.05rem; color: #495057; line-height: 1.7; margin-bottom: 20px;">
+                            Transforming gigabytes of raw prepared data into a visually coherent and responsive
+                            dashboard requires efficient programmatic data processing.
+                        </p>
+                        <h4 style="color: #c83830; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="3"></circle>
+                                <path
+                                    d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+                                </path>
+                            </svg>
+                            Key Processing Methodologies
+                        </h4>
+                        <ul
+                            style="list-style-type: none; padding-left: 0; color: #495057; font-size: 1.05rem; line-height: 1.8;">
+                            <li style="margin-bottom: 10px;"><strong>1. Programmatic Aggregation (Python):</strong>
+                                Utilizing tools like Pandas, large files containing detailed block-level or zip
+                                code-level metrics are rolled up to County and State levels. Averages are calculated
+                                factoring in population weighting to reflect accurate true representative values.</li>
+                            <li style="margin-bottom: 10px;"><strong>2. JSON Transformation:</strong> The vast tabulated
+                                data is ultimately transformed into lightweight JSON object arrays. This ensures the web
+                                application loads quickly on the client-side while still holding thousands of data
+                                points locally.</li>
+                            <li style="margin-bottom: 10px;"><strong>3. Regional Groupings:</strong> Automated scripts
+                                dynamically append geographic identifiers like "Census Region", "Division", and "RUCC
+                                Group" onto data objects based on predetermined mapping lists, allowing dynamic
+                                filtering out of the box.</li>
+                            <li><strong>4. Dynamic Extremes:</strong> Max/Min bounds for gradients and heatmap legends
+                                are calculated algorithmically based directly upon the dataset provided, rather than
+                                being hardcoded, allowing automated scalability to future variables.</li>
+                        </ul>
+                    </div>
                 </div>
             </div>
 
             <!-- Pages Content Sections -->
             <div id="content_page_main" class="about-content-section">
                 <h2>Main Dashboard</h2>
-                <div class="content-body" style="min-height: 200px;">
-                    <p style="text-align:center; color:#888; font-style:italic; margin-top:50px;">Please provide
-                        instructions to fill this section.</p>
+                <div class="content-body">
+                    <div
+                        style="background: #ffffff; border: 1px solid #e9ecef; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);">
+                        <p style="font-size: 1.05rem; color: #495057; line-height: 1.7; margin-bottom: 20px;">
+                            The <strong>Main Dashboard</strong> serves as the primary entry point to the Digital
+                            Mindscapes platform. It presents a comprehensive, interactive map of the United States,
+                            providing a macroscopic view of various socioeconomic and health indicators at the state
+                            level.
+                        </p>
+                        <h4 style="color: #c83830; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"></polygon>
+                                <line x1="9" y1="3" x2="9" y2="21"></line>
+                                <line x1="15" y1="3" x2="15" y2="21"></line>
+                            </svg>
+                            Key Features
+                        </h4>
+                        <ul
+                            style="list-style-type: none; padding-left: 0; color: #495057; font-size: 1.05rem; line-height: 1.8;">
+                            <li style="margin-bottom: 10px;"><strong>Interactive State Map:</strong> Hover over states
+                                to instantly view specific metric values via dynamic tooltips.</li>
+                            <li style="margin-bottom: 10px;"><strong>Metric Selection:</strong> Effortlessly switch
+                                between dozens of health outcomes (e.g., Diabetes, Asthma) and socio-economic factors
+                                (e.g., Income, Education) through the organized sidebar.</li>
+                            <li style="margin-bottom: 10px;"><strong>Choropleth Visuals:</strong> The map automatically
+                                updates its color gradient (heat map) to visually represent the intensity or prevalence
+                                of the selected metric across the country.</li>
+                            <li><strong>Responsive Design:</strong> Fully optimized for both desktop and mobile devices,
+                                ensuring accessibility everywhere.</li>
+                        </ul>
+                    </div>
                 </div>
             </div>
             <div id="content_page_states" class="about-content-section">
                 <h2>States Comparison</h2>
-                <div class="content-body" style="min-height: 200px;">
-                    <p style="text-align:center; color:#888; font-style:italic; margin-top:50px;">Please provide
-                        instructions to fill this section.</p>
+                <div class="content-body">
+                    <div
+                        style="background: #ffffff; border: 1px solid #e9ecef; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);">
+                        <p style="font-size: 1.05rem; color: #495057; line-height: 1.7; margin-bottom: 20px;">
+                            The <strong>States Comparison</strong> page is designed for detailed, customized evaluation
+                            of specific states. It allows users to actively select multiple states and perform
+                            side-by-side analysis using versatile chart and table views.
+                        </p>
+                        <h4 style="color: #c83830; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <line x1="18" y1="20" x2="18" y2="10"></line>
+                                <line x1="12" y1="20" x2="12" y2="4"></line>
+                                <line x1="6" y1="20" x2="6" y2="14"></line>
+                            </svg>
+                            Key Features
+                        </h4>
+                        <ul
+                            style="list-style-type: none; padding-left: 0; color: #495057; font-size: 1.05rem; line-height: 1.8;">
+                            <li style="margin-bottom: 10px;"><strong>Custom Selection:</strong> Click on individual
+                                states on the map to add them to your comparison group. The map highlights selected
+                                states while greying out unselected ones.</li>
+                            <li style="margin-bottom: 10px;"><strong>Versatile Charting:</strong> View the selected
+                                states' data through dynamic charts. Toggle smoothly between Horizontal Bar Charts,
+                                Vertical Bar Charts, and Treemaps.</li>
+                            <li style="margin-bottom: 10px;"><strong>Detailed Table View:</strong> Switch to a tabular
+                                layout to see the raw numbers for your selected states side-by-side.</li>
+                            <li style="margin-bottom: 10px;"><strong>Region Grouping:</strong> Use the "Region" toggle
+                                to quickly group or color-code states based on their geographic region (e.g., Midwest,
+                                Northeast).</li>
+                            <li><strong>Heatmap Mode:</strong> Toggle the map's heatmap coloring on or off without
+                                losing your current state selections.</li>
+                        </ul>
+                    </div>
                 </div>
             </div>
             <div id="content_page_counties" class="about-content-section">
                 <h2>Counties Comparison</h2>
-                <div class="content-body" style="min-height: 200px;">
-                    <p style="text-align:center; color:#888; font-style:italic; margin-top:50px;">Please provide
-                        instructions to fill this section.</p>
+                <div class="content-body">
+                    <div
+                        style="background: #ffffff; border: 1px solid #e9ecef; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);">
+                        <p style="font-size: 1.05rem; color: #495057; line-height: 1.7; margin-bottom: 20px;">
+                            The <strong>Counties Comparison</strong> page provides granular, local-level insights. It
+                            functions similarly to the state comparison tool but drills down to over 3,000 individual US
+                            counties.
+                        </p>
+                        <h4 style="color: #c83830; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <rect x="3" y="3" width="7" height="7"></rect>
+                                <rect x="14" y="3" width="7" height="7"></rect>
+                                <rect x="14" y="14" width="7" height="7"></rect>
+                                <rect x="3" y="14" width="7" height="7"></rect>
+                            </svg>
+                            Key Features
+                        </h4>
+                        <ul
+                            style="list-style-type: none; padding-left: 0; color: #495057; font-size: 1.05rem; line-height: 1.8;">
+                            <li style="margin-bottom: 10px;"><strong>County Selection:</strong> Interactively click
+                                counties across the map to build your custom comparison dataset.</li>
+                            <li style="margin-bottom: 10px;"><strong>Rich Visualizations:</strong> Analyze your selected
+                                counties using clear Horizontal or Vertical Bar Charts. For larger selections, expand
+                                the chart to a full-screen modal for better readability.</li>
+                            <li style="margin-bottom: 10px;"><strong>State Grouping:</strong> When viewing the data
+                                table, use the "Group by State" toggle to automatically organize selected counties under
+                                their respective state headers.</li>
+                            <li style="margin-bottom: 10px;"><strong>RUCC Filtering:</strong> Filter the entire map view
+                                by Rural-Urban Continuum Codes (e.g., "Metropolitan", "Nonmetro") to observe
+                                discrepancies between urban and rural localized regions.</li>
+                            <li><strong>Region Visualization:</strong> Color-code your selected counties by geographical
+                                region on the charts to spot broader geographic trends.</li>
+                        </ul>
+                    </div>
                 </div>
             </div>
             <div id="content_page_urban_rural" class="about-content-section">
                 <h2>Urban-Rural Comparison</h2>
-                <div class="content-body" style="min-height: 200px;">
-                    <p style="text-align:center; color:#888; font-style:italic; margin-top:50px;">Please provide
-                        instructions to fill this section.</p>
+                <div class="content-body">
+                    <div
+                        style="background: #ffffff; border: 1px solid #e9ecef; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);">
+                        <p style="font-size: 1.05rem; color: #495057; line-height: 1.7; margin-bottom: 20px;">
+                            The <strong>Urban-Rural Comparison</strong> page focuses specifically on highlighting the
+                            disparities and patterns between metropolitan and non-metropolitan areas across the country.
+                            It utilizes the USDA's Rural-Urban Continuum Codes (RUCC) to categorize counties.
+                        </p>
+                        <h4 style="color: #c83830; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path d="M4 4h16v16H4z"></path>
+                                <path d="M4 12h16"></path>
+                                <path d="M12 4v16"></path>
+                            </svg>
+                            Key Features
+                        </h4>
+                        <ul
+                            style="list-style-type: none; padding-left: 0; color: #495057; font-size: 1.05rem; line-height: 1.8;">
+                            <li style="margin-bottom: 10px;"><strong>RUCC Focused Filtering:</strong> Apply strict
+                                filters to show only counties belonging to specific RUCC classifications right on the
+                                interactive map.</li>
+                            <li style="margin-bottom: 10px;"><strong>RUCC Grouping Toggle:</strong> Organize selected
+                                counties in charts and tables specifically by their Urban/Rural status to draw immediate
+                                visual comparisons between population densities.</li>
+                            <li style="margin-bottom: 10px;"><strong>Flexible Chart Modes:</strong> Switch between
+                                robust Horizontal and Vertical Bar Charts to display the data in the clearest way
+                                possible depending on your selection size.</li>
+                            <li><strong>Seamless Integration:</strong> Retains all the powerful map interactive
+                                features, tooltip data, and tabular layouts found in the Counties Comparison page.</li>
+                        </ul>
+                    </div>
                 </div>
             </div>
             <div id="content_page_multi_metric" class="about-content-section">
                 <h2>State Multi-Metric Comparison</h2>
-                <div class="content-body" style="min-height: 200px;">
-                    <p style="text-align:center; color:#888; font-style:italic; margin-top:50px;">Please provide
-                        instructions to fill this section.</p>
+                <div class="content-body">
+                    <div
+                        style="background: #ffffff; border: 1px solid #e9ecef; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);">
+                        <p style="font-size: 1.05rem; color: #495057; line-height: 1.7; margin-bottom: 20px;">
+                            The <strong>State Multi-Metric Comparison</strong> tool allows for complex analysis by
+                            examining the correlation between two distinct variables. It answers questions like: "Is
+                            there a relationship between education level and heart disease prevalence?"
+                        </p>
+                        <h4 style="color: #c83830; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path>
+                                <path d="M22 12A10 10 0 0 0 12 2v10z"></path>
+                            </svg>
+                            Key Features
+                        </h4>
+                        <ul
+                            style="list-style-type: none; padding-left: 0; color: #495057; font-size: 1.05rem; line-height: 1.8;">
+                            <li style="margin-bottom: 10px;"><strong>Dual-Metric Selection:</strong> Select a 'Primary
+                                Metric' mapped to the X-axis and a 'Secondary Metric' mapped to the Y-axis.</li>
+                            <li style="margin-bottom: 10px;"><strong>Scatter Plot Visualization:</strong> View the
+                                interaction of two variables across all 50 states via an interactive scatter plot.
+                                States are plotted as circles—hover over them to read exact values for both metrics.
+                            </li>
+                            <li style="margin-bottom: 10px;"><strong>Region Filtering:</strong> Use quick-filter buttons
+                                (Midwest, Northeast, South, West) to isolate specific geographical regions within the
+                                scatter plot.</li>
+                            <li style="margin-bottom: 10px;"><strong>Dual Data Table:</strong> Switch to table view to
+                                see a clean, sorted list of states with their respective values for both the primary and
+                                secondary variables side-by-side.</li>
+                            <li><strong>Color-Coded Regions:</strong> Scatter plot points are intelligently color-coded
+                                based on their US Census Region, making grouping patterns instantly recognizable.</li>
+                        </ul>
+                    </div>
                 </div>
             </div>
         </div>

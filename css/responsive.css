@@ -143,7 +143,8 @@
         min-height: auto !important;
     }
 
-    #compMapDiv {
+    #compMapDiv,
+    #multiMapDiv {
         height: 400px !important;
         min-height: 350px !important;
     }
@@ -163,15 +164,15 @@
 
     /* ── Bar chart: reduce min-height, ensure it shows ── */
     .comp-bottom-section {
-        min-height: 450px !important;
-        height: 500px !important;
+        min-height: 500px !important;
+        height: auto !important;
         flex-shrink: 0 !important;
     }
 
     #compChartDiv {
         width: 100% !important;
         height: 100% !important;
-        min-height: 400px !important;
+        min-height: 500px !important;
     }
 
     /* ── Table section ── */
@@ -316,8 +317,8 @@
 
     /* ── Comparison chart section: ensure visible ── */
     .comp-bottom-section {
-        min-height: 400px !important;
-        height: 450px !important;
+        min-height: 600px !important;
+        height: auto !important;
         flex-shrink: 0 !important;
         padding: 10px !important;
     }
@@ -325,7 +326,7 @@
     #compChartDiv {
         width: 100% !important;
         height: 100% !important;
-        min-height: 380px !important;
+        min-height: 550px !important;
     }
 
     .comp-main {
@@ -442,12 +443,15 @@
 
     /* ── Charts even shorter ── */
     #compMapDiv,
-    #compChartDiv,
     #chartdiv,
     #heatchartdiv,
     #countychartdiv {
         height: 300px !important;
         min-height: 250px !important;
+    }
+
+    #compChartDiv {
+        min-height: 550px !important;
     }
 
     .selection-info {

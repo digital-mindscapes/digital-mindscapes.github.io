@@ -691,6 +691,15 @@ function drawRadarChart() {
 
     let W = div.clientWidth || 800;
     let H = div.clientHeight || 600;
+    const isMobile = window.innerWidth <= 768;
+
+    if (isMobile && H < 450) {
+        H = 450;
+    }
+    if (isMobile && W < 300) {
+        // Fallback to screen width minus padding if container isn't stretched yet
+        W = window.innerWidth - 32;
+    }
 
     // In modal, ensure we have a decent height since it's scrollable
     if (currentChartDiv === "chartModalDiv") {
@@ -726,14 +735,14 @@ function drawRadarChart() {
     for (let l = 1; l <= LEVELS; l++) {
         const r = (l / LEVELS) * R;
         svg.appendChild(mkEl("circle", { cx, cy, r, fill: l % 2 === 0 ? "rgba(0,0,0,0.02)" : "none", stroke: "#ddd", "stroke-dasharray": "5,5", "stroke-width": "1.5" }));
-        svg.appendChild(mkTxt(String(Math.round((l / LEVELS) * 100)), { x: cx + 5, y: cy - r + 15, "font-size": "13", "font-weight": "700", fill: "#bbb", "text-anchor": "start" }));
+        svg.appendChild(mkTxt(String(Math.round((l / LEVELS) * 100)), { x: cx + 5, y: cy - r + 15, "font-size": isMobile ? "10" : "13", "font-weight": "700", fill: "#bbb", "text-anchor": "start" }));
     }
 
     // ── Spokes + labels ──────────────────────────────────────────
     angles.forEach((ang, i) => {
         const x2 = cx + Math.cos(ang) * R;
         const y2 = cy + Math.sin(ang) * R;
-        svg.appendChild(mkEl("line", { x1: cx, y1: cy, x2, y2, stroke: "#ccc", "stroke-dasharray": "5,5", "stroke-width": "1.5" }));
+        svg.appendChild(mkEl("line", { x1: cx, y1: cy, x2, y2, stroke: "#ccc", "stroke-dasharray": "5,5", "stroke-width": isMobile ? "1" : "1.5" }));
 
         const lr = R + 55;
         const lx = cx + Math.cos(ang) * lr;
@@ -744,8 +753,8 @@ function drawRadarChart() {
         words.forEach(w => { if (cur.length + w.length + 1 > 16 && cur) { lines.push(cur); cur = w; } else { cur = cur ? cur + " " + w : w; } });
         if (cur) lines.push(cur);
 
-        const lh = 20;
-        const labelEl = mkEl("text", { "text-anchor": "middle", "font-size": "17", "font-weight": "800", fill: "#222" });
+        const lh = isMobile ? 14 : 20;
+        const labelEl = mkEl("text", { "text-anchor": "middle", "font-size": isMobile ? "11" : "17", "font-weight": isMobile ? "400" : "800", fill: "#222" });
         lines.forEach((line, li) => {
             const ts = document.createElementNS(NS, "tspan");
             ts.setAttribute("x", lx);
@@ -784,7 +793,7 @@ function drawRadarChart() {
         const polyEl = mkEl("polygon", {
             points: pts.map(p => p.x.toFixed(1) + "," + p.y.toFixed(1)).join(" "),
             fill: color, "fill-opacity": "0.24",
-            stroke: color, "stroke-width": "3.2", "stroke-linejoin": "round",
+            stroke: color, "stroke-width": isMobile ? "2" : "3.2", "stroke-linejoin": "round",
             style: "cursor:pointer;"
         });
         polyEl.addEventListener("mouseenter", () => {
@@ -803,7 +812,7 @@ function drawRadarChart() {
         svg.appendChild(polyEl);
 
         pts.forEach(p => {
-            const dot = mkEl("circle", { cx: p.x, cy: p.y, r: 6.5, fill: color, stroke: "white", "stroke-width": "2.8", style: "cursor:pointer;" });
+            const dot = mkEl("circle", { cx: p.x, cy: p.y, r: isMobile ? 4 : 6.5, fill: color, stroke: "white", "stroke-width": isMobile ? "1.5" : "2.8", style: "cursor:pointer;" });
             const ml = p.metric.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
             dot.addEventListener("mouseenter", () => {
                 tip.innerHTML = '<strong style="font-size:17px;">' + state.name + '</strong> &#8212; ' + ml
@@ -830,8 +839,8 @@ function drawRadarChart() {
         const rowCount = Math.min(statesArr.length - row * itemsPerRow, itemsPerRow);
         const lx = (W - rowCount * itemW) / 2 + col * itemW + 10;
         const ly = row * 30 + 25;
-        svg.appendChild(mkEl("circle", { cx: lx, cy: ly, r: 7, fill: color }));
-        svg.appendChild(mkTxt(state.name, { x: lx + 20, y: ly + 7, "font-size": "16", "font-weight": "700", fill: "#333" }));
+        svg.appendChild(mkEl("circle", { cx: lx, cy: ly, r: isMobile ? 5 : 7, fill: color }));
+        svg.appendChild(mkTxt(state.name, { x: lx + 20, y: ly + (isMobile ? 5 : 7), "font-size": isMobile ? "13" : "16", "font-weight": isMobile ? "500" : "700", fill: "#333" }));
     });
 
     div.appendChild(svg);

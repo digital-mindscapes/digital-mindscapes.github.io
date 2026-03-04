@@ -226,15 +226,7 @@ async function init() {
         }
 
 
-        const vToggle = document.getElementById("verticalToggle");
-        if (vToggle) {
-            verticalChartMode = vToggle.checked;
-            vToggle.addEventListener("change", (e) => {
-                verticalChartMode = e.target.checked;
-                initChart();
-                updateChart();
-            });
-        }
+        verticalChartMode = false;
 
         const ruccGroupToggle = document.getElementById("ruccGroupToggle");
         const sToggle = document.getElementById("stateGroupToggle");
@@ -496,7 +488,7 @@ function initMap() {
 
         console.log("Clicked county:", id, dataItem.dataContext);
 
-        if (ev.originalEvent.ctrlKey || ev.originalEvent.metaKey) {
+        if (ev.originalEvent.ctrlKey || ev.originalEvent.metaKey || window.innerWidth <= 768) {
             if (selectedCounties.has(id)) {
                 selectedCounties.delete(id);
                 polygon.set("active", false);
@@ -534,6 +526,7 @@ function initChart() {
     chartRoot.setThemes([am5themes_Animated.new(chartRoot)]);
 
     const isVert = verticalChartMode;
+    const isMobileChart = window.innerWidth <= 768;
 
     const chart = chartRoot.container.children.push(am5xy.XYChart.new(chartRoot, {
         panX: false,
@@ -541,10 +534,19 @@ function initChart() {
         wheelX: "none",
         wheelY: "none",
         layout: chartRoot.verticalLayout,
-        paddingLeft: 0,
-        paddingTop: isVert ? 70 : 30,
-        paddingBottom: isVert ? 100 : 0
+        paddingLeft: isVert ? 0 : (isMobileChart ? 40 : 160),
+        paddingTop: isVert ? (isMobileChart ? 10 : 70) : 30,
+        paddingBottom: isVert ? (isMobileChart ? 40 : 100) : 0
     }));
+
+    // On mobile, ensure the chart div is tall enough for vertical bars
+    if (isMobileChart && isVert) {
+        const el = document.getElementById("compChartDiv");
+        if (el) el.style.minHeight = "550px";
+    } else if (isMobileChart) {
+        const el = document.getElementById("compChartDiv");
+        if (el) el.style.minHeight = "";
+    }
 
     // Add Label for Metric
     chart.children.unshift(am5.Label.new(chartRoot, {
@@ -556,9 +558,12 @@ function initChart() {
         centerX: am5.percent(50)
     }));
 
-    legend = chart.rightAxesContainer.children.push(am5.Legend.new(chartRoot, {
+    legend = chart.children.push(am5.Legend.new(chartRoot, {
         nameField: "name", fillField: "color", strokeField: "color",
-        marginLeft: 20, y: 20, layout: chartRoot.verticalLayout, clickTarget: "none"
+        centerX: am5.p50, x: am5.p50,
+        layout: isMobileChart ? am5.GridLayout.new(chartRoot, { maxColumns: 2, fixedWidthGrid: true }) : chartRoot.horizontalLayout,
+        clickTarget: "none",
+        marginTop: 30
     }));
 
     if (isVert) {
@@ -567,7 +572,14 @@ function initChart() {
             renderer: am5xy.AxisRendererX.new(chartRoot, { minGridDistance: 30 }),
             tooltip: am5.Tooltip.new(chartRoot, {})
         }));
-        xAxis.get("renderer").labels.template.setAll({ rotation: -45, centerY: am5.p50, centerX: am5.p100, paddingRight: 15, fontSize: 11 });
+        xAxis.get("renderer").labels.template.setAll({
+            rotation: -45,
+            centerY: am5.p50,
+            centerX: am5.p100,
+            paddingRight: 15,
+            fontSize: isMobileChart ? 9 : 11,
+            fontWeight: isMobileChart ? "bold" : "normal"
+        });
 
         yAxis = chart.yAxes.push(am5xy.ValueAxis.new(chartRoot, {
             renderer: am5xy.AxisRendererY.new(chartRoot, {}),
@@ -579,7 +591,7 @@ function initChart() {
             renderer: am5xy.AxisRendererY.new(chartRoot, { minGridDistance: 10 }),
             tooltip: am5.Tooltip.new(chartRoot, {})
         }));
-        yAxis.get("renderer").labels.template.setAll({ fontSize: 11 });
+        yAxis.get("renderer").labels.template.setAll({ fontSize: isMobileChart ? 9 : 11, fontWeight: isMobileChart ? "bold" : "normal" });
 
         xAxis = chart.xAxes.push(am5xy.ValueAxis.new(chartRoot, {
             renderer: am5xy.AxisRendererX.new(chartRoot, {}),
@@ -851,6 +863,25 @@ function switchView(view) {
         btnTable && btnTable.classList.add('active');
         refreshTable();
     }
+}
+
+function switchChartType(type) {
+    verticalChartMode = type === 'bar_vertical';
+
+    const btnHBar = document.getElementById('btnHBarChart');
+    const btnVBar = document.getElementById('btnVBarChart');
+
+    btnHBar && btnHBar.classList.remove('active');
+    btnVBar && btnVBar.classList.remove('active');
+
+    if (type === 'bar_vertical') {
+        btnVBar && btnVBar.classList.add('active');
+    } else {
+        btnHBar && btnHBar.classList.add('active');
+    }
+
+    initChart();
+    updateChart();
 }
 
 function refreshTable() {

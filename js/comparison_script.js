@@ -129,16 +129,8 @@ async function init() {
             });
         }
 
-        // Set vertical mode BEFORE building the chart
-        const vToggle = document.getElementById("verticalToggle");
-        if (vToggle) {
-            verticalChartMode = vToggle.checked;
-            vToggle.addEventListener("change", (e) => {
-                verticalChartMode = e.target.checked;
-                initChart();
-                updateChart();
-            });
-        }
+        // verticalChartMode is handled by buttons now
+        verticalChartMode = false;
 
         // Now init the chart with the correct vertical mode
         initChart();
@@ -265,7 +257,7 @@ function initMap() {
         const dataItem = ev.target.dataItem;
         const id = dataItem.get("id");
 
-        if (ev.originalEvent.ctrlKey || ev.originalEvent.metaKey) {
+        if (ev.originalEvent.ctrlKey || ev.originalEvent.metaKey || window.innerWidth <= 768) {
             toggleStateSelection(id);
         } else {
             clearSelection();
@@ -357,20 +349,13 @@ function initBarChart(isModal) {
         if (el) el.style.minHeight = "";
     }
 
-    if (isMobileChart) {
-        legend = chart.children.push(am5.Legend.new(chartRoot, {
-            nameField: "name", fillField: "color", strokeField: "color",
-            centerX: am5.p50, x: am5.p50,
-            layout: am5.GridLayout.new(chartRoot, { maxColumns: 2, fixedWidthGrid: true }),
-            clickTarget: "none",
-            marginTop: 30
-        }));
-    } else {
-        legend = chart.children.push(am5.Legend.new(chartRoot, {
-            nameField: "name", fillField: "color", strokeField: "color",
-            marginLeft: 20, y: 20, layout: chartRoot.verticalLayout, clickTarget: "none"
-        }));
-    }
+    legend = chart.children.push(am5.Legend.new(chartRoot, {
+        nameField: "name", fillField: "color", strokeField: "color",
+        centerX: am5.p50, x: am5.p50,
+        layout: isMobileChart ? am5.GridLayout.new(chartRoot, { maxColumns: 2, fixedWidthGrid: true }) : chartRoot.horizontalLayout,
+        clickTarget: "none",
+        marginTop: 30
+    }));
 
     if (isVert) {
         xAxis = chart.xAxes.push(am5xy.CategoryAxis.new(chartRoot, {
@@ -470,6 +455,14 @@ function initTreeMap(isModal) {
             nodePaddingInner: 2
         })
     );
+
+    legend = container.children.push(am5.Legend.new(chartRoot, {
+        nameField: "name", fillField: "color", strokeField: "color",
+        centerX: am5.p50, x: am5.p50,
+        layout: isMobileChart ? am5.GridLayout.new(chartRoot, { maxColumns: 2, fixedWidthGrid: true }) : chartRoot.horizontalLayout,
+        clickTarget: "none",
+        marginTop: 30
+    }));
 
     treeSeries.rectangles.template.setAll({
         strokeWidth: 2,
@@ -613,6 +606,22 @@ function updateTreeMap() {
 
     treeSeries.data.setAll([rootData]);
 
+    if (legend) {
+        if (regionMode) {
+            legend.show();
+            const legendData = [];
+            regions.forEach(r => {
+                if (regionNodes[r].children.length > 0) {
+                    legendData.push({ name: r, color: am5.color(regionColors[r]) });
+                }
+            });
+            legend.data.setAll(legendData);
+        } else {
+            legend.hide();
+            legend.data.setAll([]);
+        }
+    }
+
     // Keep table in sync whenever the chart updates
     if (currentView === 'table') refreshTable();
 }
@@ -693,15 +702,22 @@ function switchView(view) {
 }
 
 function switchChartType(type) {
-    chartType = type;
-    const btnBar = document.getElementById('btnBarChart');
+    chartType = type.startsWith('bar') ? 'bar' : type;
+    verticalChartMode = type === 'bar_vertical';
+
+    const btnHBar = document.getElementById('btnHBarChart');
+    const btnVBar = document.getElementById('btnVBarChart');
     const btnTree = document.getElementById('btnTreeMap');
 
+    btnHBar && btnHBar.classList.remove('active');
+    btnVBar && btnVBar.classList.remove('active');
+    btnTree && btnTree.classList.remove('active');
+
     if (type === 'bar') {
-        btnBar && btnBar.classList.add('active');
-        btnTree && btnTree.classList.remove('active');
+        btnHBar && btnHBar.classList.add('active');
+    } else if (type === 'bar_vertical') {
+        btnVBar && btnVBar.classList.add('active');
     } else {
-        btnBar && btnBar.classList.remove('active');
         btnTree && btnTree.classList.add('active');
     }
 

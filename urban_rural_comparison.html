@@ -176,8 +176,8 @@
                 <h2>Urban-Rural Comparison</h2>
                 <div class="toggle-group"
                     style="display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 15px; margin-top: 25px; justify-content: center;">
-                    <div style="width: 100%; display: flex; justify-content: center;">
-                        <div class="view-toggle-bar" style="margin-top: 0;">
+                    <div style="width: 100%; display: flex; flex-direction: column; align-items: center; gap: 10px;">
+                        <div class="view-toggle-bar" id="viewToggleBar" style="margin-top: 0;">
                             <button class="view-toggle-btn active" id="btnChartView" onclick="switchView('chart')">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
                                     fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -200,6 +200,31 @@
                                 Table View
                             </button>
                         </div>
+                        <div class="view-toggle-bar" id="chartTypeToggleBar"
+                            style="margin-top: 0; background: rgba(200, 56, 48, 0.1);">
+                            <button class="view-toggle-btn active" id="btnHBarChart" onclick="switchChartType('bar')">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <path d="M4 22v-20" />
+                                    <path d="M4 16h6" />
+                                    <path d="M4 10h14" />
+                                    <path d="M4 4h10" />
+                                </svg>
+                                Horizontal Bar
+                            </button>
+                            <button class="view-toggle-btn" id="btnVBarChart" onclick="switchChartType('bar_vertical')">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <path d="M12 20v-10" />
+                                    <path d="M18 20v-16" />
+                                    <path d="M6 20v-4" />
+                                    <path d="M2 20h20" />
+                                </svg>
+                                Vertical Bar
+                            </button>
+                        </div>
                     </div>
 
                     <div class="toggle-container">
@@ -218,13 +243,6 @@
                         </label>
                     </div>
 
-                    <div class="toggle-container">
-                        <span class="toggle-label">Vertical</span>
-                        <label class="switch">
-                            <input type="checkbox" id="verticalToggle">
-                            <span class="slider round"></span>
-                        </label>
-                    </div>
                     <div class="toggle-container">
                         <span class="toggle-label">RUCC Group</span>
                         <label class="switch">

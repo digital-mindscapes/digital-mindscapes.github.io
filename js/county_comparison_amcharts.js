@@ -279,15 +279,7 @@ async function init() {
             });
         }
 
-        const vToggle = document.getElementById("verticalToggle");
-        if (vToggle) {
-            verticalChartMode = vToggle.checked;
-            vToggle.addEventListener("change", (e) => {
-                verticalChartMode = e.target.checked;
-                initChart();
-                updateChart();
-            });
-        }
+        verticalChartMode = false;
 
         const ruccGroupToggle = document.getElementById("ruccGroupToggle");
         if (ruccGroupToggle) {
@@ -508,7 +500,7 @@ function initMap() {
 
         console.log("Clicked county:", id, dataItem.dataContext);
 
-        if (ev.originalEvent.ctrlKey || ev.originalEvent.metaKey) {
+        if (ev.originalEvent.ctrlKey || ev.originalEvent.metaKey || window.innerWidth <= 768) {
             if (selectedCounties.has(id)) {
                 selectedCounties.delete(id);
                 polygon.set("active", false);
@@ -554,7 +546,7 @@ function initChart() {
         wheelX: "none",
         wheelY: "none",
         layout: chartRoot.verticalLayout,
-        paddingLeft: 0,
+        paddingLeft: isVert ? 0 : (isMobileChart ? 40 : 160),
         paddingTop: isVert ? (isMobileChart ? 10 : 70) : 30,
         paddingBottom: isVert ? (isMobileChart ? 40 : 100) : 0
     }));
@@ -578,20 +570,13 @@ function initChart() {
         centerX: am5.percent(50)
     }));
 
-    if (isMobileChart) {
-        legend = chart.children.push(am5.Legend.new(chartRoot, {
-            nameField: "name", fillField: "color", strokeField: "color",
-            centerX: am5.p50, x: am5.p50,
-            layout: am5.GridLayout.new(chartRoot, { maxColumns: 2, fixedWidthGrid: true }),
-            clickTarget: "none",
-            marginTop: 30
-        }));
-    } else {
-        legend = chart.rightAxesContainer.children.push(am5.Legend.new(chartRoot, {
-            nameField: "name", fillField: "color", strokeField: "color",
-            marginLeft: 20, y: 20, layout: chartRoot.verticalLayout, clickTarget: "none"
-        }));
-    }
+    legend = chart.children.push(am5.Legend.new(chartRoot, {
+        nameField: "name", fillField: "color", strokeField: "color",
+        centerX: am5.p50, x: am5.p50,
+        layout: isMobileChart ? am5.GridLayout.new(chartRoot, { maxColumns: 2, fixedWidthGrid: true }) : chartRoot.horizontalLayout,
+        clickTarget: "none",
+        marginTop: 30
+    }));
 
     if (isVert) {
         xAxis = chart.xAxes.push(am5xy.CategoryAxis.new(chartRoot, {
@@ -600,9 +585,9 @@ function initChart() {
             tooltip: am5.Tooltip.new(chartRoot, {})
         }));
         xAxis.get("renderer").labels.template.setAll({
-            rotation: isMobileChart ? -90 : -45,
-            centerY: isMobileChart ? am5.p50 : am5.p50,
-            centerX: isMobileChart ? am5.p100 : am5.p100,
+            rotation: -45,
+            centerY: am5.p50,
+            centerX: am5.p100,
             paddingRight: 15,
             fontSize: isMobileChart ? 9 : 11,
             fontWeight: isMobileChart ? "bold" : "normal"
@@ -946,6 +931,25 @@ function switchView(view) {
         btnTable && btnTable.classList.add('active');
         refreshTable();
     }
+}
+
+function switchChartType(type) {
+    verticalChartMode = type === 'bar_vertical';
+
+    const btnHBar = document.getElementById('btnHBarChart');
+    const btnVBar = document.getElementById('btnVBarChart');
+
+    btnHBar && btnHBar.classList.remove('active');
+    btnVBar && btnVBar.classList.remove('active');
+
+    if (type === 'bar_vertical') {
+        btnVBar && btnVBar.classList.add('active');
+    } else {
+        btnHBar && btnHBar.classList.add('active');
+    }
+
+    initChart();
+    updateChart();
 }
 
 function refreshTable() {
