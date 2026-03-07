@@ -357,7 +357,8 @@ function initBarChart(isModal) {
         layout: chartRoot.verticalLayout,
         paddingLeft: isVert ? 0 : (isMobileChart ? 40 : 160),
         paddingTop: isVert ? (isMobileChart ? 10 : 70) : 20,
-        paddingBottom: isVert ? (isMobileChart ? 40 : 100) : 0
+        paddingBottom: isVert ? (isMobileChart ? 40 : 100) : 0,
+        paddingRight: (isModal ? 40 : 20)
     }));
 
     // On mobile vertical, give the chart div enough height for the bars
@@ -383,7 +384,16 @@ function initBarChart(isModal) {
             renderer: am5xy.AxisRendererX.new(chartRoot, { minGridDistance: 30 }),
             tooltip: am5.Tooltip.new(chartRoot, {})
         }));
-        xAxis.get("renderer").labels.template.setAll({ rotation: -45, centerY: am5.p50, centerX: am5.p100, paddingRight: 15, fontSize: isMobileChart ? 9 : 14, fontWeight: isMobileChart ? "bold" : "normal" });
+
+        const shouldGoVertical = isMobileChart || selectedStates.size > 7;
+        xAxis.get("renderer").labels.template.setAll({
+            rotation: shouldGoVertical ? -90 : -45,
+            centerY: am5.p50,
+            centerX: am5.p100,
+            paddingRight: 15,
+            fontSize: isMobileChart ? 9 : 14,
+            fontWeight: "bold" // Always bold for better readability
+        });
 
         yAxis = chart.yAxes.push(am5xy.ValueAxis.new(chartRoot, {
             renderer: am5xy.AxisRendererY.new(chartRoot, {}),
@@ -459,7 +469,8 @@ function initTreeMap(isModal) {
         am5.Container.new(chartRoot, {
             width: am5.percent(100),
             height: am5.percent(100),
-            layout: chartRoot.verticalLayout
+            layout: chartRoot.verticalLayout,
+            paddingRight: (isModal ? 40 : 20)
         })
     );
 
@@ -550,7 +561,8 @@ function initRadarChart(isModal) {
         wheelY: "none",
         startAngle: -84,
         endAngle: 264,
-        innerRadius: am5.percent(40)
+        innerRadius: am5.percent(40),
+        paddingRight: (isModal ? 40 : 20)
     }));
 
     // Add cursor

@@ -605,7 +605,8 @@ function initBarChart(isModal) {
         layout: chartRoot.verticalLayout,
         paddingLeft: isVert ? 0 : (isMobileChart ? 40 : 160),
         paddingTop: isVert ? (isMobileChart ? 10 : 70) : 30,
-        paddingBottom: isVert ? (isMobileChart ? 40 : 100) : 0
+        paddingBottom: isVert ? (isMobileChart ? 40 : 100) : 0,
+        paddingRight: (isModal ? 40 : 20)
     }));
 
     // On mobile/vertical, ensure the chart div is tall enough
@@ -642,13 +643,14 @@ function initBarChart(isModal) {
             renderer: am5xy.AxisRendererX.new(chartRoot, { minGridDistance: 30 }),
             tooltip: am5.Tooltip.new(chartRoot, {})
         }));
+        const shouldGoVertical = isMobileChart || selectedCounties.size > 7;
         xAxis.get("renderer").labels.template.setAll({
-            rotation: -45,
+            rotation: shouldGoVertical ? -90 : -45,
             centerY: am5.p50,
             centerX: am5.p100,
             paddingRight: 15,
             fontSize: isMobileChart ? 9 : 11,
-            fontWeight: isMobileChart ? "bold" : "normal"
+            fontWeight: "bold"
         });
 
         yAxis = chart.yAxes.push(am5xy.ValueAxis.new(chartRoot, {
@@ -741,9 +743,9 @@ function initTreeMap(isModal) {
     }
     const container = chartRoot.container.children.push(
         am5.Container.new(chartRoot, {
-            width: am5.percent(100),
-            height: am5.percent(100),
-            layout: chartRoot.verticalLayout
+            width: am5.percent(100), height: am5.percent(100),
+            layout: chartRoot.verticalLayout,
+            paddingRight: (isModal ? 40 : 20)
         })
     );
 
@@ -808,7 +810,8 @@ function initRadarChart(isModal) {
         innerRadius: am5.percent(40),
         radius: am5.percent(80),
         layout: chartRoot.verticalLayout,
-        paddingBottom: 20
+        paddingBottom: 20,
+        paddingRight: (isModal ? 40 : 20)
     }));
 
     const cursor = chart.set("cursor", am5radar.RadarCursor.new(chartRoot, { behavior: "zoomX" }));

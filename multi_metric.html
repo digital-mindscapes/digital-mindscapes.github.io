@@ -178,13 +178,13 @@
                             metric...</span>
                     </div>
                 </div>
-                <!-- Radar Metric Chips -->
-                <div id="radarMetricChips"
+                <!-- Heatmap Metric Chips -->
+                <div id="heatmapMetricChips"
                     style="display: none; margin-bottom: 12px; background: rgba(0,0,0,0.05); padding: 15px; border-radius: 15px; min-height: 80px;">
                     <p style="color:#999;font-size:0.85rem;text-align:center;padding:10px 0;margin:0;">Click metrics
-                        below to add (max 8)</p>
+                        below to add to Heatmap (max 12)</p>
                 </div>
-                <button id="clearSelection"
+                <button id="clearSelection" onclick="clearAllSelections()"
                     style="width: 100%; background-color: #c83830; color: white; border: none; padding: 12px; border-radius: 30px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 6px rgba(200,56,48,0.2); transition: all 0.2s;">Clear
                     All</button>
             </div>
@@ -713,8 +713,20 @@
                         </svg>
                         Radar Chart
                     </button>
+                    <button id="btnHeatmapMode"
+                        style="display:flex;align-items:center;gap:6px;padding:7px 18px;border-radius:30px;border:1.5px solid #ddd;background:transparent;color:#555;font-weight:700;font-size:0.85rem;cursor:pointer;transition:all 0.2s;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2.5">
+                            <rect x="3" y="3" width="7" height="7" />
+                            <rect x="14" y="3" width="7" height="7" />
+                            <rect x="14" y="14" width="7" height="7" />
+                            <rect x="3" y="14" width="7" height="7" />
+                        </svg>
+                        Heatmap Matrix
+                    </button>
                 </div>
                 <div id="bubbleChartDiv" style="width:100%;flex:1;min-height:0;"></div>
+                <div id="heatmapChartDiv" style="display:none;width:100%;flex:1;min-height:0;"></div>
 
                 <div id="radarInfoPanel"
                     style="display:none; flex-shrink:0; margin:100px 16px 20px; background:linear-gradient(135deg,#fff 0%,#fafafa 100%); border:1px solid #e8e8e8; border-radius:12px; padding:16px 22px; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
@@ -726,11 +738,12 @@
                         </div>
                         <!-- Content -->
                         <div style="flex:1;">
-                            <div style="font-weight:700; font-size:15px; color:#222; margin-bottom:12px;">How Normalized
-                                Scores Are Calculated</div>
+                            <div style="font-weight:700; font-size:15px; color:#222; margin-bottom:12px;">Understanding
+                                Heatmap Normalization</div>
                             <!-- Formula -->
                             <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
-                                <span style="font-size:15px; font-weight:700; color:#444;">Score&nbsp;=</span>
+                                <span style="font-size:15px; font-weight:700; color:#444;">Normalized
+                                    Score&nbsp;=</span>
                                 <div style="display:inline-flex; flex-direction:column; align-items:center; gap:2px;">
                                     <span
                                         style="font-size:14px; color:#333; border-bottom:1.5px solid #555; padding-bottom:4px; padding-left:8px; padding-right:8px; white-space:nowrap;">Raw
@@ -746,11 +759,14 @@
                                     metric</span>
                             </div>
                             <p style="margin:12px 0 0; font-size:13px; color:#777; line-height:1.6;">
-                                Min and Max are computed <strong>independently for each metric</strong> across all 50
-                                U.S. states.
-                                A score of <strong>0</strong> means the lowest value among all states;
-                                <strong>100</strong> means the highest.
-                                This lets metrics with different units and scales be compared on the same radar chart.
+                                Since different metrics use <strong>different units and scales</strong> (e.g.,
+                                population vs. percentages), they cannot be compared directly.
+                                <br><br>
+                                We normalize all values to a <strong>0&#8211;100 scale</strong> independently for each
+                                metric.
+                                A score of <strong>0</strong> represents the lowest state in the country for that
+                                metric, and <strong>100</strong> represents the highest. This allows the <strong>Heatmap
+                                    Matrix</strong> to visualize multiple diverse metrics on a single, comparable grid.
                             </p>
                         </div>
                     </div>

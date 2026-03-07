@@ -18,6 +18,8 @@ let hiddenRadarStates = new Set();
 let currentChartMode = "bubble";
 let currentView = "chart";
 let currentChartDiv = "bubbleChartDiv";
+let selectedHeatmapMetrics = ["pct_unemployment_rate", "depression_prevalence", "obesity_prevalence", "total_population_sum"];
+const MAX_HEATMAP_METRICS = 12;
 
 let radarInfoPanelCached = null;
 document.addEventListener("DOMContentLoaded", () => {
@@ -39,7 +41,7 @@ function updateRadarInfoPanel() {
     if (!radarInfoPanelCached) radarInfoPanelCached = document.getElementById("radarInfoPanel");
     if (!radarInfoPanelCached) return;
 
-    if (currentChartMode === "radar" && currentView === "chart") {
+    if (currentChartMode === "heatmap" && currentView === "chart") {
         radarInfoPanelCached.style.display = "block";
         const container = document.getElementById(currentChartDiv);
         if (currentChartDiv === "chartModalDiv") {
@@ -147,8 +149,9 @@ async function loadAndMergeData() {
 // NORMALIZATION (0-100 across all states)
 // =========================================
 function normalizeValue(metric, value) {
+    if (value === null || value === undefined || typeof value !== "number" || isNaN(value)) return null;
     const vals = stateData.map(s => s[metric]).filter(v => typeof v === "number" && !isNaN(v));
-    if (!vals.length) return 0;
+    if (!vals.length) return null;
     const mn = Math.min(...vals), mx = Math.max(...vals);
     if (mx === mn) return 50;
     return Math.round(((value - mn) / (mx - mn)) * 100);
@@ -166,9 +169,11 @@ async function init() {
         initMap();
         initBubbleChart();
         updateSidebarUI();
-        document.getElementById("clearSelection").addEventListener("click", clearAll);
+        document.getElementById("clearSelection").addEventListener("click", clearAllSelections);
         document.getElementById("btnBubbleMode").addEventListener("click", () => switchMode("bubble"));
         document.getElementById("btnRadarMode").addEventListener("click", () => switchMode("radar"));
+        const btnH = document.getElementById("btnHeatmapMode");
+        if (btnH) btnH.addEventListener("click", () => switchMode("heatmap"));
     } catch (err) { console.error("Init failed:", err); }
 }
 
@@ -181,7 +186,8 @@ function initMetricCardListeners() {
         if (!m) return;
         card.addEventListener("click", () => {
             if (currentChartMode === "bubble") assignSlot(m);
-            else toggleRadarMetric(m);
+            else if (currentChartMode === "radar") toggleRadarMetric(m);
+            else toggleHeatmapMetric(m);
         });
     });
 }
@@ -205,21 +211,38 @@ function assignSlot(metric) {
 function toggleRadarMetric(metric) {
     const idx = selectedRadarMetrics.indexOf(metric);
     if (idx >= 0) selectedRadarMetrics.splice(idx, 1);
-    else { if (selectedRadarMetrics.length >= MAX_RADAR_METRICS) selectedRadarMetrics.shift(); selectedRadarMetrics.push(metric); }
+    else {
+        if (selectedRadarMetrics.length >= MAX_RADAR_METRICS) selectedRadarMetrics.shift();
+        selectedRadarMetrics.push(metric);
+    }
     updateSidebarUI();
     if (currentView === "chart") drawRadarChart();
     else drawMultiMetricTable();
 }
 
-function clearAll() {
+function toggleHeatmapMetric(metric) {
+    const idx = selectedHeatmapMetrics.indexOf(metric);
+    if (idx >= 0) selectedHeatmapMetrics.splice(idx, 1);
+    else {
+        if (selectedHeatmapMetrics.length >= MAX_HEATMAP_METRICS) selectedHeatmapMetrics.shift();
+        selectedHeatmapMetrics.push(metric);
+    }
+    updateSidebarUI();
+    if (currentView === "chart") drawHeatmapChart();
+    else drawMultiMetricTable();
+}
+
+function clearAllSelections() {
     selectedSlots = { x: null, y: null, size: null };
     selectedRadarMetrics = [];
+    selectedHeatmapMetrics = [];
     selectedStates.clear();
     if (mapPolygonSeries) mapPolygonSeries.mapPolygons.each(p => p.set("active", false));
     updateSidebarUI();
     if (currentView === "chart") {
         if (currentChartMode === "bubble") updateBubbleChart();
-        else drawRadarChart();
+        else if (currentChartMode === "radar") drawRadarChart();
+        else drawHeatmapChart();
     } else {
         drawMultiMetricTable();
     }
@@ -236,13 +259,28 @@ function switchMode(mode) {
         drawMultiMetricTable();
         return;
     }
-    const chartDiv = document.getElementById(currentChartDiv);
+
+    if (chartRoot) { chartRoot.dispose(); chartRoot = null; }
+
+    const bDiv = document.getElementById("bubbleChartDiv");
+    const hDiv = document.getElementById("heatmapChartDiv");
+
     if (mode === "bubble") {
-        safeClearDiv(currentChartDiv);
+        currentChartDiv = "bubbleChartDiv";
+        if (bDiv) bDiv.style.display = "block";
+        if (hDiv) hDiv.style.display = "none";
+        safeClearDiv("bubbleChartDiv");
         initBubbleChart();
-    } else {
-        if (chartRoot) { chartRoot.dispose(); chartRoot = null; }
+    } else if (mode === "radar") {
+        currentChartDiv = "bubbleChartDiv"; // Radar uses standard div
+        if (bDiv) bDiv.style.display = "block";
+        if (hDiv) hDiv.style.display = "none";
         drawRadarChart();
+    } else if (mode === "heatmap") {
+        currentChartDiv = "heatmapChartDiv";
+        if (bDiv) bDiv.style.display = "none";
+        if (hDiv) hDiv.style.display = "block";
+        drawHeatmapChart();
     }
     updateRadarInfoPanel();
 }
@@ -262,8 +300,10 @@ function switchView(view) {
         if (currentChartMode === "bubble") {
             if (!chartRoot) initBubbleChart();
             updateBubbleChart();
-        } else {
+        } else if (currentChartMode === "radar") {
             drawRadarChart();
+        } else {
+            drawHeatmapChart();
         }
     } else {
         btnC.classList.remove("active");
@@ -287,7 +327,7 @@ function drawMultiMetricTable() {
 
     const metrics = currentChartMode === "bubble"
         ? [selectedSlots.x, selectedSlots.y, selectedSlots.size].filter(Boolean)
-        : selectedRadarMetrics;
+        : (currentChartMode === "radar" ? selectedRadarMetrics : selectedHeatmapMetrics);
 
     if (metrics.length === 0) {
         container.innerHTML = '<div class="ct-empty"><p style="text-align:center;color:#999;padding:40px;">Select metrics on the left to see data here.</p></div>';
@@ -541,27 +581,34 @@ function copyMultiTableLaTeX(rows) {
 function updateSidebarUI() {
     const btnB = document.getElementById("btnBubbleMode");
     const btnR = document.getElementById("btnRadarMode");
-    if (btnB && btnR) {
+    const btnH = document.getElementById("btnHeatmapMode");
+    if (btnB && btnR && btnH) {
         const base = "display:flex;align-items:center;gap:6px;padding:7px 18px;border-radius:30px;font-weight:700;font-size:0.85rem;cursor:pointer;transition:all 0.2s;border-style:solid;border-width:1.5px;";
         btnB.style.cssText = base + (currentChartMode === "bubble" ? "background:#c83830;color:#fff;border-color:#c83830;" : "background:transparent;color:#555;border-color:#ddd;");
         btnR.style.cssText = base + (currentChartMode === "radar" ? "background:#c83830;color:#fff;border-color:#c83830;" : "background:transparent;color:#555;border-color:#ddd;");
+        btnH.style.cssText = base + (currentChartMode === "heatmap" ? "background:#c83830;color:#fff;border-color:#c83830;" : "background:transparent;color:#555;border-color:#ddd;");
     }
 
     const bubbleSlots = document.getElementById("bubbleSlots");
     const radarChips = document.getElementById("radarMetricChips");
+    const heatmapChips = document.getElementById("heatmapMetricChips");
     const radarInfo = document.getElementById("radarInfoPanel");
+
     if (bubbleSlots) bubbleSlots.style.display = currentChartMode === "bubble" ? "flex" : "none";
     if (radarChips) radarChips.style.display = currentChartMode === "radar" ? "block" : "none";
-    if (radarInfo) radarInfo.style.display = currentChartMode === "radar" ? "block" : "none";
+    if (heatmapChips) heatmapChips.style.display = currentChartMode === "heatmap" ? "block" : "none";
+    if (radarInfo) radarInfo.style.display = (currentChartMode === "radar" || currentChartMode === "heatmap") ? "block" : "none";
 
     if (currentChartMode === "bubble") updateBubbleSlotUI();
-    else updateRadarChipsUI();
+    else if (currentChartMode === "radar") updateRadarChipsUI();
+    else updateHeatmapChipsUI();
 
     document.querySelectorAll(".metric-card").forEach(card => {
         const m = card.getAttribute("data-metric");
         card.classList.remove("selected");
         if (currentChartMode === "bubble" && Object.values(selectedSlots).includes(m)) card.classList.add("selected");
         if (currentChartMode === "radar" && selectedRadarMetrics.includes(m)) card.classList.add("selected");
+        if (currentChartMode === "heatmap" && selectedHeatmapMetrics.includes(m)) card.classList.add("selected");
     });
 }
 
@@ -588,6 +635,23 @@ function updateRadarChipsUI() {
         const color = radarPalette[i % radarPalette.length];
         const label = m.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
         html += '<div onclick="toggleRadarMetric(\'' + m + '\')" style="display:inline-flex;align-items:center;gap:5px;background:' + color + '22;border:1.5px solid ' + color + ';color:' + color + ';border-radius:20px;padding:4px 10px;font-size:0.78rem;font-weight:700;cursor:pointer;margin:3px;white-space:nowrap;">'
+            + label + ' <span style="font-size:1rem;line-height:1;">&#215;</span></div>';
+    });
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+function updateHeatmapChipsUI() {
+    const container = document.getElementById("heatmapMetricChips");
+    if (!container) return;
+    if (!selectedHeatmapMetrics.length) {
+        container.innerHTML = '<p style="color:#999;font-size:0.85rem;text-align:center;padding:10px 0;margin:0;">Click metrics below to add (max ' + MAX_HEATMAP_METRICS + ')</p>';
+        return;
+    }
+    let html = '<div style="font-size:0.8rem;color:#888;margin-bottom:8px;">' + selectedHeatmapMetrics.length + '/' + MAX_HEATMAP_METRICS + ' metrics selected</div><div style="display:flex;flex-wrap:wrap;">';
+    selectedHeatmapMetrics.forEach((m) => {
+        const label = m.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+        html += '<div onclick="toggleHeatmapMetric(\'' + m + '\')" style="display:inline-flex;align-items:center;gap:5px;background:rgba(200,56,48,0.1);border:1.5px solid #c83830;color:#c83830;border-radius:20px;padding:4px 10px;font-size:0.78rem;font-weight:700;cursor:pointer;margin:3px;white-space:nowrap;">'
             + label + ' <span style="font-size:1rem;line-height:1;">&#215;</span></div>';
     });
     html += '</div>';
@@ -636,7 +700,9 @@ function toggleState(id) {
     if (selectedStates.has(id)) selectedStates.delete(id); else selectedStates.add(id);
     mapPolygonSeries.mapPolygons.each(p => p.set("active", selectedStates.has(p.dataItem.get("id"))));
     if (currentView === "chart") {
-        if (currentChartMode === "bubble") updateBubbleChart(); else drawRadarChart();
+        if (currentChartMode === "bubble") updateBubbleChart();
+        else if (currentChartMode === "radar") drawRadarChart();
+        else drawHeatmapChart();
     } else {
         drawMultiMetricTable();
     }
@@ -657,7 +723,15 @@ function initBubbleChart() {
         })
     });
 
-    const chart = chartRoot.container.children.push(am5xy.XYChart.new(chartRoot, { panX: true, panY: true, wheelY: "zoomXY", pinchZoomX: true, pinchZoomY: true, layout: chartRoot.verticalLayout }));
+    const chart = chartRoot.container.children.push(am5xy.XYChart.new(chartRoot, {
+        panX: true,
+        panY: true,
+        wheelY: "zoomXY",
+        pinchZoomX: true,
+        pinchZoomY: true,
+        layout: chartRoot.verticalLayout,
+        paddingRight: (currentChartDiv === "chartModalDiv" ? 40 : 20)
+    }));
     const legend = chart.children.push(am5.Legend.new(chartRoot, { centerX: am5.p50, x: am5.p50, layout: chartRoot.horizontalLayout, nameField: "name", fillField: "color", strokeField: "color", paddingTop: 15, paddingBottom: 15, clickTarget: "none" }));
     legend.data.setAll(Object.entries(regionColors).map(([name, c]) => ({ name, color: am5.color(c) })));
     xAxis = chart.xAxes.push(am5xy.ValueAxis.new(chartRoot, { extraMax: 0.1, extraMin: 0.1, renderer: am5xy.AxisRendererX.new(chartRoot, { minGridDistance: 50 }), tooltip: am5.Tooltip.new(chartRoot, {}) }));
@@ -911,10 +985,11 @@ function openChartModal() {
     modal.style.display = "flex";
     document.body.style.overflow = "hidden"; // Prevent background scrolling
 
-    currentChartDiv = "chartModalDiv";
-
     // Clear out current container before re-rendering
-    safeClearDiv("bubbleChartDiv");
+    if (currentChartMode === "heatmap") safeClearDiv("heatmapChartDiv");
+    else safeClearDiv("bubbleChartDiv");
+
+    currentChartDiv = "chartModalDiv";
 
     // Use a small timeout to ensure the modal is laid out before drawing
     setTimeout(() => {
@@ -922,9 +997,12 @@ function openChartModal() {
             if (chartRoot) { chartRoot.dispose(); chartRoot = null; }
             initBubbleChart();
             updateBubbleChart();
-        } else {
+        } else if (currentChartMode === "radar") {
             if (chartRoot) { chartRoot.dispose(); chartRoot = null; }
             drawRadarChart();
+        } else {
+            if (chartRoot) { chartRoot.dispose(); chartRoot = null; }
+            drawHeatmapChart();
         }
         updateRadarInfoPanel();
     }, 50);
@@ -940,7 +1018,21 @@ function closeChartModal(event) {
         modal.style.display = "none";
         document.body.style.overflow = "";
 
-        currentChartDiv = "bubbleChartDiv";
+        const bDiv = document.getElementById("bubbleChartDiv");
+        const hDiv = document.getElementById("heatmapChartDiv");
+
+        if (currentChartMode === "heatmap") {
+            currentChartDiv = "heatmapChartDiv";
+            if (bDiv) bDiv.style.display = "none";
+            if (hDiv) {
+                hDiv.style.display = "block";
+                hDiv.style.height = "800px"; // Reset to standard height
+            }
+        } else {
+            currentChartDiv = "bubbleChartDiv";
+            if (bDiv) bDiv.style.display = "block";
+            if (hDiv) hDiv.style.display = "none";
+        }
 
         // Clear out modal container
         safeClearDiv("chartModalDiv");
@@ -951,11 +1043,171 @@ function closeChartModal(event) {
                 if (chartRoot) { chartRoot.dispose(); chartRoot = null; }
                 initBubbleChart();
                 updateBubbleChart();
-            } else {
+            } else if (currentChartMode === "radar") {
                 if (chartRoot) { chartRoot.dispose(); chartRoot = null; }
                 drawRadarChart();
+            } else {
+                if (chartRoot) { chartRoot.dispose(); chartRoot = null; }
+                drawHeatmapChart();
             }
             updateRadarInfoPanel();
         }, 100);
     }
+}
+// =========================================
+// HEATMAP MATRIX (amCharts 5)
+// =========================================
+function drawHeatmapChart() {
+    const containerId = currentChartDiv;
+    if (chartRoot) { chartRoot.dispose(); chartRoot = null; }
+    safeClearDiv(containerId);
+
+    const statesArr = Array.from(selectedStates).map(id => stateData.find(s => s.id === id)).filter(Boolean);
+
+    const container = document.getElementById(containerId);
+    if (container) {
+        if (containerId === "chartModalDiv") {
+            // In expanded view, allocate full height needed for states
+            const neededHeight = Math.max(700, statesArr.length * 40 + 150);
+            container.style.height = "auto";
+            container.style.minHeight = neededHeight + "px";
+        } else {
+            // In normal view, ensure it fills the section but allows expansion
+            const dynamicHeight = Math.max(800, statesArr.length * 40 + 150);
+            container.style.height = dynamicHeight + "px";
+        }
+    }
+
+    if (!statesArr.length || !selectedHeatmapMetrics.length) {
+        document.getElementById(containerId).innerHTML = '<div style="height:100%; display:flex; align-items:center; justify-content:center; color:#999; font-size:1.1rem; padding:40px; text-align:center;">Select states on the map and metrics on the left to generate the Heatmap Matrix.</div>';
+        return;
+    }
+
+    chartRoot = am5.Root.new(containerId);
+    chartRoot.setThemes([am5themes_Animated.new(chartRoot)]);
+
+    const chart = chartRoot.container.children.push(am5xy.XYChart.new(chartRoot, {
+        panX: false, panY: false, wheelX: "none", wheelY: "none",
+        layout: chartRoot.verticalLayout,
+        paddingLeft: 0,
+        paddingRight: (containerId === "chartModalDiv" ? 40 : 20)
+    }));
+
+    const yRenderer = am5xy.AxisRendererY.new(chartRoot, {
+        visible: true,
+        minGridDistance: 20,
+        inversed: true
+    });
+    yRenderer.labels.template.setAll({
+        fontWeight: "500",
+        fontSize: 12
+    });
+
+    const yAxis = chart.yAxes.push(am5xy.CategoryAxis.new(chartRoot, {
+        maxDeviation: 0,
+        renderer: yRenderer,
+        categoryField: "state"
+    }));
+
+    const xRenderer = am5xy.AxisRendererX.new(chartRoot, {
+        visible: true,
+        minGridDistance: 30,
+        opposite: true
+    });
+    xRenderer.grid.template.set("visible", false);
+
+    const isMobileUI = window.innerWidth <= 768;
+
+    xRenderer.labels.template.setAll({
+        rotation: 0,
+        centerY: am5.p100,
+        centerX: am5.p50,
+        fontSize: isMobileUI ? 11 : 13,
+        fontWeight: "500",
+        paddingBottom: 10,
+        paddingTop: 5
+    });
+
+    const xAxis = chart.xAxes.push(am5xy.CategoryAxis.new(chartRoot, {
+        renderer: xRenderer,
+        categoryField: "metricLabel"
+    }));
+
+    const series = chart.series.push(am5xy.ColumnSeries.new(chartRoot, {
+        calculateAggregates: true,
+        stroke: am5.color(0xffffff),
+        clustered: false,
+        xAxis: xAxis,
+        yAxis: yAxis,
+        categoryXField: "metricLabel",
+        categoryYField: "state",
+        valueField: "normValue"
+    }));
+
+    series.columns.template.setAll({
+        tooltipText: "{state}, {fullMetricLabel}: [bold]{rawValue}[/]",
+        strokeOpacity: 1,
+        strokeWidth: 2,
+        width: am5.percent(100),
+        height: am5.percent(100)
+    });
+
+    series.columns.template.adapters.add("fill", function (fill, target) {
+        if (target.dataItem && (target.dataItem.get("value") === null || isNaN(target.dataItem.get("value")))) {
+            return am5.color(0xeeeeee);
+        }
+        return fill;
+    });
+
+    series.set("heatRules", [{
+        target: series.columns.template,
+        min: am5.color(0xfffb77),
+        max: am5.color(0xfe131a),
+        dataField: "value",
+        key: "fill"
+    }]);
+
+    const heatLegend = chart.bottomAxesContainer.children.push(am5.HeatLegend.new(chartRoot, {
+        orientation: "horizontal",
+        startColor: am5.color(0xfffb77),
+        endColor: am5.color(0xfe131a),
+        startText: "Lowest Score",
+        endText: "Highest Score",
+        stepCount: 5
+    }));
+
+    series.events.on("datavalidated", function () {
+        heatLegend.set("startValue", series.getPrivate("valueLow"));
+        heatLegend.set("endValue", series.getPrivate("valueHigh"));
+    });
+
+    // Prepare Data
+    const data = [];
+    const xAxisData = selectedHeatmapMetrics.map(m => {
+        const meta = tableMetricMeta[m] || { label: m };
+        return { metricLabel: meta.shortLabel || meta.label };
+    });
+    const yAxisData = statesArr.map(s => ({ state: s.name }));
+
+    statesArr.forEach(state => {
+        selectedHeatmapMetrics.forEach(m => {
+            const raw = state[m];
+            const meta = tableMetricMeta[m] || { label: m, fmt: "dec" };
+            const norm = normalizeValue(m, raw);
+            data.push({
+                state: state.name,
+                metricLabel: meta.shortLabel || meta.label,
+                fullMetricLabel: meta.label,
+                rawValue: formatValue(raw, meta.fmt),
+                normValue: norm
+            });
+        });
+    });
+
+    yAxis.data.setAll(yAxisData);
+    xAxis.data.setAll(xAxisData);
+    series.data.setAll(data);
+
+    chart.appear(1000, 100);
+    updateRadarInfoPanel();
 }

@@ -178,6 +178,13 @@
     background: transparent;
     border-radius: 20px;
     padding: 20px;
+    overflow-y: auto;
+    /* Allow expansion downward */
+    scrollbar-width: thin;
+}
+
+#heatmapChartDiv {
+    min-height: 800px;
 }
 
 #compChartDiv {
@@ -767,8 +774,8 @@
 #chartModalDiv {
     flex: 1;
     min-height: 0;
-    padding: 15px 15px 20px 15px;
-    /* Reduced bottom padding */
+    padding: 15px 40px 20px 20px;
+    /* Increased right/left padding */
     overflow-y: auto;
     overflow-x: hidden;
 }
