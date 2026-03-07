@@ -993,3 +993,45 @@ input:checked+.slider:before {
   font-size: 14px;
   line-height: 1;
 }
+
+/* ============================================
+   EXPORT BUTTONS (amCharts 4 & 5 customization)
+   ============================================ */
+/* Target amCharts 5 Export Button */
+.am5exporting-icon,
+/* Target amCharts 4 Export Button */
+.amcharts-export-menu-level-0 .amcharts-export-item>a {
+  width: 34px !important;
+  height: 34px !important;
+  padding: 6px !important;
+  border-radius: 12px !important;
+  background-color: rgba(200, 56, 48, 0.75) !important;
+  /* --main-color with opacity */
+  backdrop-filter: blur(4px) !important;
+  color: white !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: none !important;
+  cursor: pointer !important;
+  opacity: 1 !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+  transition: background-color 0.2s ease !important;
+
+  /* Background icon */
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z'/%3E%3C/svg%3E") !important;
+  background-size: 16px 16px !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+}
+
+.am5exporting-icon:hover,
+.amcharts-export-menu-level-0 .amcharts-export-item>a:hover {
+  background-color: rgba(200, 56, 48, 1) !important;
+}
+
+/* Hide default SVG icons */
+.am5exporting-icon svg,
+.amcharts-export-menu-level-0 .amcharts-export-item>a>svg {
+  display: none !important;
+}

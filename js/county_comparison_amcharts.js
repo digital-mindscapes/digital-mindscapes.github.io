@@ -403,6 +403,14 @@ function initMap() {
     mapRoot = am5.Root.new("chartdiv");
     mapRoot.setThemes([am5themes_Animated.new(mapRoot)]);
 
+    // Add export menu
+    let exporting = am5plugins_exporting.Exporting.new(mapRoot, {
+        menu: am5plugins_exporting.ExportingMenu.new(mapRoot, {
+            align: "right",
+            valign: "top"
+        })
+    });
+
     const mapChart = mapRoot.container.children.push(am5map.MapChart.new(mapRoot, {
         panX: "translateX",
         panY: "translateY",
@@ -536,6 +544,14 @@ function initChart() {
     }
     chartRoot = am5.Root.new(currentChartDiv);
     chartRoot.setThemes([am5themes_Animated.new(chartRoot)]);
+
+    // Add export menu
+    let exporting = am5plugins_exporting.Exporting.new(chartRoot, {
+        menu: am5plugins_exporting.ExportingMenu.new(chartRoot, {
+            align: "right",
+            valign: "bottom"
+        })
+    });
 
     const isVert = verticalChartMode;
     const isMobileChart = window.innerWidth <= 768;

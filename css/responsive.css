@@ -186,6 +186,13 @@
    ───────────────────────────────────────────── */
 @media (max-width: 768px) {
 
+    /* Hide download/export buttons on mobile */
+    .am5exporting-icon,
+    .amcharts-export-menu,
+    .amcharts-export-menu-level-0 {
+        display: none !important;
+    }
+
     /* ── Header: hide logos, compact title ── */
     .header {
         padding: 12px 15px !important;

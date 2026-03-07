@@ -221,6 +221,14 @@ function initMap() {
     mapRoot = am5.Root.new("compMapDiv");
     mapRoot.setThemes([am5themes_Animated.new(mapRoot)]);
 
+    // Add export menu
+    let exporting = am5plugins_exporting.Exporting.new(mapRoot, {
+        menu: am5plugins_exporting.ExportingMenu.new(mapRoot, {
+            align: "right",
+            valign: "top"
+        })
+    });
+
     const mapChart = mapRoot.container.children.push(am5map.MapChart.new(mapRoot, {
         panX: "rotateX",
         projection: am5map.geoAlbersUsa()
@@ -320,6 +328,14 @@ function initChart(isModal = false) {
         myTheme,
         am5themes_Animated.new(chartRoot)
     ]);
+
+    // Add export menu
+    let exporting = am5plugins_exporting.Exporting.new(chartRoot, {
+        menu: am5plugins_exporting.ExportingMenu.new(chartRoot, {
+            align: "right",
+            valign: "bottom"
+        })
+    });
 
     if (chartType === "bar") {
         initBarChart(isModal);

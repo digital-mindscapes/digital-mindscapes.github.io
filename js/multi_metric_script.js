@@ -12,6 +12,7 @@ let activeSlot = "x";
 // --- Radar mode ---
 let selectedRadarMetrics = [];
 const MAX_RADAR_METRICS = 8;
+let hiddenRadarStates = new Set();
 
 // --- Mode ---
 let currentChartMode = "bubble";
@@ -594,6 +595,15 @@ function updateRadarChipsUI() {
 function initMap() {
     mapRoot = am5.Root.new("multiMapDiv");
     mapRoot.setThemes([am5themes_Animated.new(mapRoot)]);
+
+    // Add export menu
+    let exporting = am5plugins_exporting.Exporting.new(mapRoot, {
+        menu: am5plugins_exporting.ExportingMenu.new(mapRoot, {
+            align: "right",
+            valign: "top"
+        })
+    });
+
     const mapChart = mapRoot.container.children.push(am5map.MapChart.new(mapRoot, { panX: "rotateX", projection: am5map.geoAlbersUsa() }));
     mapPolygonSeries = mapChart.series.push(am5map.MapPolygonSeries.new(mapRoot, { geoJSON: am5geodata_usaLow }));
     mapPolygonSeries.mapPolygons.template.setAll({ tooltipText: "{name}", fill: am5.color(0xd9cec8), stroke: am5.color(0xffffff), strokeWidth: 1, cursorOverStyle: "pointer", interactive: true });
@@ -633,6 +643,15 @@ function toggleState(id) {
 function initBubbleChart() {
     chartRoot = am5.Root.new(currentChartDiv);
     chartRoot.setThemes([am5themes_Animated.new(chartRoot)]);
+
+    // Add export menu
+    let exporting = am5plugins_exporting.Exporting.new(chartRoot, {
+        menu: am5plugins_exporting.ExportingMenu.new(chartRoot, {
+            align: "right",
+            valign: "bottom"
+        })
+    });
+
     const chart = chartRoot.container.children.push(am5xy.XYChart.new(chartRoot, { panX: true, panY: true, wheelY: "zoomXY", pinchZoomX: true, pinchZoomY: true, layout: chartRoot.verticalLayout }));
     const legend = chart.children.push(am5.Legend.new(chartRoot, { centerX: am5.p50, x: am5.p50, layout: chartRoot.horizontalLayout, nameField: "name", fillField: "color", strokeField: "color", paddingTop: 15, paddingBottom: 15, clickTarget: "none" }));
     legend.data.setAll(Object.entries(regionColors).map(([name, c]) => ({ name, color: am5.color(c) })));
@@ -670,6 +689,15 @@ function updateBubbleChart() {
         data.push({ title: s.name, region: s.region, x: v(selectedSlots.x), y: v(selectedSlots.y), size: Math.max(0.1, v(selectedSlots.size) || 10) });
     });
     bubbleSeries.data.setAll(data);
+}
+
+function toggleRadarState(stateId) {
+    if (hiddenRadarStates.has(stateId)) {
+        hiddenRadarStates.delete(stateId);
+    } else {
+        hiddenRadarStates.add(stateId);
+    }
+    drawRadarChart();
 }
 
 // =========================================
@@ -715,7 +743,9 @@ function drawRadarChart() {
 
     const cx = W / 2;
     const cy = LEGEND_H + (H - LEGEND_H) / 2;
-    const R = Math.min(cx - 165, (H - LEGEND_H) / 2 - 70); // Increased gap to 70
+    const padding = isMobile ? 120 : 180;
+    const verticalPadding = isMobile ? 80 : 100;
+    const R = Math.min(cx - padding, (H - LEGEND_H) / 2 - verticalPadding);
     const angles = Array.from({ length: N }, (_, i) => (2 * Math.PI * i / N) - Math.PI / 2);
     const NS = "http://www.w3.org/2000/svg";
 
@@ -744,13 +774,14 @@ function drawRadarChart() {
         const y2 = cy + Math.sin(ang) * R;
         svg.appendChild(mkEl("line", { x1: cx, y1: cy, x2, y2, stroke: "#ccc", "stroke-dasharray": "5,5", "stroke-width": isMobile ? "1" : "1.5" }));
 
-        const lr = R + 55;
+        const lr = R + (isMobile ? 35 : 45);
         const lx = cx + Math.cos(ang) * lr;
         const ly = cy + Math.sin(ang) * lr;
         const words = selectedRadarMetrics[i].replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase()).split(" ");
         const lines = [];
         let cur = "";
-        words.forEach(w => { if (cur.length + w.length + 1 > 16 && cur) { lines.push(cur); cur = w; } else { cur = cur ? cur + " " + w : w; } });
+        const maxLineLen = isMobile ? 12 : 14;
+        words.forEach(w => { if (cur.length + w.length + 1 > maxLineLen && cur) { lines.push(cur); cur = w; } else { cur = cur ? cur + " " + w : w; } });
         if (cur) lines.push(cur);
 
         const lh = isMobile ? 14 : 20;
@@ -770,7 +801,9 @@ function drawRadarChart() {
     div.appendChild(tip);
     div.addEventListener("mouseleave", () => { tip.style.display = "none"; });
 
+    // No extra declaration here
     statesArr.forEach((stateId, si) => {
+        if (hiddenRadarStates.has(stateId)) return;
         const state = stateData.find(s => s.id === stateId);
         if (!state) return;
         const color = radarPalette[si % radarPalette.length];
@@ -833,14 +866,22 @@ function drawRadarChart() {
     statesArr.forEach((stateId, si) => {
         const state = stateData.find(s => s.id === stateId);
         if (!state) return;
+        const isHidden = hiddenRadarStates.has(stateId);
         const color = radarPalette[si % radarPalette.length];
         const row = Math.floor(si / itemsPerRow);
         const col = si % itemsPerRow;
         const rowCount = Math.min(statesArr.length - row * itemsPerRow, itemsPerRow);
         const lx = (W - rowCount * itemW) / 2 + col * itemW + 10;
         const ly = row * 30 + 25;
-        svg.appendChild(mkEl("circle", { cx: lx, cy: ly, r: isMobile ? 5 : 7, fill: color }));
-        svg.appendChild(mkTxt(state.name, { x: lx + 20, y: ly + (isMobile ? 5 : 7), "font-size": isMobile ? "13" : "16", "font-weight": isMobile ? "500" : "700", fill: "#333" }));
+
+        const g = mkEl("g", { style: "cursor:pointer; transition: opacity 0.2s;" });
+        if (isHidden) g.setAttribute("opacity", "0.35");
+
+        g.appendChild(mkEl("circle", { cx: lx, cy: ly, r: isMobile ? 5 : 7, fill: color }));
+        g.appendChild(mkTxt(state.name, { x: lx + 20, y: ly + (isMobile ? 5 : 7), "font-size": isMobile ? "13" : "16", "font-weight": isMobile ? "500" : "700", fill: "#333" }));
+
+        g.onclick = () => toggleRadarState(stateId);
+        svg.appendChild(g);
     });
 
     div.appendChild(svg);

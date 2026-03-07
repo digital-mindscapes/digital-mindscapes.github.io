@@ -223,6 +223,11 @@ hs.properties.fill = am4core.color("#c83830");
 var psActive = polygonTemplate.states.create("active");
 psActive.properties.fill = am4core.color("#c83830");
 
+// Export Menu
+chart.exporting.menu = new am4core.ExportMenu();
+chart.exporting.menu.align = "right";
+chart.exporting.menu.verticalAlign = "top";
+
 addCustomMapControls("chartdiv", chart, false);
 
 // =========================================
@@ -230,7 +235,7 @@ addCustomMapControls("chartdiv", chart, false);
 // =========================================
 
 var countyChart = null;
-var countyToggleEnabled = true;
+var countyToggleEnabled = false;
 
 document.getElementById("countyToggle").addEventListener("change", function (e) {
   countyToggleEnabled = e.target.checked;
@@ -287,7 +292,9 @@ polygonTemplate.events.on("hit", function (ev) {
       activeStateData = defaultStateData;
       updateMetrics(defaultStateData);
       var stateAbbr = defaultStateId.split(/[\.\-]/).pop().toLowerCase();
-      openCountyPanel(defaultStateData.name, stateAbbr);
+      if (countyToggleEnabled) {
+        openCountyPanel(defaultStateData.name, stateAbbr);
+      }
     }
   } catch (error) {
     console.error("Error pre-loading data:", error);
@@ -642,6 +649,11 @@ function renderCountyMap(geodata) {
 
   var countySeries = countyChart.series.push(new am4maps.MapPolygonSeries());
   countySeries.useGeodata = true;
+
+  // Export Menu
+  countyChart.exporting.menu = new am4core.ExportMenu();
+  countyChart.exporting.menu.align = "right";
+  countyChart.exporting.menu.verticalAlign = "bottom";
 
   var countyPoly = countySeries.mapPolygons.template;
 
