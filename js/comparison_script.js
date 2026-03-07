@@ -68,7 +68,7 @@ function getRegion(stateAbbr) {
 let currentView = "chart";
 let chartType = "bar";
 let mapRoot, chartRoot;
-let mapPolygonSeries, barSeries, treeSeries, xAxis, yAxis, legend, activeState;
+let mapPolygonSeries, barSeries, treeSeries, radarSeries, xAxis, yAxis, legend, activeState;
 
 // =========================================
 // DATA LOADING — merge ACS + PLACES
@@ -322,7 +322,7 @@ function initChart(isModal = false) {
 
     const myTheme = am5.Theme.new(chartRoot);
     myTheme.rule("HierarchyNode", ["depth0"]).setAll({ forceHidden: true });
-    myTheme.rule("HierarchyNode", ["depth1"]).setAll({ forceHidden: true });
+    myTheme.rule("HierarchyNode", ["depth1"]).setAll({ forceHidden: regionMode ? true : false });
 
     chartRoot.setThemes([
         myTheme,
@@ -339,8 +339,12 @@ function initChart(isModal = false) {
 
     if (chartType === "bar") {
         initBarChart(isModal);
-    } else {
+    } else if (chartType === "treemap") {
         initTreeMap(isModal);
+    } else if (chartType === "circular_bar") {
+        initRadarChart(isModal);
+    } else if (chartType === "voronoi_treemap") {
+        initVoronoiTreeMap(isModal);
     }
 }
 
@@ -491,11 +495,12 @@ function initTreeMap(isModal) {
     });
 
     treeSeries.rectangles.template.adapters.add("fill", function (fill, target) {
+        if (!regionMode) return am5.color(0xc83830);
         const dataContext = target.dataItem.dataContext;
         if (dataContext && dataContext.region && regionColors[dataContext.region]) {
             return am5.color(regionColors[dataContext.region]);
         }
-        return fill;
+        return am5.color(0xc83830);
     });
 
     treeSeries.labels.template.setAll({
@@ -535,11 +540,102 @@ function initTreeMap(isModal) {
     treeSeries.appear(1000, 100);
 }
 
+function initRadarChart(isModal) {
+    const isMobileChart = window.innerWidth <= 768;
+
+    const chart = chartRoot.container.children.push(am5radar.RadarChart.new(chartRoot, {
+        panX: false,
+        panY: false,
+        wheelX: "none",
+        wheelY: "none",
+        startAngle: -84,
+        endAngle: 264,
+        innerRadius: am5.percent(40)
+    }));
+
+    // Add cursor
+    const cursor = chart.set("cursor", am5radar.RadarCursor.new(chartRoot, {
+        behavior: "zoomX"
+    }));
+    cursor.lineY.set("forceHidden", true);
+
+    // Create axes
+    let xRenderer = am5radar.AxisRendererCircular.new(chartRoot, {
+        minGridDistance: 30
+    });
+    xRenderer.grid.template.set("forceHidden", true);
+
+    xAxis = chart.xAxes.push(am5xy.CategoryAxis.new(chartRoot, {
+        maxDeviation: 0,
+        categoryField: "name",
+        renderer: xRenderer
+    }));
+
+    let yRenderer = am5radar.AxisRendererRadial.new(chartRoot, {});
+    yRenderer.labels.template.set("centerX", am5.p50);
+
+    yAxis = chart.yAxes.push(am5xy.ValueAxis.new(chartRoot, {
+        maxDeviation: 0.3,
+        min: 0,
+        renderer: yRenderer
+    }));
+
+    // Add series
+    radarSeries = chart.series.push(am5radar.RadarColumnSeries.new(chartRoot, {
+        name: "Series 1",
+        sequencedInterpolation: true,
+        xAxis: xAxis,
+        yAxis: yAxis,
+        valueYField: "value",
+        categoryXField: "name"
+    }));
+
+    // Rounded corners for columns
+    radarSeries.columns.template.setAll({
+        cornerRadius: 5,
+        tooltipText: "{categoryX}: [bold]{valueY}[/]"
+    });
+
+    // Color adaptation based on region
+    radarSeries.columns.template.adapters.add("fill", function (fill, target) {
+        if (!regionMode) return am5.color(0xc83830);
+        const dataContext = target.dataItem.dataContext;
+        if (dataContext && dataContext.region && regionColors[dataContext.region]) {
+            return am5.color(regionColors[dataContext.region]);
+        }
+        return am5.color(0xc83830);
+    });
+
+    radarSeries.columns.template.adapters.add("stroke", function (stroke, target) {
+        if (!regionMode) return am5.color(0xc83830);
+        const dataContext = target.dataItem.dataContext;
+        if (dataContext && dataContext.region && regionColors[dataContext.region]) {
+            return am5.color(regionColors[dataContext.region]);
+        }
+        return am5.color(0xc83830);
+    });
+
+    legend = chart.children.push(am5.Legend.new(chartRoot, {
+        nameField: "name", fillField: "color", strokeField: "color",
+        centerX: am5.p50, x: am5.p50,
+        layout: isMobileChart ? am5.GridLayout.new(chartRoot, { maxColumns: 2, fixedWidthGrid: true }) : chartRoot.horizontalLayout,
+        clickTarget: "none",
+        marginTop: 30
+    }));
+
+    radarSeries.appear(1000);
+    chart.appear(1000, 100);
+}
+
 function updateChart() {
     if (chartType === "bar") {
         updateBarChart();
-    } else {
+    } else if (chartType === "treemap") {
         updateTreeMap();
+    } else if (chartType === "circular_bar") {
+        updateRadarChart();
+    } else if (chartType === "voronoi_treemap") {
+        updateVoronoiTreeMap();
     }
 }
 
@@ -616,9 +712,18 @@ function updateTreeMap() {
         }
     });
 
-    rootData.children = regions
-        .filter(r => regionNodes[r].children.length > 0)
-        .map(r => regionNodes[r]);
+    if (regionMode) {
+        rootData.children = regions
+            .filter(r => regionNodes[r].children.length > 0)
+            .map(r => regionNodes[r]);
+    } else {
+        // Flatten the data for non-region mode
+        const allItems = [];
+        regions.forEach(r => {
+            regionNodes[r].children.forEach(c => allItems.push(c));
+        });
+        rootData.children = allItems;
+    }
 
     treeSeries.data.setAll([rootData]);
 
@@ -639,6 +744,118 @@ function updateTreeMap() {
     }
 
     // Keep table in sync whenever the chart updates
+    if (currentView === 'table') refreshTable();
+}
+
+function updateRadarChart() {
+    if (!radarSeries) return;
+
+    const data = [];
+    const regionOrder = ["Central", "East", "South", "West"];
+    const selectedByRegion = { "Central": [], "East": [], "South": [], "West": [] };
+
+    selectedStates.forEach(id => {
+        const state = stateData.find(s => s.id === id);
+        if (state) {
+            let val = state[activeMetric] || 0;
+            selectedByRegion[state.region].push({
+                name: state.name, value: val, region: state.region
+            });
+        }
+    });
+
+    const legendData = [];
+    if (regionMode) {
+        legend.show();
+        regionOrder.forEach(region => {
+            selectedByRegion[region].sort((a, b) => a.value - b.value);
+            selectedByRegion[region].forEach(item => data.push(item));
+            if (selectedByRegion[region].length > 0) {
+                legendData.push({ name: region, color: am5.color(regionColors[region]) });
+            }
+        });
+    } else {
+        legend.hide();
+        let allItems = [];
+        regionOrder.forEach(region => {
+            selectedByRegion[region].forEach(item => allItems.push(item));
+        });
+        allItems.sort((a, b) => a.value - b.value);
+        allItems.forEach(item => data.push(item));
+    }
+
+    radarSeries.data.setAll(data);
+    xAxis.data.setAll(data);
+    legend.data.setAll(legendData);
+
+    if (currentView === 'table') refreshTable();
+}
+
+function initVoronoiTreeMap(isModal) {
+    const isMobileChart = window.innerWidth <= 768;
+    const container = chartRoot.container.children.push(
+        am5.Container.new(chartRoot, {
+            width: am5.percent(100), height: am5.percent(100),
+            layout: chartRoot.verticalLayout
+        })
+    );
+
+    treeSeries = container.children.push(
+        am5hierarchy.Voronoi.new(chartRoot, {
+            singleBranchOnly: false,
+            sort: "descending",
+            valueField: "value",
+            categoryField: "name",
+            childDataField: "children",
+            initialDepth: 2,
+            colors: am5.ColorSet.new(chartRoot, {})
+        })
+    );
+
+    treeSeries.polygons.template.setAll({
+        strokeWidth: 2,
+        stroke: am5.color(0xffffff),
+        tooltipText: "{name}: [bold]{value}[/]"
+    });
+
+    treeSeries.polygons.template.adapters.add("fill", function (fill, target) {
+        if (!regionMode) return am5.color(0xc83830);
+        const dataContext = target.dataItem.dataContext;
+        if (dataContext && dataContext.region && regionColors[dataContext.region]) {
+            return am5.color(regionColors[dataContext.region]);
+        }
+        return am5.color(0xc83830);
+    });
+
+    treeSeries.labels.template.setAll({
+        fontSize: 14, fontWeight: "600", fill: am5.color(0xffffff)
+    });
+
+    treeSeries.appear(1000, 100);
+}
+
+function updateVoronoiTreeMap() {
+    if (!treeSeries) return;
+    const rootData = { name: "Root", children: [] };
+    const regions = ["Central", "East", "South", "West"];
+    const regionNodes = {};
+    regions.forEach(r => { regionNodes[r] = { name: r, region: r, children: [] }; });
+
+    selectedStates.forEach(id => {
+        const state = stateData.find(s => s.id === id);
+        if (state) {
+            let val = state[activeMetric] || 0;
+            regionNodes[state.region].children.push({
+                name: state.name, value: val, region: state.region
+            });
+        }
+    });
+
+    rootData.children = regions
+        .filter(r => regionNodes[r].children.length > 0)
+        .map(r => regionNodes[r]);
+
+    treeSeries.data.setAll([rootData]);
     if (currentView === 'table') refreshTable();
 }
 
@@ -724,17 +941,21 @@ function switchChartType(type) {
     const btnHBar = document.getElementById('btnHBarChart');
     const btnVBar = document.getElementById('btnVBarChart');
     const btnTree = document.getElementById('btnTreeMap');
+    const btnCircular = document.getElementById('btnCircularBarChart');
 
     btnHBar && btnHBar.classList.remove('active');
     btnVBar && btnVBar.classList.remove('active');
     btnTree && btnTree.classList.remove('active');
+    btnCircular && btnCircular.classList.remove('active');
 
     if (type === 'bar') {
         btnHBar && btnHBar.classList.add('active');
     } else if (type === 'bar_vertical') {
         btnVBar && btnVBar.classList.add('active');
-    } else {
+    } else if (type === 'treemap') {
         btnTree && btnTree.classList.add('active');
+    } else {
+        btnCircular && btnCircular.classList.add('active');
     }
 
     initChart(currentChartDiv === "chartModalDiv");

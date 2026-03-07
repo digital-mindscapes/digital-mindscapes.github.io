@@ -91,6 +91,23 @@ let allCountyData = [];
 let activeMetric = "pct_unemployment_rate";
 let heatmapMode = true;
 let regionMode = false;
+let stateGroupMode = false;
+let stateColors = {};
+
+function getStateColor(state) {
+    if (!state) return am5.color(0xc83830);
+    if (!stateColors[state]) {
+        const colors = [
+            "#3b82f6", "#ef4444", "#10b981", "#f59e0b", "#8b5cf6",
+            "#ec4899", "#06b6d4", "#f97316", "#14b8a6", "#6366f1",
+            "#4ade80", "#fb7185", "#38bdf8", "#fbbf24", "#818cf8",
+            "#fb923c", "#2dd4bf", "#f472b6", "#a78bfa", "#22d3ee"
+        ];
+        const index = Object.keys(stateColors).length % colors.length;
+        stateColors[state] = am5.color(colors[index]);
+    }
+    return stateColors[state];
+}
 let verticalChartMode = false;
 let selectedCounties = new Set(); // Stores amCharts ids (e.g. US-AL-001)
 let countyDataLookup = {}; // Stores amCharts ids mapping to county data
@@ -118,7 +135,7 @@ function getRegion(stateAbbr) {
 }
 
 let mapRoot, chartRoot;
-let mapPolygonSeries, barSeries, xAxis, yAxis, legend, activeState;
+let mapPolygonSeries, barSeries, treeSeries, radarSeries, xAxis, yAxis, legend, activeState;
 
 // =========================================
 // DATA LOADING
@@ -248,6 +265,7 @@ async function init() {
                 window.tableGroupMode = regionMode;
                 if (regionMode) {
                     window.tableGroupStateMode = false;
+                    stateGroupMode = false;
                     const sToggle = document.getElementById("stateGroupToggle");
                     if (sToggle) sToggle.checked = false;
                 }
@@ -269,11 +287,13 @@ async function init() {
             window.tableGroupStateMode = sToggle.checked;
             sToggle.addEventListener("change", (e) => {
                 window.tableGroupStateMode = e.target.checked;
+                stateGroupMode = e.target.checked;
                 if (window.tableGroupStateMode) {
                     window.tableGroupMode = false;
                     regionMode = false;
                     if (rToggle) rToggle.checked = false;
                 }
+                initChart();
                 updateChart();
                 if (currentView === 'table') refreshTable();
             });
@@ -538,23 +558,44 @@ function initMap() {
 
 let currentChartDiv = "compChartDiv";
 
-function initChart() {
+function initChart(isModal = false) {
     if (chartRoot) {
         chartRoot.dispose();
     }
-    chartRoot = am5.Root.new(currentChartDiv);
-    chartRoot.setThemes([am5themes_Animated.new(chartRoot)]);
+    const containerId = isModal ? "chartModalDiv" : "compChartDiv";
+    chartRoot = am5.Root.new(containerId);
+
+    const myTheme = am5.Theme.new(chartRoot);
+    myTheme.rule("HierarchyNode", ["depth0"]).setAll({ forceHidden: true });
+    myTheme.rule("HierarchyNode", ["depth1"]).setAll({ forceHidden: (regionMode || stateGroupMode) ? true : false });
+
+    chartRoot.setThemes([
+        myTheme,
+        am5themes_Animated.new(chartRoot)
+    ]);
 
     // Add export menu
-    let exporting = am5plugins_exporting.Exporting.new(chartRoot, {
+    am5plugins_exporting.Exporting.new(chartRoot, {
         menu: am5plugins_exporting.ExportingMenu.new(chartRoot, {
             align: "right",
             valign: "bottom"
         })
     });
 
-    const isVert = verticalChartMode;
+    if (chartType === "bar") {
+        initBarChart(isModal);
+    } else if (chartType === "treemap") {
+        initTreeMap(isModal);
+    } else if (chartType === "circular_bar") {
+        initRadarChart(isModal);
+    }
+}
+
+let chartType = "bar";
+
+function initBarChart(isModal) {
     const isMobileChart = window.innerWidth <= 768;
+    const isVert = verticalChartMode;
 
     const chart = chartRoot.container.children.push(am5xy.XYChart.new(chartRoot, {
         panX: false,
@@ -567,13 +608,14 @@ function initChart() {
         paddingBottom: isVert ? (isMobileChart ? 40 : 100) : 0
     }));
 
-    // On mobile, ensure the chart div is tall enough for vertical bars
-    if (isMobileChart && isVert) {
-        const el = document.getElementById("compChartDiv");
-        if (el) el.style.minHeight = "550px";
-    } else if (isMobileChart) {
-        const el = document.getElementById("compChartDiv");
-        if (el) el.style.minHeight = "";
+    // On mobile/vertical, ensure the chart div is tall enough
+    const container = document.getElementById(isModal ? "chartModalDiv" : "compChartDiv");
+    if (container) {
+        if (isMobileChart && isVert) {
+            container.style.minHeight = "550px";
+        } else {
+            container.style.minHeight = "";
+        }
     }
 
     // Add Label for Metric
@@ -650,6 +692,10 @@ function initChart() {
     });
 
     barSeries.columns.template.adapters.add("fill", function (fill, target) {
+        if (stateGroupMode) {
+            const dataContext = target.dataItem.dataContext;
+            return getStateColor(dataContext.state);
+        }
         if (!regionMode) return am5.color(0xc83830);
         const dataContext = target.dataItem.dataContext;
         if (dataContext && dataContext.region && regionColors[dataContext.region]) {
@@ -686,12 +732,155 @@ function initChart() {
     chart.appear(1000, 100);
 }
 
+function initTreeMap(isModal) {
+    const isMobileChart = window.innerWidth <= 768;
+    const containerId = isModal ? "chartModalDiv" : "compChartDiv";
+    const el = document.getElementById(containerId);
+    if (el) {
+        el.style.minHeight = "550px"; // Set a good base height for Treemap
+    }
+    const container = chartRoot.container.children.push(
+        am5.Container.new(chartRoot, {
+            width: am5.percent(100),
+            height: am5.percent(100),
+            layout: chartRoot.verticalLayout
+        })
+    );
+
+    treeSeries = container.children.push(
+        am5hierarchy.Treemap.new(chartRoot, {
+            singleBranchOnly: false,
+            sort: "descending",
+            valueField: "value",
+            categoryField: "name",
+            childDataField: "children",
+            initialDepth: 2,
+            nodePaddingOuter: 0,
+            nodePaddingInner: 2
+        })
+    );
+
+    legend = container.children.push(am5.Legend.new(chartRoot, {
+        nameField: "name", fillField: "color", strokeField: "color",
+        centerX: am5.p50, x: am5.p50,
+        layout: isMobileChart ? am5.GridLayout.new(chartRoot, { maxColumns: 2, fixedWidthGrid: true }) : chartRoot.horizontalLayout,
+        clickTarget: "none",
+        marginTop: 30
+    }));
+
+    treeSeries.rectangles.template.setAll({
+        strokeWidth: 2,
+        stroke: am5.color(0xffffff),
+        cornerRadiusTL: 4, cornerRadiusTR: 4, cornerRadiusBL: 4, cornerRadiusBR: 4,
+        tooltipText: "{name}: [bold]{value}[/]"
+    });
+
+    treeSeries.rectangles.template.adapters.add("fill", function (fill, target) {
+        const dataContext = target.dataItem.dataContext;
+        if (stateGroupMode) {
+            return getStateColor(dataContext.state);
+        }
+        if (!regionMode) return am5.color(0xc83830);
+        if (dataContext && dataContext.region && regionColors[dataContext.region]) {
+            return am5.color(regionColors[dataContext.region]);
+        }
+        return fill;
+    });
+
+    treeSeries.labels.template.setAll({
+        centerY: am5.p0, y: 10, fontSize: 14, fontWeight: "600"
+    });
+
+    treeSeries.appear(1000, 100);
+}
+
+function initRadarChart(isModal) {
+    const isMobileChart = window.innerWidth <= 768;
+    const containerId = isModal ? "chartModalDiv" : "compChartDiv";
+    const el = document.getElementById(containerId);
+    if (el) {
+        el.style.minHeight = "550px"; // Set a good base height for Circular Bar
+    }
+
+    const chart = chartRoot.container.children.push(am5radar.RadarChart.new(chartRoot, {
+        panX: false, panY: false, wheelX: "none", wheelY: "none",
+        startAngle: -84, endAngle: 264,
+        innerRadius: am5.percent(40),
+        radius: am5.percent(80),
+        layout: chartRoot.verticalLayout,
+        paddingBottom: 20
+    }));
+
+    const cursor = chart.set("cursor", am5radar.RadarCursor.new(chartRoot, { behavior: "zoomX" }));
+    cursor.lineY.set("forceHidden", true);
+
+    let xRenderer = am5radar.AxisRendererCircular.new(chartRoot, { minGridDistance: 30 });
+    xRenderer.grid.template.set("forceHidden", true);
+    xRenderer.labels.template.set("forceHidden", true); // No labels on the edge
+
+    xAxis = chart.xAxes.push(am5xy.CategoryAxis.new(chartRoot, {
+        maxDeviation: 0, categoryField: "name", renderer: xRenderer
+    }));
+
+    let yRenderer = am5radar.AxisRendererRadial.new(chartRoot, {});
+    yRenderer.labels.template.set("centerX", am5.p50);
+
+    yAxis = chart.yAxes.push(am5xy.ValueAxis.new(chartRoot, {
+        maxDeviation: 0.3, min: 0, renderer: yRenderer
+    }));
+
+    radarSeries = chart.series.push(am5radar.RadarColumnSeries.new(chartRoot, {
+        name: "Series 1", sequencedInterpolation: true,
+        xAxis: xAxis, yAxis: yAxis,
+        valueYField: "value", categoryXField: "name"
+    }));
+
+    radarSeries.columns.template.setAll({
+        cornerRadius: 5, tooltipText: "{categoryX}: [bold]{valueY}[/]"
+    });
+
+    radarSeries.columns.template.adapters.add("fill", function (fill, target) {
+        const dataContext = target.dataItem.dataContext;
+        if (stateGroupMode) {
+            return getStateColor(dataContext.state);
+        }
+        if (!regionMode) return am5.color(0xc83830);
+        if (dataContext && dataContext.region && regionColors[dataContext.region]) {
+            return am5.color(regionColors[dataContext.region]);
+        }
+        return chartRoot.get("colors").getIndex(radarSeries.columns.indexOf(target));
+    });
+
+    legend = chart.children.push(am5.Legend.new(chartRoot, {
+        nameField: "name", fillField: "color", strokeField: "color",
+        centerX: am5.p50, x: am5.p50,
+        layout: isMobileChart ? am5.GridLayout.new(chartRoot, { maxColumns: 2, fixedWidthGrid: true }) : chartRoot.horizontalLayout,
+        clickTarget: "none",
+        marginTop: 20,
+        marginBottom: 20
+    }));
+
+    radarSeries.appear(1000);
+    chart.appear(1000, 100);
+}
+
 function updateChart() {
+    if (chartType === "bar") {
+        updateBarChart();
+    } else if (chartType === "treemap") {
+        updateTreeMap();
+    } else if (chartType === "circular_bar") {
+        updateRadarChart();
+    }
+}
+
+function updateBarChart() {
     if (!barSeries) return;
 
     const data = [];
     const regionOrder = ["Central", "East", "South", "West"];
     const selectedByRegion = { "Central": [], "East": [], "South": [], "West": [] };
+    const selectedByState = {};
 
     selectedCounties.forEach(id => {
         const countyData = countyDataLookup[id];
@@ -705,11 +894,31 @@ function updateChart() {
             if (countyData.state_abbr || countyData.state) {
                 shortName += ", " + (countyData.state_abbr || countyData.state);
             }
-            selectedByRegion[countyData.region].push({ name: shortName, value: val, region: countyData.region });
+            const item = {
+                name: shortName,
+                value: val,
+                region: countyData.region,
+                state: countyData.state_abbr || countyData.state
+            };
+
+            if (stateGroupMode) {
+                const s = item.state || "Unknown";
+                if (!selectedByState[s]) selectedByState[s] = [];
+                selectedByState[s].push(item);
+            } else {
+                selectedByRegion[countyData.region].push(item);
+            }
         }
     });
 
-    if (regionMode) {
+    if (stateGroupMode) {
+        legend.show();
+        const sortedStates = Object.keys(selectedByState).sort();
+        sortedStates.forEach(s => {
+            selectedByState[s].sort((a, b) => a.value - b.value);
+            selectedByState[s].forEach(item => data.push(item));
+        });
+    } else if (regionMode) {
         legend.show();
         regionOrder.forEach(region => {
             selectedByRegion[region].sort((a, b) => a.value - b.value);
@@ -741,15 +950,17 @@ function updateChart() {
         }
     }
 
-    const compChartDiv = document.getElementById("compChartDiv");
+    const chartDiv = document.getElementById(currentChartDiv);
+    if (!chartDiv) return;
+
     if (verticalChartMode) {
-        compChartDiv.style.height = "500px";
+        chartDiv.style.height = "550px";
     } else {
         const minHeight = 250;
         const heightPerItem = 30;
-        let newHeight = data.length * heightPerItem + 60;
+        let newHeight = data.length * heightPerItem + 100; // Extra padding for legend/labels
         if (newHeight < minHeight) newHeight = minHeight;
-        compChartDiv.style.height = newHeight + "px";
+        chartDiv.style.height = newHeight + "px";
     }
 
     chartRoot.resize();
@@ -758,7 +969,11 @@ function updateChart() {
     yAxis.data.setAll(data);
     barSeries.data.setAll(data);
 
-    updateChartExtras(selectedByRegion);
+    if (stateGroupMode) {
+        updateChartExtrasState(selectedByState);
+    } else {
+        updateChartExtras(selectedByRegion);
+    }
 
     // Keep table in sync whenever the chart updates
     if (typeof currentView !== 'undefined' && currentView === 'table') refreshTable();
@@ -807,6 +1022,191 @@ function updateChartExtras(selectedByRegion) {
     });
 
     legend.data.setAll(legendData);
+}
+
+function updateChartExtrasState(selectedByState) {
+    const catAxis = verticalChartMode ? xAxis : yAxis;
+    catAxis.axisRanges.clear();
+    const legendData = [];
+
+    const sortedStates = Object.keys(selectedByState).sort();
+    sortedStates.forEach(state => {
+        const counties = selectedByState[state];
+        if (counties && counties.length > 0) {
+            const lastCounty = counties[counties.length - 1].name;
+            const color = getStateColor(state);
+
+            const rangeDataItem = catAxis.makeDataItem({ category: lastCounty });
+            const range = catAxis.createAxisRange(rangeDataItem);
+
+            if (verticalChartMode) {
+                rangeDataItem.get("label").setAll({
+                    fill: color, text: state, location: 1, fontWeight: "bold", dy: 80, rotation: 0, centerX: am5.p50
+                });
+                rangeDataItem.get("grid").setAll({ stroke: color, strokeOpacity: 1, location: 1 });
+                rangeDataItem.get("tick").setAll({
+                    stroke: color, strokeOpacity: 1, location: 1, visible: true, length: 80
+                });
+            } else {
+                rangeDataItem.get("label").setAll({
+                    fill: color, text: state, location: 1, fontWeight: "bold", dx: -130
+                });
+                rangeDataItem.get("grid").setAll({ stroke: color, strokeOpacity: 1, location: 1 });
+                rangeDataItem.get("tick").setAll({
+                    stroke: color, strokeOpacity: 1, location: 1, visible: true, length: 130
+                });
+            }
+
+            legendData.push({ name: state, color: color });
+        }
+    });
+
+    legend.data.setAll(legendData);
+}
+
+function updateTreeMap() {
+    if (!treeSeries) return;
+    const rootData = { name: "Root", children: [] };
+    const regions = ["Central", "East", "South", "West"];
+
+    if (stateGroupMode) {
+        const stateNodes = {};
+        selectedCounties.forEach(id => {
+            const data = countyDataLookup[id];
+            if (data) {
+                let val = data[activeMetric] || 0;
+                let shortName = (data.name || id).replace(/ County$/i, "").replace(/ Parish$/i, "");
+                const state = data.state_abbr || data.state || "Unknown";
+                if (data.state_abbr || data.state) shortName += ", " + state;
+
+                if (!stateNodes[state]) {
+                    stateNodes[state] = { name: state, state: state, children: [] };
+                }
+                stateNodes[state].children.push({ name: shortName, value: val, state: state });
+            }
+        });
+        rootData.children = Object.keys(stateNodes).sort().map(s => stateNodes[s]);
+
+        if (legend) {
+            legend.show();
+            const legendData = Object.keys(stateNodes).sort().map(s => ({
+                name: s, color: getStateColor(s)
+            }));
+            legend.data.setAll(legendData);
+        }
+    } else if (regionMode) {
+        const regionNodes = {};
+        regions.forEach(r => { regionNodes[r] = { name: r, region: r, children: [] }; });
+
+        selectedCounties.forEach(id => {
+            const data = countyDataLookup[id];
+            if (data) {
+                let val = data[activeMetric] || 0;
+                let shortName = (data.name || id).replace(/ County$/i, "").replace(/ Parish$/i, "");
+                if (data.state_abbr || data.state) shortName += ", " + (data.state_abbr || data.state);
+                regionNodes[data.region].children.push({ name: shortName, value: val, region: data.region });
+            }
+        });
+
+        rootData.children = regions
+            .filter(r => regionNodes[r].children.length > 0)
+            .map(r => regionNodes[r]);
+
+        if (legend) {
+            legend.show();
+            const legendData = regions.filter(r => regionNodes[r].children.length > 0)
+                .map(r => ({ name: r, color: am5.color(regionColors[r]) }));
+            legend.data.setAll(legendData);
+        }
+    } else {
+        selectedCounties.forEach(id => {
+            const data = countyDataLookup[id];
+            if (data) {
+                let val = data[activeMetric] || 0;
+                let shortName = (data.name || id).replace(/ County$/i, "").replace(/ Parish$/i, "");
+                if (data.state_abbr || data.state) shortName += ", " + (data.state_abbr || data.state);
+                rootData.children.push({ name: shortName, value: val });
+            }
+        });
+        if (legend) {
+            legend.hide();
+            legend.data.setAll([]);
+        }
+    }
+
+    treeSeries.data.setAll([rootData]);
+
+    const chartDiv = document.getElementById(currentChartDiv);
+    if (chartDiv) {
+        chartDiv.style.height = "550px";
+    }
+    chartRoot.resize();
+
+    if (typeof currentView !== 'undefined' && currentView === 'table') refreshTable();
+}
+
+function updateRadarChart() {
+    if (!radarSeries) return;
+    const data = [];
+    const selectedByState = {};
+    const regionOrder = ["Central", "East", "South", "West"];
+    const selectedByRegion = { "Central": [], "East": [], "South": [], "West": [] };
+
+    selectedCounties.forEach(id => {
+        const countyData = countyDataLookup[id];
+        if (countyData) {
+            let val = countyData[activeMetric] || 0;
+            let shortName = (countyData.name || id).replace(/ County$/i, "").replace(/ Parish$/i, "");
+            const state = countyData.state_abbr || countyData.state || "Unknown";
+            if (countyData.state_abbr || countyData.state) shortName += ", " + state;
+
+            const item = { name: shortName, value: val, region: countyData.region, state: state };
+            if (stateGroupMode) {
+                if (!selectedByState[state]) selectedByState[state] = [];
+                selectedByState[state].push(item);
+            } else {
+                selectedByRegion[countyData.region].push(item);
+            }
+        }
+    });
+
+    const legendData = [];
+    if (stateGroupMode) {
+        legend.show();
+        const sortedStates = Object.keys(selectedByState).sort();
+        sortedStates.forEach(state => {
+            selectedByState[state].sort((a, b) => a.value - b.value);
+            data.push(...selectedByState[state]);
+            legendData.push({ name: state, color: getStateColor(state) });
+        });
+    } else if (regionMode) {
+        legend.show();
+        regionOrder.forEach(region => {
+            const sortedByVal = selectedByRegion[region].sort((a, b) => a.value - b.value);
+            data.push(...sortedByVal);
+            if (selectedByRegion[region].length > 0) {
+                legendData.push({ name: region, color: am5.color(regionColors[region]) });
+            }
+        });
+    } else {
+        legend.hide();
+        let allItems = [];
+        regionOrder.forEach(region => { allItems = allItems.concat(selectedByRegion[region]); });
+        allItems.sort((a, b) => a.value - b.value);
+        data.push(...allItems);
+    }
+
+    radarSeries.data.setAll(data);
+    xAxis.data.setAll(data);
+    legend.data.setAll(legendData);
+
+    const chartDiv = document.getElementById(currentChartDiv);
+    if (chartDiv) {
+        chartDiv.style.height = "550px";
+    }
+    chartRoot.resize();
+
+    if (typeof currentView !== 'undefined' && currentView === 'table') refreshTable();
 }
 
 
@@ -950,18 +1350,29 @@ function switchView(view) {
 }
 
 function switchChartType(type) {
-    verticalChartMode = type === 'bar_vertical';
+    if (type === 'bar_vertical') {
+        chartType = 'bar';
+        verticalChartMode = true;
+    } else {
+        chartType = type;
+        verticalChartMode = false;
+    }
 
     const btnHBar = document.getElementById('btnHBarChart');
     const btnVBar = document.getElementById('btnVBarChart');
+    const btnTree = document.getElementById('btnTreeMap');
+    const btnCircular = document.getElementById('btnCircularBarChart');
 
-    btnHBar && btnHBar.classList.remove('active');
-    btnVBar && btnVBar.classList.remove('active');
+    [btnHBar, btnVBar, btnTree, btnCircular].forEach(btn => btn && btn.classList.remove('active'));
 
     if (type === 'bar_vertical') {
         btnVBar && btnVBar.classList.add('active');
-    } else {
+    } else if (type === 'bar') {
         btnHBar && btnHBar.classList.add('active');
+    } else if (type === 'treemap') {
+        btnTree && btnTree.classList.add('active');
+    } else if (type === 'circular_bar') {
+        btnCircular && btnCircular.classList.add('active');
     }
 
     initChart();
@@ -999,7 +1410,7 @@ function openChartModal() {
     document.body.style.overflow = "hidden"; // Prevent background scrolling
 
     currentChartDiv = "chartModalDiv";
-    initChart();
+    initChart(true);
     updateChart();
 }
 
@@ -1014,7 +1425,7 @@ function closeChartModal(event) {
         document.body.style.overflow = "";
 
         currentChartDiv = "compChartDiv";
-        initChart();
+        initChart(false);
         updateChart();
     }
 }
