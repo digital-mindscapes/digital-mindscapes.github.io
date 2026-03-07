@@ -31,6 +31,8 @@ function safeClearDiv(divId) {
         div.removeChild(radarInfoPanelCached);
     }
     div.innerHTML = "";
+    div.style.minHeight = "";
+    div.style.height = "";
 }
 
 function updateRadarInfoPanel() {
@@ -50,12 +52,15 @@ function updateRadarInfoPanel() {
             radarInfoPanelCached.style.boxSizing = "border-box";
             if (container) container.appendChild(radarInfoPanelCached);
         } else {
-            radarInfoPanelCached.style.marginTop = "100px";
-            radarInfoPanelCached.style.marginBottom = "20px";
-            radarInfoPanelCached.style.maxWidth = "";
-            radarInfoPanelCached.style.width = "";
-            radarInfoPanelCached.style.marginLeft = "16px";
-            radarInfoPanelCached.style.marginRight = "16px";
+            radarInfoPanelCached.style.marginTop = "60px"; // Increased margin to prevent overlap
+            radarInfoPanelCached.style.marginBottom = "40px";
+            radarInfoPanelCached.style.maxWidth = "1100px";
+            radarInfoPanelCached.style.width = "95%";
+            radarInfoPanelCached.style.marginLeft = "auto";
+            radarInfoPanelCached.style.marginRight = "auto";
+            radarInfoPanelCached.style.boxSizing = "border-box";
+            radarInfoPanelCached.style.position = "relative";
+            radarInfoPanelCached.style.zIndex = "10";
             const section = document.getElementById("chartSection");
             if (section) section.appendChild(radarInfoPanelCached);
         }
@@ -717,17 +722,22 @@ function drawRadarChart() {
         return;
     }
 
-    let W = div.clientWidth || 800;
-    let H = div.clientHeight || 600;
+    let W = div.clientWidth;
+    let H = div.clientHeight;
+
+    // Reliability check: If returning from display:none or flex reflow, dimensions might be 0
+    if (!W || W < 100) W = div.parentElement ? div.parentElement.clientWidth : 800;
+
+    // In normal view, force a standard height if the flex container is being stubborn
+    if (currentChartDiv === "bubbleChartDiv") {
+        H = 650;
+    } else if (!H || H < 100) {
+        H = 700;
+    }
+
+    div.style.minHeight = H + "px"; // Force container to respect the SVG height
     const isMobile = window.innerWidth <= 768;
 
-    if (isMobile && H < 450) {
-        H = 450;
-    }
-    if (isMobile && W < 300) {
-        // Fallback to screen width minus padding if container isn't stretched yet
-        W = window.innerWidth - 32;
-    }
 
     // In modal, ensure we have a decent height since it's scrollable
     if (currentChartDiv === "chartModalDiv") {
@@ -935,14 +945,17 @@ function closeChartModal(event) {
         // Clear out modal container
         safeClearDiv("chartModalDiv");
 
-        if (currentChartMode === "bubble") {
-            if (chartRoot) { chartRoot.dispose(); chartRoot = null; }
-            initBubbleChart();
-            updateBubbleChart();
-        } else {
-            if (chartRoot) { chartRoot.dispose(); chartRoot = null; }
-            drawRadarChart();
-        }
-        updateRadarInfoPanel();
+        // Use a small timeout to allow the browser to reflow the page after modal closes
+        setTimeout(() => {
+            if (currentChartMode === "bubble") {
+                if (chartRoot) { chartRoot.dispose(); chartRoot = null; }
+                initBubbleChart();
+                updateBubbleChart();
+            } else {
+                if (chartRoot) { chartRoot.dispose(); chartRoot = null; }
+                drawRadarChart();
+            }
+            updateRadarInfoPanel();
+        }, 100);
     }
 }
