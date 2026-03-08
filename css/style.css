@@ -1035,3 +1035,91 @@ input:checked+.slider:before {
 .amcharts-export-menu-level-0 .amcharts-export-item>a>svg {
   display: none !important;
 }
+
+/* ============================================
+   COUNTY DISTRIBUTION PAGE STYLES
+   ============================================ */
+
+.metrics-sidebar {
+  width: 320px;
+  background: var(--bg-white);
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow-y: auto;
+  height: calc(100vh - 120px);
+}
+
+.metrics-sidebar-header {
+  padding: 25px;
+  background: rgba(200, 56, 48, 0.05);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.metrics-sidebar-header h2 {
+  font-size: 1.25rem;
+  color: var(--text-dark);
+  margin-bottom: 10px;
+}
+
+.metrics-sidebar-header p {
+  font-size: 0.85rem;
+  color: var(--text-light);
+  line-height: 1.5;
+}
+
+.metrics-sidebar-content {
+  padding: 15px;
+}
+
+.metrics-sidebar-section h3 {
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-light);
+  margin: 25px 10px 15px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid rgba(200, 56, 48, 0.1);
+}
+
+.metric-sidebar-item {
+  padding: 15px 20px;
+  margin-bottom: 8px;
+  border-radius: 12px;
+  cursor: pointer;
+  background: var(--bg-white);
+  border: 1px solid var(--border-color);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.metric-sidebar-item:hover {
+  transform: translateY(-2px);
+  border-color: #adb5bd;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.metric-sidebar-item.active {
+  background: rgba(200, 56, 48, 0.05);
+  border-color: var(--main-color);
+  box-shadow: 0 4px 15px rgba(200, 56, 48, 0.1);
+}
+
+.metric-sidebar-item .metric-label {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-dark);
+}
+
+.metric-sidebar-item.active .metric-label {
+  color: var(--main-color);
+}
+
+.metric-sidebar-item .metric-unit {
+  font-size: 0.8rem;
+  color: var(--text-light);
+  font-weight: 500;
+}

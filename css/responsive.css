@@ -179,6 +179,54 @@
     .comp-table-section {
         min-height: auto !important;
     }
+
+    /* ── County Distribution Page (Mobile) ── */
+    .metrics-sidebar {
+        width: 100% !important;
+        height: auto !important;
+        border-right: none !important;
+        border-bottom: 1px solid #eee !important;
+        overflow: visible !important;
+    }
+
+    .metrics-sidebar-content {
+        display: none !important;
+        /* Hide full list on mobile */
+    }
+
+    .mobile-metric-selector {
+        display: block !important;
+        margin-top: 15px !important;
+        width: 100% !important;
+    }
+
+    .mobile-metric-dropdown {
+        display: block !important;
+        width: 100% !important;
+        padding: 12px 15px !important;
+        border: 2px solid var(--primary-color) !important;
+        border-radius: 10px !important;
+        font-size: 15px !important;
+        font-weight: 600 !important;
+        background: #fff !important;
+        color: #333 !important;
+        cursor: pointer !important;
+        appearance: auto !important;
+    }
+
+    .control-bar {
+        padding: 15px !important;
+        gap: 15px !important;
+        justify-content: center !important;
+    }
+
+    .distribution-container {
+        padding: 10px !important;
+    }
+
+    #distributionChartDiv {
+        min-height: 800px !important;
+    }
 }
 
 /* ─────────────────────────────────────────────
