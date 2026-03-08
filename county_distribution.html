@@ -17,7 +17,7 @@
     <style>
         .header {
             position: relative;
-            z-index: 3000 !important;
+            z-index: 7000 !important;
             /* Always above sticky bars when scrolling */
         }
 
@@ -25,18 +25,32 @@
             display: flex;
             align-items: center;
             gap: 15px;
-            padding: 12px 30px;
+            padding: 20px 30px;
+            min-height: 85px;
             background: #fff;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
             position: sticky;
             top: 0;
-            z-index: 2000;
-            overflow-x: auto;
-            scrollbar-width: none;
+            z-index: 6000;
+            /* Ensure navigation is above everything else */
+            overflow: visible;
         }
 
         .navigation-bar::-webkit-scrollbar {
             display: none;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1000;
+            background: #f1f5f9;
+            display: flex;
+            align-items: flex-start;
+            justify-content: stretch;
+            height: auto;
+            min-height: calc(100vh - 120px);
+            padding: 0 !important;
+            gap: 0 !important;
         }
 
         .control-bar {
@@ -49,9 +63,10 @@
             border-bottom: 1px solid rgba(0, 0, 0, 0.08);
             flex-wrap: wrap;
             position: sticky;
-            top: 60px;
-            /* Height of navigation-bar */
-            z-index: 1500;
+            top: 85px;
+            /* Default starting point, will be refined via JS */
+            z-index: 3000;
+            /* Below navigation */
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
             margin-bottom: 15px;
             border-radius: 0 0 16px 16px;
@@ -166,11 +181,10 @@
             flex: 1;
             padding: 20px;
             background: #f1f5f9;
-            overflow-y: visible;
-            /* Prevents internal scroll competing with sticky nav */
             display: flex;
             flex-direction: column;
             gap: 0;
+            position: relative;
         }
 
         #distributionChartDiv {
@@ -274,6 +288,115 @@
         #tableWrapper {
             scroll-margin-top: 130px;
         }
+
+        /* --- Range Slider Styling --- */
+        .range-slider-container {
+            padding: 15px 40px;
+            background: #fff;
+            border-radius: 16px;
+            margin-top: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+            border: 1px solid rgba(0, 0, 0, 0.02);
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .range-slider-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .range-label {
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #64748b;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .range-value-display {
+            font-size: 14px;
+            font-weight: 800;
+            color: var(--main-color);
+            background: #fff1f0;
+            padding: 4px 12px;
+            border-radius: 20px;
+            border: 1px solid rgba(200, 56, 48, 0.1);
+        }
+
+        .dual-range-slider {
+            position: relative;
+            height: 30px;
+            display: flex;
+            align-items: center;
+        }
+
+        .slider-track {
+            position: absolute;
+            width: 100%;
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 3px;
+            z-index: 1;
+        }
+
+        .slider-range-fill {
+            position: absolute;
+            height: 6px;
+            background: linear-gradient(90deg, var(--main-color), #a02820);
+            border-radius: 3px;
+            z-index: 2;
+        }
+
+        .range-input {
+            position: absolute;
+            width: 100%;
+            pointer-events: none;
+            appearance: none;
+            height: 0;
+            background: none;
+            z-index: 3;
+            margin: 0;
+        }
+
+        .range-input::-webkit-slider-thumb {
+            pointer-events: auto;
+            appearance: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #fff;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            border: 3px solid var(--main-color);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .range-input::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(200, 56, 48, 0.2);
+        }
+
+        .range-input::-webkit-slider-thumb:active {
+            transform: scale(0.95);
+        }
     </style>
 </head>
 
@@ -366,6 +489,15 @@
                 <path d="M22 12A10 10 0 0 0 12 2v10z"></path>
             </svg>
             State Multi-Metric Comparison
+        </a>
+        <a href="about.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+            About
         </a>
     </div>
 
@@ -494,6 +626,32 @@
 
             <div id="chartWrapper">
                 <div id="distributionChartDiv"></div>
+
+                <!-- Dynamic Range Slider -->
+                <div id="rangeSliderContainer" class="range-slider-container">
+                    <div class="range-slider-header">
+                        <span class="range-label">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                            </svg>
+                            Filter by Range
+                        </span>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <span id="rangeMinDisplay" class="range-value-display">0.0</span>
+                            <span style="color: #94a3b8; font-weight: 800;">—</span>
+                            <span id="rangeMaxDisplay" class="range-value-display">100.0</span>
+                        </div>
+                    </div>
+                    <div class="dual-range-slider">
+                        <div class="slider-track"></div>
+                        <div id="sliderRangeFill" class="slider-range-fill"></div>
+                        <input type="range" id="rangeMinInput" class="range-input" min="0" max="100" step="0.1"
+                            value="0">
+                        <input type="range" id="rangeMaxInput" class="range-input" min="0" max="100" step="0.1"
+                            value="100">
+                    </div>
+                </div>
             </div>
 
             <div id="tableWrapper" style="display: none;">

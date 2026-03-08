@@ -267,7 +267,7 @@ body {
 .container {
   display: flex;
   width: 100%;
-  height: calc(100vh - 90px);
+  height: calc(100vh - 120px);
   position: relative;
   align-items: center;
   justify-content: center;
@@ -1048,7 +1048,7 @@ input:checked+.slider:before {
   flex-direction: column;
   padding: 0;
   overflow-y: auto;
-  height: calc(100vh - 120px);
+  height: calc(100vh - 180px);
 }
 
 .metrics-sidebar-header {

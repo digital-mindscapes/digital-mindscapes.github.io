@@ -11,6 +11,11 @@ let highlightFilter = "None"; // "None", "Above", "Below"
 let colorMode = "none"; // "none", "rucc", "region"
 let viewMode = "chart"; // "chart", "table"
 let globalRuccData = {};
+let rangeMin = 0, rangeMax = 100;
+let metricMin = 0, metricMax = 100;
+let currentActiveMetricForRange = "";
+let rangeLineMinDataItem = null, rangeLineMaxDataItem = null;
+let nationalAvgLineDataItem = null;
 
 const ruccColors = {
     "Metro": "#3b82f6",
@@ -30,6 +35,20 @@ const stateToRegion = {
     "IL": "Midwest", "IN": "Midwest", "MI": "Midwest", "OH": "Midwest", "WI": "Midwest", "IA": "Midwest", "KS": "Midwest", "MN": "Midwest", "MO": "Midwest", "NE": "Midwest", "ND": "Midwest", "SD": "Midwest",
     "DE": "South", "FL": "South", "GA": "South", "MD": "South", "NC": "South", "SC": "South", "VA": "South", "WV": "South", "AL": "South", "KY": "South", "MS": "South", "TN": "South", "AR": "South", "LA": "South", "OK": "South", "TX": "South", "DC": "South",
     "AZ": "West", "CO": "West", "ID": "West", "MT": "West", "NV": "West", "NM": "West", "UT": "West", "WY": "West", "AK": "West", "CA": "West", "HI": "West", "OR": "West", "WA": "West"
+};
+
+const stateNameMap = {
+    "AL": "Alabama", "AK": "Alaska", "AZ": "Arizona", "AR": "Arkansas", "CA": "California",
+    "CO": "Colorado", "CT": "Connecticut", "DE": "Delaware", "FL": "Florida", "GA": "Georgia",
+    "HI": "Hawaii", "ID": "Idaho", "IL": "Illinois", "IN": "Indiana", "IA": "Iowa",
+    "KS": "Kansas", "KY": "Kentucky", "LA": "Louisiana", "ME": "Maine", "MD": "Maryland",
+    "MA": "Massachusetts", "MI": "Michigan", "MN": "Minnesota", "MS": "Mississippi", "MO": "Missouri",
+    "MT": "Montana", "NE": "Nebraska", "NV": "Nevada", "NH": "New Hampshire", "NJ": "New Jersey",
+    "NM": "New Mexico", "NY": "New York", "NC": "North Carolina", "ND": "North Dakota", "OH": "Ohio",
+    "OK": "Oklahoma", "OR": "Oregon", "PA": "Pennsylvania", "RI": "Rhode Island", "SC": "South Carolina",
+    "SD": "South Dakota", "TN": "Tennessee", "TX": "Texas", "UT": "Utah", "VT": "Vermont",
+    "VA": "Virginia", "WA": "Washington", "WV": "West Virginia", "WI": "Wisconsin", "WY": "Wyoming",
+    "DC": "District of Columbia"
 };
 
 function normalizeCountyName(name) {
@@ -143,6 +162,15 @@ async function init() {
     initChart();
     updateChart();
     attachListeners();
+    syncStickyTop();
+}
+
+function syncStickyTop() {
+    const navBar = document.querySelector(".navigation-bar");
+    const controlBar = document.querySelector(".control-bar");
+    if (navBar && controlBar) {
+        controlBar.style.top = navBar.offsetHeight + "px";
+    }
 }
 
 function populateStateDropdown() {
@@ -259,6 +287,126 @@ function attachListeners() {
         colorMode = e.target.value;
         updateChart();
     };
+
+    // Range Slider Listeners
+    const minInput = document.getElementById("rangeMinInput");
+    const maxInput = document.getElementById("rangeMaxInput");
+
+    if (minInput && maxInput) {
+        minInput.oninput = (e) => {
+            let val = parseFloat(e.target.value);
+            if (val > rangeMax) {
+                val = rangeMax;
+                e.target.value = val;
+            }
+            rangeMin = val;
+            fastUpdatePlotRange();
+        };
+        minInput.onchange = (e) => {
+            updateChart();
+        };
+
+        maxInput.oninput = (e) => {
+            let val = parseFloat(e.target.value);
+            if (val < rangeMin) {
+                val = rangeMin;
+                e.target.value = val;
+            }
+            rangeMax = val;
+            fastUpdatePlotRange();
+        };
+        maxInput.onchange = (e) => {
+            updateChart();
+        };
+    }
+}
+
+function updateRangeSliderUI() {
+    const minInput = document.getElementById("rangeMinInput");
+    const maxInput = document.getElementById("rangeMaxInput");
+    const fill = document.getElementById("sliderRangeFill");
+    const minDisplay = document.getElementById("rangeMinDisplay");
+    const maxDisplay = document.getElementById("rangeMaxDisplay");
+
+    if (!minInput || !maxInput || !fill || !minDisplay || !maxDisplay) return;
+
+    const minBound = parseFloat(minInput.min);
+    const maxBound = parseFloat(minInput.max);
+    const range = maxBound - minBound;
+
+    if (range === 0) return;
+
+    const left = ((rangeMin - minBound) / range) * 100;
+    const right = ((rangeMax - minBound) / range) * 100;
+
+    fill.style.left = left + "%";
+    fill.style.width = (right - left) + "%";
+
+    const meta = tableMetricMeta[activeMetric] || { unit: "" };
+    minDisplay.textContent = formatValue(rangeMin, meta.unit === "%" ? "pct" : "dec");
+    maxDisplay.textContent = formatValue(rangeMax, meta.unit === "%" ? "pct" : "dec");
+}
+
+function fastUpdatePlotRange() {
+    updateRangeSliderUI();
+
+    // 1. Update Dashed Lines (Fast)
+    if (rangeLineMinDataItem) rangeLineMinDataItem.set("value", rangeMin);
+    if (rangeLineMaxDataItem) rangeLineMaxDataItem.set("value", rangeMax);
+
+    // 2. Loop through points and update highlights (Fast)
+    if (!barSeries) return;
+
+    let highlightedCount = 0;
+    // We recalculate National Average if needed but usually it's stable
+    // Let's get current National Avg from the existing line if it's there
+    const nationalAvg = nationalAvgLineDataItem ? nationalAvgLineDataItem.get("value") : 0;
+
+    am5.array.each(barSeries.dataItems, (di) => {
+        const val = di.get("valueX") || di.get("valueY"); // Depending on mobile orientation
+        const sprite = di.bullets[0].get("sprite");
+        if (!sprite) return;
+
+        const dataContext = di.dataContext;
+        const rc = dataContext.rucc_class || "Unknown";
+        const reg = dataContext.region || "Unknown";
+
+        // Re-apply highlight logic
+        let isHighlighted = true;
+        if (highlightFilter === "Above") {
+            isHighlighted = (val > nationalAvg);
+        } else if (highlightFilter === "Below") {
+            isHighlighted = (val < nationalAvg);
+        }
+
+        // Apply Range Filter Logic
+        const inRange = (val >= rangeMin && val <= rangeMax);
+        if (!inRange) isHighlighted = false;
+
+        // Base color (consistent with updateChart)
+        let bColor = am5.color(0xc83830);
+        if (colorMode === "rucc") {
+            bColor = am5.color(ruccColors[rc] || "#7f7f7f");
+        } else if (colorMode === "region") {
+            bColor = am5.color(regionColors[reg] || "#7f7f7f");
+        }
+
+        if (isHighlighted) {
+            sprite.setAll({ fill: bColor, fillOpacity: 0.7 });
+            highlightedCount++;
+        } else {
+            sprite.setAll({ fill: am5.color(0xd1d5db), fillOpacity: 0.08 });
+        }
+    });
+
+    // 3. Update Title Count (Fast)
+    const meta = tableMetricMeta[activeMetric];
+    const titleLabel = chart.get("titleLabel");
+    if (titleLabel) {
+        const totalInView = barSeries.dataItems.length;
+        const countText = highlightedCount === totalInView ? `${totalInView} Counties` : `${highlightedCount} of ${totalInView} Counties`;
+        titleLabel.set("text", (meta ? meta.label : activeMetric) + " — " + countText);
+    }
 }
 
 function toggleView(mode) {
@@ -282,8 +430,16 @@ function toggleView(mode) {
 
         // Scroll to controls so they are visible and sticky
         if (controlBar) {
-            const navHeight = document.querySelector(".navigation-bar")?.offsetHeight || 60;
-            const scrollPos = controlBar.offsetTop - navHeight;
+            const navBar = document.querySelector(".navigation-bar");
+            // Use the actual height of the navigation bar to prevent overlapping
+            const navHeight = navBar ? navBar.offsetHeight : 0;
+
+            // Sync the sticky top position in CSS with the actual nav height
+            if (navHeight > 0) {
+                controlBar.style.top = navHeight + "px";
+            }
+
+            const scrollPos = controlBar.offsetTop - Math.max(navHeight, 60);
             window.scrollTo({
                 top: scrollPos,
                 behavior: "smooth"
@@ -398,9 +554,40 @@ function initChart() {
 function updateChart() {
     if (!barSeries) return;
 
-    if (simulation) simulation.stop();
+    // 0. Update Range Bounds if metric changed
+    if (currentActiveMetricForRange !== activeMetric) {
+        let minObs = Infinity, maxObs = -Infinity;
+        allCountyData.forEach(c => {
+            let v = parseFloat(c[activeMetric]);
+            if (!isNaN(v) && v !== 0) {
+                if (v < minObs) minObs = v;
+                if (v > maxObs) maxObs = v;
+            }
+        });
 
-    // 1. Calculate National Average (Excluding 0s which often indicate suppressed/missing data)
+        // If no data found, use defaults
+        if (minObs === Infinity) { minObs = 0; maxObs = 100; }
+
+        metricMin = minObs;
+        metricMax = maxObs;
+        rangeMin = metricMin;
+        rangeMax = metricMax;
+        currentActiveMetricForRange = activeMetric;
+
+        const minIn = document.getElementById("rangeMinInput");
+        const maxIn = document.getElementById("rangeMaxInput");
+        if (minIn && maxIn) {
+            minIn.min = metricMin;
+            minIn.max = metricMax;
+            minIn.value = metricMin;
+            maxIn.min = metricMin;
+            maxIn.max = metricMax;
+            maxIn.value = metricMax;
+        }
+        updateRangeSliderUI();
+    }
+
+    // 1. Calculate National Average
     let total = 0, count = 0;
     allCountyData.forEach(c => {
         let v = parseFloat(c[activeMetric]);
@@ -411,9 +598,12 @@ function updateChart() {
     });
     const nationalAvg = count > 0 ? total / count : 0;
 
-    // 2. Clear existing average lines
+    // 2. Clear existing lines
     xAxis.axisRanges.clear();
     yAxis.axisRanges.clear();
+    rangeLineMinDataItem = null;
+    rangeLineMaxDataItem = null;
+    nationalAvgLineDataItem = null;
 
     // 3. (Line creation moved to datavalidated below)
 
@@ -449,11 +639,15 @@ function updateChart() {
             isHighlighted = (val < nationalAvg);
         }
 
-        const bulletSettings = { fill: bColor, fillOpacity: isHighlighted ? 0.7 : 0.15 };
+        // Apply Range Filter Logic
+        const inRange = (val >= rangeMin && val <= rangeMax);
+        if (!inRange) isHighlighted = false;
+
+        const bulletSettings = { fill: bColor, fillOpacity: isHighlighted ? 0.7 : 0.08 };
 
         // If not highlighted, make it a neutral light gray
         if (!isHighlighted) {
-            bulletSettings.fill = am5.color(0x94a3b8);
+            bulletSettings.fill = am5.color(0xd1d5db); // Lighter gray for grayed out points
         }
 
         if (val === 0) {
@@ -475,24 +669,32 @@ function updateChart() {
             rucc_class: rc,
             region: c.region || "Unknown",
             bulletSettings: bulletSettings,
-            state_abbr: c.state_abbr
+            state_abbr: c.state_abbr,
+            state_name: stateNameMap[c.state_abbr] || c.state_abbr
         };
         // The table engine expects the metric key as a property
         rowData[activeMetric] = val;
         data.push(rowData);
     });
 
+    const highlightedCount = data.filter(d => d.bulletSettings.fillOpacity > 0.1).length;
+
     barSeries.data.setAll(data);
 
-    // Sync Table
+    // Sync Table (Filter table rows to only show points in range)
     if (typeof renderComparisonTable === "function") {
-        renderComparisonTable("compTableDiv", data, activeMetric);
+        const filteredData = data.filter(d => d.value >= rangeMin && d.value <= rangeMax);
+        renderComparisonTable("compTableDiv", filteredData, activeMetric);
     }
 
     // Update Meta & Title
     const meta = tableMetricMeta[activeMetric];
     const titleLabel = chart.get("titleLabel");
-    if (titleLabel) titleLabel.set("text", (meta ? meta.label : activeMetric) + " \u2014 County Distribution (" + data.length + " Counties)");
+    if (titleLabel) {
+        const totalCount = data.length;
+        const countText = highlightedCount === totalCount ? `${totalCount} Counties` : `${highlightedCount} of ${totalCount} Counties`;
+        titleLabel.set("text", (meta ? meta.label : activeMetric) + " \u2014 " + countText);
+    }
 
     // Update Legend
     if (!legend) return;
@@ -521,9 +723,9 @@ function updateChart() {
         const activeAxis = mobile ? yAxis : xAxis;
 
         // Create Average Line now that data is stable
-        const range = activeAxis.makeDataItem({ value: nationalAvg });
-        activeAxis.createAxisRange(range);
-        range.get("grid").setAll({
+        nationalAvgLineDataItem = activeAxis.makeDataItem({ value: nationalAvg });
+        activeAxis.createAxisRange(nationalAvgLineDataItem);
+        nationalAvgLineDataItem.get("grid").setAll({
             strokeOpacity: 0.8,
             strokeDasharray: [6, 4],
             strokeWidth: 3,
@@ -555,7 +757,24 @@ function updateChart() {
             labelSettings.centerX = am5.p50;
         }
 
-        range.get("label").setAll(labelSettings);
+        nationalAvgLineDataItem.get("label").setAll(labelSettings);
+
+        // --- Create Range Dashboard Lines (Dashed Lines) ---
+        const createRangeLine = (val) => {
+            const di = activeAxis.makeDataItem({ value: val });
+            activeAxis.createAxisRange(di);
+            di.get("grid").setAll({
+                strokeOpacity: 0.6,
+                strokeDasharray: [4, 4],
+                strokeWidth: 2,
+                stroke: am5.color(0x64748b),
+                visible: true
+            });
+            return di;
+        };
+
+        rangeLineMinDataItem = createRangeLine(rangeMin);
+        rangeLineMaxDataItem = createRangeLine(rangeMax);
 
         // Use a slightly longer delay to ensure the initial amCharts layout is 100% established
         setTimeout(() => {
@@ -602,6 +821,7 @@ window.addEventListener("resize", () => {
     resizeTimeout = setTimeout(() => {
         initChart();
         updateChart();
+        syncStickyTop();
     }, 500);
 });
 

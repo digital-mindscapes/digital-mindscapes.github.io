@@ -1116,36 +1116,88 @@
                 <h2>Main Dashboard</h2>
                 <div class="content-body">
                     <div
-                        style="background: #ffffff; border: 1px solid #e9ecef; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);">
-                        <p style="font-size: 1.05rem; color: #495057; line-height: 1.7; margin-bottom: 20px;">
-                            The <strong>Main Dashboard</strong> serves as the primary entry point to the Digital
-                            Mindscapes platform. It presents a comprehensive, interactive map of the United States,
-                            providing a macroscopic view of various socioeconomic and health indicators at the state
-                            level.
-                        </p>
-                        <h4 style="color: #c83830; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                        style="background: #ffffff; border: 1px solid #e9ecef; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02); margin-bottom: 30px;">
+                        <h4
+                            style="color: #c83830; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; font-size: 1.25rem;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
                                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round">
-                                <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"></polygon>
-                                <line x1="9" y1="3" x2="9" y2="21"></line>
-                                <line x1="15" y1="3" x2="15" y2="21"></line>
+                                stroke-linejoin="round" style="color: #c83830;">
+                                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                                <polyline points="9 22 9 12 15 12 15 22"></polyline>
                             </svg>
-                            Key Features
+                            The National Perspective
                         </h4>
-                        <ul
-                            style="list-style-type: none; padding-left: 0; color: #495057; font-size: 1.05rem; line-height: 1.8;">
-                            <li style="margin-bottom: 10px;"><strong>Interactive State Map:</strong> Hover over states
-                                to instantly view specific metric values via dynamic tooltips.</li>
-                            <li style="margin-bottom: 10px;"><strong>Metric Selection:</strong> Effortlessly switch
-                                between dozens of health outcomes (e.g., Diabetes, Asthma) and socio-economic factors
-                                (e.g., Income, Education) through the organized sidebar.</li>
-                            <li style="margin-bottom: 10px;"><strong>Choropleth Visuals:</strong> The map automatically
-                                updates its color gradient (heat map) to visually represent the intensity or prevalence
-                                of the selected metric across the country.</li>
-                            <li><strong>Responsive Design:</strong> Fully optimized for both desktop and mobile devices,
-                                ensuring accessibility everywhere.</li>
+
+                        <p
+                            style="font-size: 1.1rem; color: #2b2e31; line-height: 1.7; margin-bottom: 20px; font-weight: 500;">
+                            The <strong>Main Dashboard</strong> serves as the central hub of Digital Mindscapes,
+                            offering a big-picture view of the nation's health and socioeconomic landscape.
+                        </p>
+
+                        <div
+                            style="background: #f8f9fa; border-radius: 10px; padding: 20px; margin-bottom: 25px; border-left: 4px solid #c83830;">
+                            <h5
+                                style="margin-top: 0; color: #495057; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                                Significance</h5>
+                            <p style="margin-bottom: 0; color: #495057; line-height: 1.6;">
+                                By visualizing data at the state level, this view helps identify broad geographic
+                                trends, regional differences, and national outliers. It provides the essential context
+                                needed to understand how local conditions compare to the broader American landscape.
+                                Having a
+                                strong national baseline is the first step in recognizing which regions are successfully
+                                addressing health challenges and which may require new policy interventions.
+                            </p>
+                        </div>
+
+                        <h5 style="color: #2b2e31; margin-bottom: 15px; font-weight: 700;">What this information
+                            conveys:</h5>
+                        <ul style="list-style-type: none; padding-left: 0; margin-bottom: 25px;">
+                            <li style="margin-bottom: 12px; display: flex; gap: 10px;">
+                                <span style="color: #c83830; font-weight: bold;">•</span>
+                                <span style="color: #495057; line-height: 1.5;"><strong>Location-based
+                                        Patterns:</strong>
+                                    Instantly recognize clusters of health outcomes or socioeconomic status across
+                                    different US regions.</span>
+                            </li>
+                            <li style="margin-bottom: 12px; display: flex; gap: 10px;">
+                                <span style="color: #c83830; font-weight: bold;">•</span>
+                                <span style="color: #495057; line-height: 1.5;"><strong>Relative Intensity:</strong> The
+                                    dynamic heatmap colors provide an intuitive sense of how states rank against each
+                                    other for any chosen metric.</span>
+                            </li>
+                            <li style="display: flex; gap: 10px;">
+                                <span style="color: #c83830; font-weight: bold;">•</span>
+                                <span style="color: #495057; line-height: 1.5;"><strong>Metric Connectivity:</strong>
+                                    Allows for quick mental correlations by toggling through various health and social
+                                    factors.</span>
+                            </li>
                         </ul>
+
+                        <h5 style="color: #2b2e31; margin-bottom: 15px; font-weight: 700;">Interactive Features:</h5>
+                        <div
+                            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                            <div
+                                style="padding: 15px; background: #fff; border: 1px solid #e9ecef; border-radius: 8px;">
+                                <strong style="display: block; color: #c83830; margin-bottom: 5px;">State
+                                    Tooltips</strong>
+                                <span style="font-size: 0.9rem; color: #6c757d;">Hover over any state to reveal precise
+                                    data values and state-specific details.</span>
+                            </div>
+                            <div
+                                style="padding: 15px; background: #fff; border: 1px solid #e9ecef; border-radius: 8px;">
+                                <strong style="display: block; color: #c83830; margin-bottom: 5px;">Metric
+                                    Selector</strong>
+                                <span style="font-size: 0.9rem; color: #6c757d;">Choose from a wide array of indicators,
+                                    from chronic diseases to educational attainment.</span>
+                            </div>
+                            <div
+                                style="padding: 15px; background: #fff; border: 1px solid #e9ecef; border-radius: 8px;">
+                                <strong style="display: block; color: #c83830; margin-bottom: 5px;">Dynamic
+                                    Heatmap</strong>
+                                <span style="font-size: 0.9rem; color: #6c757d;">Watch the map transform as the color
+                                    gradient adapts to the range of the selected metric.</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1153,38 +1205,247 @@
                 <h2>States Comparison</h2>
                 <div class="content-body">
                     <div
-                        style="background: #ffffff; border: 1px solid #e9ecef; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);">
-                        <p style="font-size: 1.05rem; color: #495057; line-height: 1.7; margin-bottom: 20px;">
-                            The <strong>States Comparison</strong> page is designed for detailed, customized evaluation
-                            of specific states. It allows users to actively select multiple states and perform
-                            side-by-side analysis using versatile chart and table views.
-                        </p>
-                        <h4 style="color: #c83830; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                        style="background: #ffffff; border: 1px solid #e9ecef; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02); margin-bottom: 30px;">
+                        <h4
+                            style="color: #c83830; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; font-size: 1.25rem;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
                                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round">
+                                stroke-linejoin="round" style="color: #c83830;">
                                 <line x1="18" y1="20" x2="18" y2="10"></line>
                                 <line x1="12" y1="20" x2="12" y2="4"></line>
                                 <line x1="6" y1="20" x2="6" y2="14"></line>
                             </svg>
-                            Key Features
+                            Comparative Analysis
                         </h4>
-                        <ul
-                            style="list-style-type: none; padding-left: 0; color: #495057; font-size: 1.05rem; line-height: 1.8;">
-                            <li style="margin-bottom: 10px;"><strong>Custom Selection:</strong> Click on individual
-                                states on the map to add them to your comparison group. The map highlights selected
-                                states while greying out unselected ones.</li>
-                            <li style="margin-bottom: 10px;"><strong>Versatile Charting:</strong> View the selected
-                                states' data through dynamic charts. Toggle smoothly between Horizontal Bar Charts,
-                                Vertical Bar Charts, and Treemaps.</li>
-                            <li style="margin-bottom: 10px;"><strong>Detailed Table View:</strong> Switch to a tabular
-                                layout to see the raw numbers for your selected states side-by-side.</li>
-                            <li style="margin-bottom: 10px;"><strong>Region Grouping:</strong> Use the "Region" toggle
-                                to quickly group or color-code states based on their geographic region (e.g., Midwest,
-                                Northeast).</li>
-                            <li><strong>Heatmap Mode:</strong> Toggle the map's heatmap coloring on or off without
-                                losing your current state selections.</li>
+
+                        <p
+                            style="font-size: 1.1rem; color: #2b2e31; line-height: 1.7; margin-bottom: 20px; font-weight: 500;">
+                            The <strong>States Comparison</strong> page enables targeted side-by-side analysis of
+                            user-selected states across diverse visualization formats.
+                        </p>
+
+                        <div
+                            style="background: #f8f9fa; border-radius: 10px; padding: 20px; margin-bottom: 25px; border-left: 4px solid #c83830;">
+                            <h5
+                                style="margin-top: 0; color: #495057; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                                Significance</h5>
+                            <p style="margin-bottom: 0; color: #495057; line-height: 1.6;">
+                                Comparing states directly is crucial for identifying regional successes or challenges.
+                                It allows researchers to move beyond the national average and see how specific states
+                                within the same region or with similar demographic profiles are performing relative to
+                                one another. Sorting and ranking these states helps pinpoint top performers, providing
+                                a roadmap for other regions to follow.
+                            </p>
+                        </div>
+
+                        <h5 style="color: #2b2e31; margin-bottom: 15px; font-weight: 700;">What this information
+                            conveys:</h5>
+                        <ul style="list-style-type: none; padding-left: 0; margin-bottom: 25px;">
+                            <li style="margin-bottom: 12px; display: flex; gap: 10px;">
+                                <span style="color: #c83830; font-weight: bold;">•</span>
+                                <span style="color: #495057; line-height: 1.5;"><strong>Regional Benchmarking:</strong>
+                                    Compare states within the same Census region to spot outliers or localized
+                                    phenomena.</span>
+                            </li>
+                            <li style="margin-bottom: 12px; display: flex; gap: 10px;">
+                                <span style="color: #c83830; font-weight: bold;">•</span>
+                                <span style="color: #495057; line-height: 1.5;"><strong>Data Distribution
+                                        Styles:</strong> Use bar charts for rank comparison and treemaps for
+                                    understanding the relative weights of selections.</span>
+                            </li>
+                            <li style="display: flex; gap: 10px;">
+                                <span style="color: #c83830; font-weight: bold;">•</span>
+                                <span style="color: #495057; line-height: 1.5;"><strong>Precise Metrics:</strong> The
+                                    side-by-side table view provides the exact numerical values necessary for rigorous
+                                    reporting.</span>
+                            </li>
                         </ul>
+
+                        <h5
+                            style="color: #2b2e31; margin-bottom: 25px; font-weight: 700; border-bottom: 2px solid #f1f3f5; padding-bottom: 12px;">
+                            Visual Guide: Chart Types</h5>
+
+                        <div style="display: flex; flex-direction: column; gap: 40px; margin-bottom: 40px;">
+                            <!-- Vertical Bar Chart -->
+                            <div
+                                style="background: #fff; border: 1px solid #e9ecef; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05); transition: transform 0.2s ease;">
+                                <div
+                                    style="width: 100%; background: #fdfdfd; border-bottom: 1px solid #f1f3f5; display: flex; align-items: center; justify-content: center; padding: 10px;">
+                                    <img src="assets/about/vertical_bar_chart_state_comparison_page.png"
+                                        alt="Vertical Bar Chart"
+                                        style="width: 100%; height: auto; border-radius: 8px; mix-blend-mode: multiply;">
+                                </div>
+                                <div style="padding: 25px;">
+                                    <h6
+                                        style="margin: 0 0 12px 0; color: #c83830; font-size: 1.25rem; font-weight: 700;">
+                                        Vertical Bar Chart</h6>
+                                    <p style="font-size: 1rem; color: #495057; line-height: 1.6; margin-bottom: 20px;">
+                                        Best for side-by-side comparisons of state values. This classical view makes it
+                                        easy to spot which states are above or below the group average.
+                                    </p>
+                                    <div
+                                        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+                                        <div style="display: flex; align-items: flex-start; gap: 10px;">
+                                            <span style="color: #c83830; font-weight: bold;">•</span>
+                                            <span style="color: #6c757d; font-size: 0.95rem;">Clear ranking of selected
+                                                states.</span>
+                                        </div>
+                                        <div style="display: flex; align-items: flex-start; gap: 10px;">
+                                            <span style="color: #c83830; font-weight: bold;">•</span>
+                                            <span style="color: #6c757d; font-size: 0.95rem;">Immediate visual height
+                                                contrast.</span>
+                                        </div>
+                                        <div style="display: flex; align-items: flex-start; gap: 10px;">
+                                            <span style="color: #c83830; font-weight: bold;">•</span>
+                                            <span style="color: #6c757d; font-size: 0.95rem;">Includes state labels for
+                                                easy identification.</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Horizontal Bar Chart -->
+                            <div
+                                style="background: #fff; border: 1px solid #e9ecef; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05); transition: transform 0.2s ease;">
+                                <div
+                                    style="width: 100%; background: #fdfdfd; border-bottom: 1px solid #f1f3f5; display: flex; align-items: center; justify-content: center; padding: 10px;">
+                                    <img src="assets/about/horizontal_bar_chart_state_comparison_page.png"
+                                        alt="Horizontal Bar Chart"
+                                        style="width: 100%; height: auto; border-radius: 8px; mix-blend-mode: multiply;">
+                                </div>
+                                <div style="padding: 25px;">
+                                    <h6
+                                        style="margin: 0 0 12px 0; color: #c83830; font-size: 1.25rem; font-weight: 700;">
+                                        Horizontal Bar Chart</h6>
+                                    <p style="font-size: 1rem; color: #495057; line-height: 1.6; margin-bottom: 20px;">
+                                        Offers a clean, organized list view. This format is particularly useful when
+                                        comparing many states at once, as it allows for longer labels and easier
+                                        scrolling.
+                                    </p>
+                                    <div
+                                        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+                                        <div style="display: flex; align-items: flex-start; gap: 10px;">
+                                            <span style="color: #c83830; font-weight: bold;">•</span>
+                                            <span style="color: #6c757d; font-size: 0.95rem;">High readability for state
+                                                names.</span>
+                                        </div>
+                                        <div style="display: flex; align-items: flex-start; gap: 10px;">
+                                            <span style="color: #c83830; font-weight: bold;">•</span>
+                                            <span style="color: #6c757d; font-size: 0.95rem;">Natural top-to-bottom
+                                                ranking flow.</span>
+                                        </div>
+                                        <div style="display: flex; align-items: flex-start; gap: 10px;">
+                                            <span style="color: #c83830; font-weight: bold;">•</span>
+                                            <span style="color: #6c757d; font-size: 0.95rem;">Effective for large
+                                                comparative lists.</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Circular Bar Chart -->
+                            <div
+                                style="background: #fff; border: 1px solid #e9ecef; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05); transition: transform 0.2s ease;">
+                                <div
+                                    style="width: 100%; background: #fdfdfd; border-bottom: 1px solid #f1f3f5; display: flex; align-items: center; justify-content: center; padding: 20px;">
+                                    <img src="assets/about/circular_bar_state_comparison_page.png"
+                                        alt="Circular Bar Chart"
+                                        style="width: 100%; max-width: 900px; height: auto; border-radius: 8px; mix-blend-mode: multiply; filter: brightness(1.1) contrast(1.1);">
+                                </div>
+                                <div style="padding: 25px;">
+                                    <h6
+                                        style="margin: 0 0 12px 0; color: #c83830; font-size: 1.25rem; font-weight: 700;">
+                                        Circular Bar Chart</h6>
+                                    <p style="font-size: 1rem; color: #495057; line-height: 1.6; margin-bottom: 20px;">
+                                        A modern, compact visualization that uses radial length to show value
+                                        differences. It's excellent for seeing proportional relationships in a visually
+                                        engaging way.
+                                    </p>
+                                    <div
+                                        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+                                        <div style="display: flex; align-items: flex-start; gap: 10px;">
+                                            <span style="color: #c83830; font-weight: bold;">•</span>
+                                            <span style="color: #6c757d; font-size: 0.95rem;">Space-efficient
+                                                design.</span>
+                                        </div>
+                                        <div style="display: flex; align-items: flex-start; gap: 10px;">
+                                            <span style="color: #c83830; font-weight: bold;">•</span>
+                                            <span style="color: #6c757d; font-size: 0.95rem;">Unique visual style for
+                                                data summaries.</span>
+                                        </div>
+                                        <div style="display: flex; align-items: flex-start; gap: 10px;">
+                                            <span style="color: #c83830; font-weight: bold;">•</span>
+                                            <span style="color: #6c757d; font-size: 0.95rem;">Dynamic interactivity and
+                                                hover effects.</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Table View -->
+                            <div
+                                style="background: #fff; border: 1px solid #e9ecef; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05); transition: transform 0.2s ease;">
+                                <div
+                                    style="width: 100%; background: #fdfdfd; border-bottom: 1px solid #e9ecef; display: flex; align-items: center; justify-content: center; padding: 10px;">
+                                    <img src="assets/about/table_view_state_comparison_page.png" alt="Table View"
+                                        style="width: 100%; height: auto; border-radius: 8px; mix-blend-mode: multiply;">
+                                </div>
+                                <div style="padding: 25px;">
+                                    <h6
+                                        style="margin: 0 0 12px 0; color: #c83830; font-size: 1.25rem; font-weight: 700;">
+                                        Detailed Data Table</h6>
+                                    <p style="font-size: 1rem; color: #495057; line-height: 1.6; margin-bottom: 20px;">
+                                        The go-to source for precise numerical analysis. This view lists raw data points
+                                        and provides powerful options for data portability and organization.
+                                    </p>
+                                    <div
+                                        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+                                        <div style="display: flex; align-items: flex-start; gap: 10px;">
+                                            <span style="color: #c83830; font-weight: bold;">•</span>
+                                            <span style="color: #6c757d; font-size: 0.95rem;">Exact values for rigorous
+                                                research.</span>
+                                        </div>
+                                        <div style="display: flex; align-items: flex-start; gap: 10px;">
+                                            <span style="color: #c83830; font-weight: bold;">•</span>
+                                            <span style="color: #6c757d; font-size: 0.95rem;">Sortable columns and
+                                                <strong>Group by Region</strong> functionality.</span>
+                                        </div>
+                                        <div style="display: flex; align-items: flex-start; gap: 10px;">
+                                            <span style="color: #c83830; font-weight: bold;">•</span>
+                                            <span style="color: #6c757d; font-size: 0.95rem;">Export options:
+                                                <strong>CSV</strong>, <strong>HTML</strong>, and <strong>LaTeX</strong>
+                                                formats.</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h5 style="color: #2b2e31; margin-bottom: 15px; font-weight: 700;">Key Features:</h5>
+                        <div
+                            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                            <div
+                                style="padding: 15px; background: #fff; border: 1px solid #e9ecef; border-radius: 8px;">
+                                <strong style="display: block; color: #c83830; margin-bottom: 5px;">Multi-Chart
+                                    Views</strong>
+                                <span style="font-size: 0.9rem; color: #6c757d;">Switch between Horizontal/Vertical Bar
+                                    Charts and Treemaps to see the data from different angles.</span>
+                            </div>
+                            <div
+                                style="padding: 15px; background: #fff; border: 1px solid #e9ecef; border-radius: 8px;">
+                                <strong style="display: block; color: #c83830; margin-bottom: 5px;">Regional
+                                    Grouping</strong>
+                                <span style="font-size: 0.9rem; color: #6c757d;">Quickly group your selections by
+                                    geographic region for enhanced context.</span>
+                            </div>
+                            <div
+                                style="padding: 15px; background: #fff; border: 1px solid #e9ecef; border-radius: 8px;">
+                                <strong style="display: block; color: #c83830; margin-bottom: 5px;">Interactive
+                                    Selection</strong>
+                                <span style="font-size: 0.9rem; color: #6c757d;">Easily add or remove states by clicking
+                                    directly on the map interface.</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1192,39 +1453,88 @@
                 <h2>Counties Comparison</h2>
                 <div class="content-body">
                     <div
-                        style="background: #ffffff; border: 1px solid #e9ecef; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);">
-                        <p style="font-size: 1.05rem; color: #495057; line-height: 1.7; margin-bottom: 20px;">
-                            The <strong>Counties Comparison</strong> page provides granular, local-level insights. It
-                            functions similarly to the state comparison tool but drills down to over 3,000 individual US
-                            counties.
-                        </p>
-                        <h4 style="color: #c83830; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                        style="background: #ffffff; border: 1px solid #e9ecef; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02); margin-bottom: 30px;">
+                        <h4
+                            style="color: #c83830; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; font-size: 1.25rem;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
                                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round">
+                                stroke-linejoin="round" style="color: #c83830;">
                                 <rect x="3" y="3" width="7" height="7"></rect>
                                 <rect x="14" y="3" width="7" height="7"></rect>
                                 <rect x="14" y="14" width="7" height="7"></rect>
                                 <rect x="3" y="14" width="7" height="7"></rect>
                             </svg>
-                            Key Features
+                            Granular Local Insights
                         </h4>
-                        <ul
-                            style="list-style-type: none; padding-left: 0; color: #495057; font-size: 1.05rem; line-height: 1.8;">
-                            <li style="margin-bottom: 10px;"><strong>County Selection:</strong> Interactively click
-                                counties across the map to build your custom comparison dataset.</li>
-                            <li style="margin-bottom: 10px;"><strong>Rich Visualizations:</strong> Analyze your selected
-                                counties using clear Horizontal or Vertical Bar Charts. For larger selections, expand
-                                the chart to a full-screen modal for better readability.</li>
-                            <li style="margin-bottom: 10px;"><strong>State Grouping:</strong> When viewing the data
-                                table, use the "Group by State" toggle to automatically organize selected counties under
-                                their respective state headers.</li>
-                            <li style="margin-bottom: 10px;"><strong>RUCC Filtering:</strong> Filter the entire map view
-                                by Rural-Urban Continuum Codes (e.g., "Metropolitan", "Nonmetro") to observe
-                                discrepancies between urban and rural localized regions.</li>
-                            <li><strong>Region Visualization:</strong> Color-code your selected counties by geographical
-                                region on the charts to spot broader geographic trends.</li>
+
+                        <p
+                            style="font-size: 1.1rem; color: #2b2e31; line-height: 1.7; margin-bottom: 20px; font-weight: 500;">
+                            The <strong>Counties Comparison</strong> page provides the highest level of geographic
+                            detail, allowing for the analysis of over 3,000 individual U.S. counties.
+                        </p>
+
+                        <div
+                            style="background: #f8f9fa; border-radius: 10px; padding: 20px; margin-bottom: 25px; border-left: 4px solid #c83830;">
+                            <h5
+                                style="margin-top: 0; color: #495057; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                                Significance</h5>
+                            <p style="margin-bottom: 0; color: #495057; line-height: 1.6;">
+                                Public health and socioeconomic outcomes are often local. By drilling down to the county
+                                level, this view exposes differences that state-level averages often mask. Since most
+                                public health funding is managed at the county or city level, this data is an
+                                indispensable tool for community leaders and local policymakers who need to
+                                justify exactly where and why resources should be allocated.
+                            </p>
+                        </div>
+
+                        <h5 style="color: #2b2e31; margin-bottom: 15px; font-weight: 700;">What this information
+                            conveys:</h5>
+                        <ul style="list-style-type: none; padding-left: 0; margin-bottom: 25px;">
+                            <li style="margin-bottom: 12px; display: flex; gap: 10px;">
+                                <span style="color: #c83830; font-weight: bold;">•</span>
+                                <span style="color: #495057; line-height: 1.5;"><strong>Hyper-Local
+                                        Disparities:</strong> Identify specific counties that are struggling or thriving
+                                    compared to their neighbors.</span>
+                            </li>
+                            <li style="margin-bottom: 12px; display: flex; gap: 10px;">
+                                <span style="color: #c83830; font-weight: bold;">•</span>
+                                <span style="color: #495057; line-height: 1.5;"><strong>Statewide Context:</strong> View
+                                    how counties perform within their own state borders using the "Group by State"
+                                    feature.</span>
+                            </li>
+                            <li style="display: flex; gap: 10px;">
+                                <span style="color: #c83830; font-weight: bold;">•</span>
+                                <span style="color: #495057; line-height: 1.5;"><strong>Population Density
+                                        Trends:</strong> Understand how urbanization correlates with the selected metric
+                                    through integrated filtering.</span>
+                            </li>
                         </ul>
+
+                        <h5 style="color: #2b2e31; margin-bottom: 15px; font-weight: 700;">Key Features:</h5>
+                        <div
+                            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                            <div
+                                style="padding: 15px; background: #fff; border: 1px solid #e9ecef; border-radius: 8px;">
+                                <strong style="display: block; color: #c83830; margin-bottom: 5px;">3,000+
+                                    Counties</strong>
+                                <span style="font-size: 0.9rem; color: #6c757d;">Access data for every county in the
+                                    United States, providing a truly comprehensive dataset.</span>
+                            </div>
+                            <div
+                                style="padding: 15px; background: #fff; border: 1px solid #e9ecef; border-radius: 8px;">
+                                <strong style="display: block; color: #c83830; margin-bottom: 5px;">Advanced Modal
+                                    Charting</strong>
+                                <span style="font-size: 0.9rem; color: #6c757d;">For large selections, expand the bar
+                                    charts to a full-screen view for detailed exploration.</span>
+                            </div>
+                            <div
+                                style="padding: 15px; background: #fff; border: 1px solid #e9ecef; border-radius: 8px;">
+                                <strong style="display: block; color: #c83830; margin-bottom: 5px;">State-County
+                                    Nesting</strong>
+                                <span style="font-size: 0.9rem; color: #6c757d;">Dynamically organize your selected
+                                    counties under their state headers in the table view.</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1232,74 +1542,297 @@
                 <h2>Urban-Rural Comparison</h2>
                 <div class="content-body">
                     <div
-                        style="background: #ffffff; border: 1px solid #e9ecef; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);">
-                        <p style="font-size: 1.05rem; color: #495057; line-height: 1.7; margin-bottom: 20px;">
-                            The <strong>Urban-Rural Comparison</strong> page focuses specifically on highlighting the
-                            disparities and patterns between metropolitan and non-metropolitan areas across the country.
-                            It utilizes the USDA's Rural-Urban Continuum Codes (RUCC) to categorize counties.
-                        </p>
-                        <h4 style="color: #c83830; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                        style="background: #ffffff; border: 1px solid #e9ecef; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02); margin-bottom: 30px;">
+                        <h4
+                            style="color: #c83830; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; font-size: 1.25rem;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
                                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round">
+                                stroke-linejoin="round" style="color: #c83830;">
                                 <path d="M4 4h16v16H4z"></path>
                                 <path d="M4 12h16"></path>
                                 <path d="M12 4v16"></path>
                             </svg>
-                            Key Features
+                            The Urban-Rural Divide
                         </h4>
-                        <ul
-                            style="list-style-type: none; padding-left: 0; color: #495057; font-size: 1.05rem; line-height: 1.8;">
-                            <li style="margin-bottom: 10px;"><strong>RUCC Focused Filtering:</strong> Apply strict
-                                filters to show only counties belonging to specific RUCC classifications right on the
-                                interactive map.</li>
-                            <li style="margin-bottom: 10px;"><strong>RUCC Grouping Toggle:</strong> Organize selected
-                                counties in charts and tables specifically by their Urban/Rural status to draw immediate
-                                visual comparisons between population densities.</li>
-                            <li style="margin-bottom: 10px;"><strong>Flexible Chart Modes:</strong> Switch between
-                                robust Horizontal and Vertical Bar Charts to display the data in the clearest way
-                                possible depending on your selection size.</li>
-                            <li><strong>Seamless Integration:</strong> Retains all the powerful map interactive
-                                features, tooltip data, and tabular layouts found in the Counties Comparison page.</li>
+
+                        <p
+                            style="font-size: 1.1rem; color: #2b2e31; line-height: 1.7; margin-bottom: 20px; font-weight: 500;">
+                            The <strong>Urban-Rural Comparison</strong> page specifically investigates how population
+                            density and geographic isolation influence health and socioeconomic metrics.
+                        </p>
+
+                        <div
+                            style="background: #f8f9fa; border-radius: 10px; padding: 20px; margin-bottom: 25px; border-left: 4px solid #c83830;">
+                            <h5
+                                style="margin-top: 0; color: #495057; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                                Significance</h5>
+                            <p style="margin-bottom: 0; color: #495057; line-height: 1.6;">
+                                Research consistently shows significant differences between urban and rural health
+                                outcomes. This view utilizes the USDA's Rural-Urban Continuum Codes (RUCC) to provide a
+                                rigorous framework for analyzing these gaps. Health access can vary significantly in
+                                "frontier"
+                                rural counties compared to busy metropolitan areas, helping to highlight exactly where
+                                rural
+                                communities may be underserved and overlooked.
+                            </p>
+                        </div>
+
+                        <h5 style="color: #2b2e31; margin-bottom: 15px; font-weight: 700;">What this information
+                            conveys:</h5>
+                        <ul style="list-style-type: none; padding-left: 0; margin-bottom: 25px;">
+                            <li style="margin-bottom: 12px; display: flex; gap: 10px;">
+                                <span style="color: #c83830; font-weight: bold;">•</span>
+                                <span style="color: #495057; line-height: 1.5;"><strong>Density-Based Trends:</strong>
+                                    Observe if a metric (like poverty or heart disease) follows a gradient from highly
+                                    metropolitan to completely rural areas.</span>
+                            </li>
+                            <li style="margin-bottom: 12px; display: flex; gap: 10px;">
+                                <span style="color: #c83830; font-weight: bold;">•</span>
+                                <span style="color: #495057; line-height: 1.5;"><strong>Localized RUCC
+                                        Analysis:</strong> Filter your custom county selections to isolate and ignore
+                                    noise from disparate population centers.</span>
+                            </li>
+                            <li style="display: flex; gap: 10px;">
+                                <span style="color: #c83830; font-weight: bold;">•</span>
+                                <span style="color: #495057; line-height: 1.5;"><strong>Policy Context:</strong>
+                                    Provides empirical data to support the unique public health strategies required for
+                                    rural vs. urban environments.</span>
+                            </li>
                         </ul>
+
+                        <h5 style="color: #2b2e31; margin-bottom: 15px; font-weight: 700;">Key Features:</h5>
+                        <div
+                            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                            <div
+                                style="padding: 15px; background: #fff; border: 1px solid #e9ecef; border-radius: 8px;">
+                                <strong style="display: block; color: #c83830; margin-bottom: 5px;">RUCC
+                                    Categorization</strong>
+                                <span style="font-size: 0.9rem; color: #6c757d;">Counties are automatically grouped into
+                                    standardized Metro vs. Non-Metro classifications.</span>
+                            </div>
+                            <div
+                                style="padding: 15px; background: #fff; border: 1px solid #e9ecef; border-radius: 8px;">
+                                <strong style="display: block; color: #c83830; margin-bottom: 5px;">Contrast
+                                    Charts</strong>
+                                <span style="font-size: 0.9rem; color: #6c757d;">Visualizations are optimized to
+                                    highlight the contrast between urban and rural datasets.</span>
+                            </div>
+                            <div
+                                style="padding: 15px; background: #fff; border: 1px solid #e9ecef; border-radius: 8px;">
+                                <strong style="display: block; color: #c83830; margin-bottom: 5px;">Focused Map
+                                    Views</strong>
+                                <span style="font-size: 0.9rem; color: #6c757d;">Apply filters directly to the
+                                    interactive map to isolate specific density classes nationwide.</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
+            <div id="content_page_county_distribution" class="about-content-section">
+                <h2>County Distribution</h2>
+                <div class="content-body">
+                    <div
+                        style="background: #ffffff; border: 1px solid #e9ecef; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02); margin-bottom: 30px;">
+                        <h4
+                            style="color: #c83830; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; font-size: 1.25rem;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" style="color: #c83830;">
+                                <circle cx="12" cy="12" r="3" />
+                                <circle cx="6" cy="16" r="3" />
+                                <circle cx="18" cy="16" r="3" />
+                                <circle cx="9" cy="8" r="3" />
+                                <circle cx="15" cy="8" r="3" />
+                            </svg>
+                            National Benchmarking
+                        </h4>
+
+                        <p
+                            style="font-size: 1.1rem; color: #2b2e31; line-height: 1.7; margin-bottom: 20px; font-weight: 500;">
+                            The <strong>County Distribution</strong> page visualizes how every county in the nation
+                            spreads across the value spectrum for a given metric.
+                        </p>
+
+                        <div
+                            style="background: #f8f9fa; border-radius: 10px; padding: 20px; margin-bottom: 25px; border-left: 4px solid #c83830;">
+                            <h5
+                                style="margin-top: 0; color: #495057; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                                Significance</h5>
+                            <p style="margin-bottom: 0; color: #495057; line-height: 1.6;">
+                                Understanding the distribution of data is key to statistical literacy. This view allows
+                                you to see the "shape" of the nation's health—is a problem widespread, or is it
+                                concentrated in a few extreme outliers? By looking at the "spread" or variance of the
+                                data, you can understand if a state has a consistent problem across all counties or just
+                                a few highly troubled areas. This provides a powerful benchmark for seeing
+                                exactly where a specific county sits relative to the national average.
+                            </p>
+                        </div>
+
+                        <h5 style="color: #2b2e31; margin-bottom: 15px; font-weight: 700;">What this information
+                            conveys:</h5>
+                        <ul style="list-style-type: none; padding-left: 0; margin-bottom: 25px;">
+                            <li style="margin-bottom: 12px; display: flex; gap: 10px;">
+                                <span style="color: #c83830; font-weight: bold;">•</span>
+                                <span style="color: #495057; line-height: 1.5;"><strong>Outlier Identification:</strong>
+                                    Easily spot counties that deviate significantly from the national norm.</span>
+                            </li>
+                            <li style="margin-bottom: 12px; display: flex; gap: 10px;">
+                                <span style="color: #c83830; font-weight: bold;">•</span>
+                                <span style="color: #495057; line-height: 1.5;"><strong>National Benchmarking:</strong>
+                                    See the national average line and determine if a region is systematically above or
+                                    below it.</span>
+                            </li>
+                            <li style="display: flex; gap: 10px;">
+                                <span style="color: #c83830; font-weight: bold;">•</span>
+                                <span style="color: #495057; line-height: 1.5;"><strong>Cluster Analysis:</strong>
+                                    Observe if certain regions or RUCC classes tend to cluster together on the value
+                                    scale.</span>
+                            </li>
+                        </ul>
+
+                        <h5 style="color: #2b2e31; margin-bottom: 15px; font-weight: 700;">Key Features:</h5>
+                        <div
+                            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                            <div
+                                style="padding: 15px; background: #fff; border: 1px solid #e9ecef; border-radius: 8px;">
+                                <strong style="display: block; color: #c83830; margin-bottom: 5px;">Dot Plot
+                                    Visualization</strong>
+                                <span style="font-size: 0.9rem; color: #6c757d;">A clean, interactive dot plot showing
+                                    the precise placement of every county.</span>
+                            </div>
+                            <div
+                                style="padding: 15px; background: #fff; border: 1px solid #e9ecef; border-radius: 8px;">
+                                <strong style="display: block; color: #c83830; margin-bottom: 5px;">Highlight
+                                    Filters</strong>
+                                <span style="font-size: 0.9rem; color: #6c757d;">Instantly highlight counties that are
+                                    above or below the calculated national average.</span>
+                            </div>
+                            <div
+                                style="padding: 15px; background: #fff; border: 1px solid #e9ecef; border-radius: 8px;">
+                                <strong style="display: block; color: #c83830; margin-bottom: 5px;">Census Region
+                                    Coloring</strong>
+                                <span style="font-size: 0.9rem; color: #6c757d;">Color-code dots by region to visually
+                                    test geographical hypotheses.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div id="content_page_multi_metric" class="about-content-section">
                 <h2>State Multi-Metric Comparison</h2>
                 <div class="content-body">
                     <div
-                        style="background: #ffffff; border: 1px solid #e9ecef; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);">
-                        <p style="font-size: 1.05rem; color: #495057; line-height: 1.7; margin-bottom: 20px;">
-                            The <strong>State Multi-Metric Comparison</strong> tool allows for complex analysis by
-                            examining the correlation between two distinct variables. It answers questions like: "Is
-                            there a relationship between education level and heart disease prevalence?"
-                        </p>
-                        <h4 style="color: #c83830; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                        style="background: #ffffff; border: 1px solid #e9ecef; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02); margin-bottom: 30px;">
+                        <h4
+                            style="color: #c83830; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; font-size: 1.25rem;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
                                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round">
+                                stroke-linejoin="round" style="color: #c83830;">
                                 <path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path>
                                 <path d="M22 12A10 10 0 0 0 12 2v10z"></path>
                             </svg>
-                            Key Features
+                            Multivariate Analysis & Correlation
                         </h4>
-                        <ul
-                            style="list-style-type: none; padding-left: 0; color: #495057; font-size: 1.05rem; line-height: 1.8;">
-                            <li style="margin-bottom: 10px;"><strong>Dual-Metric Selection:</strong> Select a 'Primary
-                                Metric' mapped to the X-axis and a 'Secondary Metric' mapped to the Y-axis.</li>
-                            <li style="margin-bottom: 10px;"><strong>Scatter Plot Visualization:</strong> View the
-                                interaction of two variables across all 50 states via an interactive scatter plot.
-                                States are plotted as circles—hover over them to read exact values for both metrics.
+
+                        <p
+                            style="font-size: 1.1rem; color: #2b2e31; line-height: 1.7; margin-bottom: 20px; font-weight: 500;">
+                            The <strong>State Multi-Metric Comparison</strong> tool is a powerful engine for discovery,
+                            allowing users to move beyond single-variable maps to explore complex interdependencies
+                            between up to 12 different metrics.
+                        </p>
+
+                        <div
+                            style="background: #f8f9fa; border-radius: 10px; padding: 20px; margin-bottom: 25px; border-left: 4px solid #c83830;">
+                            <h5
+                                style="margin-top: 0; color: #495057; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                                Significance</h5>
+                            <p style="margin-bottom: 0; color: #495057; line-height: 1.6;">
+                                True insight comes from understanding how variables interact. Does high unemployment
+                                *always* correlate with poor mental health in every region? This tool provides the
+                                mathematical and visual evidence to answer such questions. While correlation does not
+                                mean one thing causes another, it is the essential first step in uncoverging non-obvious
+                                connections and asking better research questions about geographic differences.
+                            </p>
+                        </div>
+
+                        <h5 style="color: #2b2e31; margin-bottom: 15px; font-weight: 700;">Advanced Visualizations:</h5>
+                        <div
+                            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 25px;">
+                            <!-- Bubble Chart -->
+                            <div
+                                style="padding: 15px; background: #fff; border: 1px solid #e9ecef; border-radius: 8px; border-top: 3px solid #c83830;">
+                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                                        fill="none" stroke="#c83830" stroke-width="2.5">
+                                        <circle cx="6" cy="18" r="4" />
+                                        <circle cx="18" cy="6" r="3" />
+                                        <circle cx="13" cy="14" r="5" />
+                                    </svg>
+                                    <strong style="color: #2b2e31;">Bubble Chart (3 Metrics)</strong>
+                                </div>
+                                <span style="font-size: 0.9rem; color: #6c757d;">Explore three-way relationships by
+                                    mapping data to the X-axis, Y-axis, and the relative size of each bubble. Perfect
+                                    for seeing how population scale impacts bivariate correlations.</span>
+                            </div>
+
+                            <!-- Radar Chart -->
+                            <div
+                                style="padding: 15px; background: #fff; border: 1px solid #e9ecef; border-radius: 8px; border-top: 3px solid #c83830;">
+                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                                        fill="none" stroke="#c83830" stroke-width="2.5">
+                                        <polygon points="12 2 19 21 12 17 5 21 12 2" />
+                                    </svg>
+                                    <strong style="color: #2b2e31;">Radar Chart (8 Metrics)</strong>
+                                </div>
+                                <span style="font-size: 0.9rem; color: #6c757d;">Create multidimensional "profiles" for
+                                    selected states. By plotting up to 8 metrics on a radial axis, you can visually
+                                    compare the unique "shape" of each state's socioeconomic health.</span>
+                            </div>
+
+                            <!-- Heatmap Matrix -->
+                            <div
+                                style="padding: 15px; background: #fff; border: 1px solid #e9ecef; border-radius: 8px; border-top: 3px solid #c83830;">
+                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                                        fill="none" stroke="#c83830" stroke-width="2.5">
+                                        <rect x="3" y="3" width="7" height="7" />
+                                        <rect x="14" y="3" width="7" height="7" />
+                                        <rect x="14" y="14" width="7" height="7" />
+                                        <rect x="3" y="14" width="7" height="7" />
+                                    </svg>
+                                    <strong style="color: #2b2e31;">Heatmap Matrix (12 Metrics)</strong>
+                                </div>
+                                <span style="font-size: 0.9rem; color: #6c757d;">The ultimate correlation tool. Compare
+                                    up to 12 metrics simultaneously across all selected states in a normalized grid,
+                                    using color intensity to instantly spot patterns.</span>
+                            </div>
+                        </div>
+
+                        <h5 style="color: #2b2e31; margin-bottom: 15px; font-weight: 700;">What this information
+                            conveys:</h5>
+                        <ul style="list-style-type: none; padding-left: 0; margin-bottom: 25px;">
+                            <li style="margin-bottom: 12px; display: flex; gap: 10px;">
+                                <span style="color: #c83830; font-weight: bold;">•</span>
+                                <span style="color: #495057; line-height: 1.5;"><strong>Inter-Metric
+                                        Interaction:</strong>
+                                    Visualize if growth in economic factors corresponds directly with improvements in
+                                    health risk behaviors.</span>
                             </li>
-                            <li style="margin-bottom: 10px;"><strong>Region Filtering:</strong> Use quick-filter buttons
-                                (Midwest, Northeast, South, West) to isolate specific geographical regions within the
-                                scatter plot.</li>
-                            <li style="margin-bottom: 10px;"><strong>Dual Data Table:</strong> Switch to table view to
-                                see a clean, sorted list of states with their respective values for both the primary and
-                                secondary variables side-by-side.</li>
-                            <li><strong>Color-Coded Regions:</strong> Scatter plot points are intelligently color-coded
-                                based on their US Census Region, making grouping patterns instantly recognizable.</li>
+                            <li style="margin-bottom: 12px; display: flex; gap: 10px;">
+                                <span style="color: #c83830; font-weight: bold;">•</span>
+                                <span style="color: #495057; line-height: 1.5;"><strong>Normalized
+                                        Benchmarking:</strong> The integrated normalization formula ensures that metrics
+                                    with different units (percentages vs. raw counts) can be compared fairly.</span>
+                            </li>
+                            <li style="display: flex; gap: 10px;">
+                                <span style="color: #c83830; font-weight: bold;">•</span>
+                                <span style="color: #495057; line-height: 1.5;"><strong>Regional
+                                        Fingerprinting:</strong> Identify if certain geographic regions share a distinct
+                                    multivariate profile, such as high-cost housing combined with low food
+                                    insecurity.</span>
+                            </li>
                         </ul>
                     </div>
                 </div>
