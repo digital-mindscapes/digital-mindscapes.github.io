@@ -8,20 +8,17 @@ let allCountyData = [];
 let allStateData = [];
 let viewMode = 'distribution'; // 'distribution' or 'boxplot'
 let compareList = []; // Tracks metrics for correlation
-let activeInfoMetric = null; // Tracks current metric highlighted in sidebar
+let activeFilters = {
+    region: 'All',
+    state: 'All',
+    metro: 'All',
+    search: ''
+};
 
 // --- Metric DNA Global State ---
-let dnaAnchorMins = {};
-let dnaAnchorMaxes = {};
-let selectedDnaMetrics = [
-    'pct_unemployment_rate',
-    'pct_graduate_professional_degree',
-    'obesity_prevalence',
-    'depression_prevalence',
-    'checkup_prevalence',
-    'food_insecurity_prevalence'
-];
+let dnaMetricList = [];
 let activeDnaCounty = null;
+let activeInfoMetric = null; // Tracks current metric highlighted in sidebar
 
 const higherIsBetter = {
     "pct_in_labor_force": true,
@@ -72,13 +69,8 @@ function normalizeCountyName(name) {
         .trim();
 }
 
-// Global Filters
-let activeFilters = {
-    region: 'All',
-    state: 'All',
-    metro: 'All',
-    search: ''
-};
+// Global Filters (removed duplicate)
+
 
 const regionMapping = {
     "Northeast": ["CT", "ME", "MA", "NH", "RI", "VT", "NJ", "NY", "PA"],
@@ -452,6 +444,9 @@ function renderGroupedGrid() {
                         <button class="compare-btn" onclick="toggleCompare('${metric}')" title="Compare Metric">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"/><path d="M8 3H3v5"/><path d="M21 16v5h-5"/><path d="M3 21h5v-5"/><path d="m15 15 6 6"/><path d="m9 9-6-6"/><path d="m3 21 6-6"/><path d="m21 3-6 6"/></svg>
                         </button>
+                        <button class="dna-btn" onclick="toggleDNA('${metric}')" title="Add to DNA Profile">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"/><path d="M4.7 19.8 19.3 4.2"/><path d="M19.3 19.8 4.7 4.2"/><path d="M2 12h20"/><circle cx="12" cy="12" r="3"/></svg>
+                        </button>
                     </div>
                 </div>
                 <div class="card-viz-container" id="viz-${metric}"></div>
@@ -707,6 +702,10 @@ async function init() {
 
         populateStateDropdown();
         renderGroupedGrid();
+
+        // Initialize DNA states
+        updateDnaHud();
+        updateCardStates();
     } catch (e) {
         console.error("Initialization failed", e);
     }
@@ -729,6 +728,8 @@ function toggleInfo(metric, isUpdate = false) {
             // Already active, just close it
             card.classList.remove('show-info');
             activeInfoMetric = null;
+            const content = document.getElementById('metric-viz-content');
+            if (content) content.classList.remove('sidebar-open');
             sidebarContent.innerHTML = `
                 <div class="sidebar-empty-state">
                     <div class="empty-icon">
@@ -772,10 +773,14 @@ function toggleInfo(metric, isUpdate = false) {
             }
             card.classList.add('show-info');
             activeInfoMetric = metric;
+            const content = document.getElementById('metric-viz-content');
+            if (content) content.classList.add('sidebar-open');
         }
     } else {
         card.classList.add('show-info');
         activeInfoMetric = metric;
+        const content = document.getElementById('metric-viz-content');
+        if (content) content.classList.add('sidebar-open');
     }
 
     // Find top and bottom 5 in filtered set
@@ -833,12 +838,15 @@ function toggleInfo(metric, isUpdate = false) {
             <h4><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Positive Deviation</h4>
             <div class="insights-list">
                 ${successes.map(c => `
-                    <div class="insight-item ${activeDnaCounty === c.id ? 'active' : ''}" onclick="showMetricDNA('${c.id}')">
+                    <div class="insight-item ${activeDnaCounty === c.id ? 'dna-active' : ''}" onclick="showMetricDNA('${c.id}')">
                         <div class="county-info">
                             <span class="c-name">${c.name}</span>
                             <span class="c-state">${c.state_name || c.state_abbr}</span>
                         </div>
-                        <span class="c-value">${formatValue(c[metric], metric)}</span>
+                        <div class="c-value-wrapper">
+                            ${activeDnaCounty === c.id ? '<span class="dna-active-badge">DNA</span>' : ''}
+                            <span class="c-value">${formatValue(c[metric], metric)}</span>
+                        </div>
                     </div>
                 `).join('')}
             </div>
@@ -848,12 +856,15 @@ function toggleInfo(metric, isUpdate = false) {
             <h4><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="19"/><path d="M12 8v5"/></svg> Critical Focus</h4>
             <div class="insights-list">
                 ${criticals.map(c => `
-                    <div class="insight-item ${activeDnaCounty === c.id ? 'active' : ''}" onclick="showMetricDNA('${c.id}')">
+                    <div class="insight-item ${activeDnaCounty === c.id ? 'dna-active' : ''}" onclick="showMetricDNA('${c.id}')">
                         <div class="county-info">
                             <span class="c-name">${c.name}</span>
                             <span class="c-state">${c.state_name || c.state_abbr}</span>
                         </div>
-                        <span class="c-value" style="color: #dc2626;">${formatValue(c[metric], metric)}</span>
+                        <div class="c-value-wrapper">
+                            ${activeDnaCounty === c.id ? '<span class="dna-active-badge">DNA</span>' : ''}
+                            <span class="c-value" style="color: #dc2626;">${formatValue(c[metric], metric)}</span>
+                        </div>
                     </div>
                 `).join('')}
             </div>
@@ -891,6 +902,7 @@ function toggleInfo(metric, isUpdate = false) {
 }
 
 function showMetricDNA(countyId) {
+    activeDnaCounty = countyId;
     const county = allCountyData.find(c => c.id === countyId);
     if (!county) return;
 
@@ -911,79 +923,86 @@ function showMetricDNA(countyId) {
     if (!container) return;
 
     // Check if card for this county already exists
-    if (document.getElementById(`comp-card-${countyId}`)) {
-        document.getElementById(`comp-card-${countyId}`).scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        return;
+    let card = document.getElementById(`comp-card-${countyId}`);
+    if (card) {
+        // Move to top of stack
+        container.prepend(card);
+    } else {
+        // New card element
+        card = document.createElement('div');
+        card.id = `comp-card-${countyId}`;
+        card.className = 'rich-comparison-card';
+        card.style.marginBottom = '15px';
+
+        card.innerHTML = `
+            <div class="card-header">
+                <div class="comparison-title">
+                    <h3>${county.name}</h3>
+                    <p>${county.state_name || county.state_abbr}</p>
+                </div>
+                <button class="close-card-btn" onclick="removeMetricDNA('${countyId}')" title="Close Card">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+
+            <div class="comparison-metric-name">
+                ${label}
+            </div>
+
+            <div class="comp-bar-wrapper">
+                <div class="comp-bar-container">
+                    <div class="comp-bar-label">
+                        <span>County</span>
+                        <span>${formatValue(val, metric)}</span>
+                    </div>
+                    <div class="comp-bar-bg">
+                        <div class="comp-bar-fill bar-county" id="bar-county-${countyId}"></div>
+                    </div>
+                </div>
+
+                <div class="comp-bar-container">
+                    <div class="comp-bar-label">
+                        <span>${county.state_abbr} State Average</span>
+                        <span>${formatValue(stateAvg, metric)}</span>
+                    </div>
+                    <div class="comp-bar-bg">
+                        <div class="comp-bar-fill bar-state" id="bar-state-${countyId}"></div>
+                    </div>
+                </div>
+
+                <div class="comp-bar-container">
+                    <div class="comp-bar-label">
+                        <span>${county.region} Region Average</span>
+                        <span>${formatValue(regionAvg, metric)}</span>
+                    </div>
+                    <div class="comp-bar-bg">
+                        <div class="comp-bar-fill bar-region" id="bar-region-${countyId}"></div>
+                    </div>
+                </div>
+
+                <div class="comp-bar-container">
+                    <div class="comp-bar-label">
+                        <span>National Average</span>
+                        <span>${formatValue(nationalAvg, metric)}</span>
+                    </div>
+                    <div class="comp-bar-bg">
+                        <div class="comp-bar-fill bar-national" id="bar-national-${countyId}"></div>
+                    </div>
+                </div>
+            </div>
+        `;
+        container.prepend(card);
     }
-
-    // New card element
-    const card = document.createElement('div');
-    card.id = `comp-card-${countyId}`;
-    card.className = 'rich-comparison-card';
-    card.style.marginBottom = '15px';
-
-    card.innerHTML = `
-        <div class="card-header">
-            <div class="comparison-title">
-                <h3>${county.name}</h3>
-                <p>${county.state_name || county.state_abbr}</p>
-            </div>
-            <button class="close-card-btn" onclick="removeMetricDNA('${countyId}')" title="Close Card">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-            </button>
-        </div>
-
-        <div class="comparison-metric-name">
-            ${label}
-        </div>
-
-        <div class="comp-bar-wrapper">
-            <div class="comp-bar-container">
-                <div class="comp-bar-label">
-                    <span>County</span>
-                    <span>${formatValue(val, metric)}</span>
-                </div>
-                <div class="comp-bar-bg">
-                    <div class="comp-bar-fill bar-county" id="bar-county-${countyId}"></div>
-                </div>
-            </div>
-
-            <div class="comp-bar-container">
-                <div class="comp-bar-label">
-                    <span>${county.state_abbr} State Average</span>
-                    <span>${formatValue(stateAvg, metric)}</span>
-                </div>
-                <div class="comp-bar-bg">
-                    <div class="comp-bar-fill bar-state" id="bar-state-${countyId}"></div>
-                </div>
-            </div>
-
-            <div class="comp-bar-container">
-                <div class="comp-bar-label">
-                    <span>${county.region} Region Average</span>
-                    <span>${formatValue(regionAvg, metric)}</span>
-                </div>
-                <div class="comp-bar-bg">
-                    <div class="comp-bar-fill bar-region" id="bar-region-${countyId}"></div>
-                </div>
-            </div>
-
-            <div class="comp-bar-container">
-                <div class="comp-bar-label">
-                    <span>National Average</span>
-                    <span>${formatValue(nationalAvg, metric)}</span>
-                </div>
-                <div class="comp-bar-bg">
-                    <div class="comp-bar-fill bar-national" id="bar-national-${countyId}"></div>
-                </div>
-            </div>
-        </div>
-    `;
-
-    container.appendChild(card);
 
     // Update active states in sidebar
     updateInsightItemActiveStates();
+
+    // Clear previous active DNA card styling
+    document.querySelectorAll('.rich-comparison-card').forEach(c => c.classList.remove('active-dna'));
+    card.classList.add('active-dna');
+
+    // Render Radar Chart if axes are selected
+    renderRadarChart(countyId);
 
     // Animate bars
     const maxVal = Math.max(val, stateAvg, regionAvg, nationalAvg, 0.0001);
@@ -1017,10 +1036,31 @@ function updateInsightItemActiveStates() {
     document.querySelectorAll('.insight-item').forEach(item => {
         const onclick = item.getAttribute('onclick') || '';
         const match = onclick.match(/showMetricDNA\('(.+?)'\)/);
-        if (match && activeIds.includes(match[1])) {
-            item.classList.add('active');
-        } else {
-            item.classList.remove('active');
+        if (match) {
+            const countyId = match[1];
+
+            // Check if card is open
+            if (activeIds.includes(countyId)) {
+                item.classList.add('active');
+            } else {
+                item.classList.remove('active');
+            }
+
+            // Check if it's the active DNA county
+            const valueWrapper = item.querySelector('.c-value-wrapper');
+            if (activeDnaCounty === countyId) {
+                item.classList.add('dna-active');
+                if (valueWrapper && !valueWrapper.querySelector('.dna-active-badge')) {
+                    const badge = document.createElement('span');
+                    badge.className = 'dna-active-badge';
+                    badge.textContent = 'DNA';
+                    valueWrapper.insertBefore(badge, valueWrapper.firstChild);
+                }
+            } else {
+                item.classList.remove('dna-active');
+                const badge = item.querySelector('.dna-active-badge');
+                if (badge) badge.remove();
+            }
         }
     });
 }
@@ -1048,6 +1088,15 @@ function updateCardStates() {
         } else {
             card.classList.remove('compare-selected');
             if (btn) btn.classList.remove('active');
+        }
+
+        const dnaBtn = card.querySelector('.dna-btn');
+        if (dnaMetricList.includes(m)) {
+            card.classList.add('dna-selected');
+            if (dnaBtn) dnaBtn.classList.add('active');
+        } else {
+            card.classList.remove('dna-selected');
+            if (dnaBtn) dnaBtn.classList.remove('active');
         }
     });
 }
@@ -1083,6 +1132,211 @@ function clearComparison() {
 
     const content = document.getElementById('metric-viz-content');
     if (content) content.classList.remove('is-comparing');
+}
+
+// --- DNA Radar Chart Logic ---
+
+function toggleDNA(metric) {
+    const idx = dnaMetricList.indexOf(metric);
+    if (idx > -1) {
+        dnaMetricList.splice(idx, 1);
+    } else if (dnaMetricList.length < 8) {
+        dnaMetricList.push(metric);
+    }
+
+    updateDnaHud();
+    updateCardStates();
+
+    // Refresh chart for active county if exists
+    if (activeDnaCounty) {
+        renderRadarChart(activeDnaCounty);
+    }
+}
+
+function updateDnaHud() {
+    const hud = document.getElementById('dna-hud');
+    const countSpan = document.getElementById('dna-count');
+    const listDiv = document.getElementById('hud-dna-list');
+
+    if (dnaMetricList.length > 0) {
+        hud.style.display = 'block';
+        countSpan.textContent = dnaMetricList.length;
+        listDiv.innerHTML = dnaMetricList.map(m => `
+            <div class="hud-dna-tag">${metricLabels[m] || m}</div>
+        `).join('');
+    } else {
+        hud.style.display = 'none';
+    }
+}
+
+function clearDNASelection() {
+    dnaMetricList = [];
+    updateDnaHud();
+    updateCardStates();
+    const container = document.getElementById('dna-radar-container');
+    if (container) container.innerHTML = '';
+}
+
+function renderRadarChart(countyId) {
+    const container = document.getElementById('dna-radar-container');
+    if (!container || dnaMetricList.length < 3) {
+        if (container) {
+            container.innerHTML = `
+                <div class="radar-card" style="text-align: center; border-style: dashed; background: #f8fafc; opacity: 0.7;">
+                    <p style="font-size: 0.8rem; color: #64748b; margin: 10px 0;">Add at least 3 metrics using the <svg style="display:inline; vertical-align:middle; margin: 0 4px;" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"/><path d="M4.7 19.8 19.3 4.2"/><path d="M19.3 19.8 4.7 4.2"/><path d="M2 12h20"/><circle cx="12" cy="12" r="3"/></svg> icon to view the <b>County DNA Radar</b></p>
+                </div>
+            `;
+        }
+        return;
+    }
+
+    const county = allCountyData.find(c => c.id === countyId);
+    if (!county) return;
+
+    // Ensure the corresponding card (if exists) is highlighted
+    document.querySelectorAll('.rich-comparison-card').forEach(c => c.classList.remove('active-dna'));
+    const activeCard = document.getElementById(`comp-card-${countyId}`);
+    if (activeCard) activeCard.classList.add('active-dna');
+
+    container.innerHTML = `
+        <div class="radar-card">
+            <div class="radar-title">
+                <span style="color: #10b981; font-weight: 900;">•</span> 
+                DNA Profile: ${county.name}
+            </div>
+            <div id="radar-viz-${countyId}" class="radar-container" style="min-height: 300px;"></div>
+        </div>
+    `;
+
+    const vizElement = document.getElementById(`radar-viz-${countyId}`);
+    if (!vizElement) return;
+
+    const width = vizElement.offsetWidth || 300;
+    const height = 300;
+    const margin = 50;
+    const radius = Math.min(width, height) / 2 - margin;
+
+    const svg = d3.select(vizElement).append("svg")
+        .attr("width", width)
+        .attr("height", height)
+        .append("g")
+        .attr("transform", `translate(${width / 2},${height / 2})`);
+
+    const angleSlice = (Math.PI * 2) / dnaMetricList.length;
+
+    // Normalization scales for each metric across the national dataset
+    const scales = dnaMetricList.map(m => {
+        const vals = allCountyData.map(c => c[m]).filter(v => typeof v === 'number' && v !== 0);
+        const extent = d3.extent(vals);
+        // Ensure valid domain even if data is skewed
+        const domain = (extent[0] === extent[1]) ? [0, 100] : extent;
+        return d3.scaleLinear().domain(domain).range([0, radius]);
+    });
+
+    const data = dnaMetricList.map((m, i) => {
+        const val = county[m] || 0;
+        return {
+            axis: metricLabels[m] || m,
+            value: scales[i](val)
+        };
+    });
+
+    // Draw grid levels (concentric polygons)
+    const levels = 5;
+    const gridG = svg.append("g").attr("class", "radar-grid");
+
+    for (let j = 0; j < levels; j++) {
+        const levelFactor = radius * ((j + 1) / levels);
+        gridG.append("polygon")
+            .attr("class", "radar-level")
+            .attr("points", dnaMetricList.map((_, i) => {
+                return [
+                    levelFactor * Math.cos(angleSlice * i - Math.PI / 2),
+                    levelFactor * Math.sin(angleSlice * i - Math.PI / 2)
+                ].join(",");
+            }).join(" "))
+            .style("stroke", "#e2e8f0")
+            .style("fill", "none");
+    }
+
+    // Draw axes lines and labels
+    const axisG = svg.selectAll(".radar-axis")
+        .data(dnaMetricList)
+        .enter().append("g")
+        .attr("class", "radar-axis");
+
+    axisG.append("line")
+        .attr("x1", 0)
+        .attr("y1", 0)
+        .attr("x2", (d, i) => radius * Math.cos(angleSlice * i - Math.PI / 2))
+        .attr("y2", (d, i) => radius * Math.sin(angleSlice * i - Math.PI / 2))
+        .style("stroke", "#cbd5e1")
+        .style("stroke-width", "1px");
+
+    axisG.append("text")
+        .attr("text-anchor", "middle")
+        .attr("dy", "0.35em")
+        .attr("x", (d, i) => (radius + 20) * Math.cos(angleSlice * i - Math.PI / 2))
+        .attr("y", (d, i) => (radius + 20) * Math.sin(angleSlice * i - Math.PI / 2))
+        .style("font-size", "10px")
+        .style("font-weight", "600")
+        .style("fill", "#64748b")
+        .text((d) => {
+            const label = metricLabels[d] || d;
+            return label.length > 12 ? label.substring(0, 10) + '...' : label;
+        });
+
+    // Draw the radar area (the "DNA" shape)
+    const radarLine = d3.lineRadial()
+        .radius(d => d.value)
+        .angle((d, i) => i * angleSlice)
+        .curve(d3.curveLinearClosed);
+
+    svg.append("path")
+        .datum(data)
+        .attr("class", "radar-area")
+        .attr("d", radarLine)
+        .attr("transform", `rotate(0)`)
+        .style("fill", "rgba(16, 185, 129, 0.3)")
+        .style("stroke", "#10b981")
+        .style("stroke-width", "3px")
+        .style("opacity", 0)
+        .transition().duration(800)
+        .style("opacity", 1);
+
+    // Create Tooltip element if it doesn't exist
+    let tooltip = d3.select("#radar-tooltip");
+    if (tooltip.empty()) {
+        tooltip = d3.select("body").append("div")
+            .attr("id", "radar-tooltip")
+            .attr("class", "radar-tooltip")
+            .style("opacity", 0);
+    }
+
+    // Add interactive dots
+    svg.selectAll(".radar-dot")
+        .data(data)
+        .enter().append("circle")
+        .attr("class", "radar-dot")
+        .attr("r", 4)
+        .attr("cx", (d, i) => d.value * Math.cos(angleSlice * i - Math.PI / 2))
+        .attr("cy", (d, i) => d.value * Math.sin(angleSlice * i - Math.PI / 2))
+        .on("mouseover", function (event, d) {
+            const metric = dnaMetricList[data.indexOf(d)];
+            const formattedVal = formatValue(county[metric], metric);
+
+            tooltip.transition().duration(200).style("opacity", 1);
+            tooltip.html(`${d.axis}<span class="tip-val">${formattedVal}</span>`)
+                .style("left", (event.pageX + 10) + "px")
+                .style("top", (event.pageY - 28) + "px");
+        })
+        .on("mousemove", function (event) {
+            tooltip.style("left", (event.pageX + 10) + "px")
+                .style("top", (event.pageY - 28) + "px");
+        })
+        .on("mouseout", function () {
+            tooltip.transition().duration(500).style("opacity", 0);
+        });
 }
 
 function runCorrelation() {

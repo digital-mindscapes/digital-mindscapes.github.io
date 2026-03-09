@@ -219,6 +219,19 @@
                 </div>
             </div>
 
+            <!-- Metric DNA Selection HUD -->
+            <div id="dna-hud" class="comparison-hud dna-hud" style="display: none;">
+                <div class="hud-content">
+                    <div class="hud-text">
+                        <span id="dna-count">0</span>/8 Metrics Selected for DNA Profile
+                    </div>
+                    <div id="hud-dna-list" class="hud-metrics"></div>
+                    <div class="hud-actions">
+                        <button class="hud-btn clear-btn" onclick="clearDNASelection()">Clear DNA</button>
+                    </div>
+                </div>
+            </div>
+
             <div id="metric-viz-content" class="metric-viz-content">
                 <!-- Categories and grids will be injected here -->
                 <div class="loader-container">
@@ -258,6 +271,9 @@
                         </p>
                     </div>
                 </div>
+                <!-- Container for DNA Radar Profile -->
+                <div id="dna-radar-container"></div>
+                <!-- Container for benchmark cards -->
                 <div id="comparison-card-container"></div>
             </div>
         </aside>
