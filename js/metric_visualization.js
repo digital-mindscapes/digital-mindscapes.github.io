@@ -891,7 +891,6 @@ function toggleInfo(metric, isUpdate = false) {
 }
 
 function showMetricDNA(countyId) {
-    activeDnaCounty = countyId;
     const county = allCountyData.find(c => c.id === countyId);
     if (!county) return;
 
@@ -900,7 +899,6 @@ function showMetricDNA(countyId) {
     const val = county[metric];
 
     // Calculate averages for current metric and filtered subset
-    const filteredData = getFilteredData();
     const nationalValues = allCountyData.map(c => c[metric]).filter(v => typeof v === 'number' && v !== 0);
     const stateValues = allCountyData.filter(c => c.state_abbr === county.state_abbr).map(c => c[metric]).filter(v => typeof v === 'number' && v !== 0);
     const regionValues = allCountyData.filter(c => c.region === county.region).map(c => c[metric]).filter(v => typeof v === 'number' && v !== 0);
@@ -909,83 +907,122 @@ function showMetricDNA(countyId) {
     const stateAvg = stateValues.reduce((a, b) => a + b, 0) / stateValues.length;
     const regionAvg = regionValues.reduce((a, b) => a + b, 0) / regionValues.length;
 
-    // Update active state in sidebar
-    document.querySelectorAll('.insight-item').forEach(item => {
-        item.classList.toggle('active', item.getAttribute('onclick').includes(countyId));
-    });
-
     const container = document.getElementById('comparison-card-container');
     if (!container) return;
 
-    container.innerHTML = `
-        <div class="rich-comparison-card">
-            <div class="card-header">
-                <div class="comparison-title">
-                    <h3 id="compCountyName">${county.name}</h3>
-                    <p id="compStateName">${county.state_name || county.state_abbr}</p>
+    // Check if card for this county already exists
+    if (document.getElementById(`comp-card-${countyId}`)) {
+        document.getElementById(`comp-card-${countyId}`).scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        return;
+    }
+
+    // New card element
+    const card = document.createElement('div');
+    card.id = `comp-card-${countyId}`;
+    card.className = 'rich-comparison-card';
+    card.style.marginBottom = '15px';
+
+    card.innerHTML = `
+        <div class="card-header">
+            <div class="comparison-title">
+                <h3>${county.name}</h3>
+                <p>${county.state_name || county.state_abbr}</p>
+            </div>
+            <button class="close-card-btn" onclick="removeMetricDNA('${countyId}')" title="Close Card">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        </div>
+
+        <div class="comparison-metric-name">
+            ${label}
+        </div>
+
+        <div class="comp-bar-wrapper">
+            <div class="comp-bar-container">
+                <div class="comp-bar-label">
+                    <span>County</span>
+                    <span>${formatValue(val, metric)}</span>
+                </div>
+                <div class="comp-bar-bg">
+                    <div class="comp-bar-fill bar-county" id="bar-county-${countyId}"></div>
                 </div>
             </div>
 
-            <div class="comparison-metric-name" id="compMetricName">
-                ${label}
+            <div class="comp-bar-container">
+                <div class="comp-bar-label">
+                    <span>${county.state_abbr} State Average</span>
+                    <span>${formatValue(stateAvg, metric)}</span>
+                </div>
+                <div class="comp-bar-bg">
+                    <div class="comp-bar-fill bar-state" id="bar-state-${countyId}"></div>
+                </div>
             </div>
 
-            <div class="comp-bar-wrapper">
-                <div class="comp-bar-container">
-                    <div class="comp-bar-label">
-                        <span>County</span>
-                        <span id="compCountyVal">${formatValue(val, metric)}</span>
-                    </div>
-                    <div class="comp-bar-bg">
-                        <div class="comp-bar-fill bar-county" id="compCountyBar"></div>
-                    </div>
+            <div class="comp-bar-container">
+                <div class="comp-bar-label">
+                    <span>${county.region} Region Average</span>
+                    <span>${formatValue(regionAvg, metric)}</span>
                 </div>
-
-                <div class="comp-bar-container">
-                    <div class="comp-bar-label">
-                        <span>${county.state_abbr} State Average</span>
-                        <span id="compStateVal">${formatValue(stateAvg, metric)}</span>
-                    </div>
-                    <div class="comp-bar-bg">
-                        <div class="comp-bar-fill bar-state" id="compStateBar"></div>
-                    </div>
+                <div class="comp-bar-bg">
+                    <div class="comp-bar-fill bar-region" id="bar-region-${countyId}"></div>
                 </div>
+            </div>
 
-                <div class="comp-bar-container">
-                    <div class="comp-bar-label">
-                        <span>${county.region} Region Average</span>
-                        <span id="compRegionVal">${formatValue(regionAvg, metric)}</span>
-                    </div>
-                    <div class="comp-bar-bg">
-                        <div class="comp-bar-fill bar-region" id="compRegionBar"></div>
-                    </div>
+            <div class="comp-bar-container">
+                <div class="comp-bar-label">
+                    <span>National Average</span>
+                    <span>${formatValue(nationalAvg, metric)}</span>
                 </div>
-
-                <div class="comp-bar-container">
-                    <div class="comp-bar-label">
-                        <span>National Average</span>
-                        <span id="compNationalVal">${formatValue(nationalAvg, metric)}</span>
-                    </div>
-                    <div class="comp-bar-bg">
-                        <div class="comp-bar-fill bar-national" id="compNationalBar"></div>
-                    </div>
+                <div class="comp-bar-bg">
+                    <div class="comp-bar-fill bar-national" id="bar-national-${countyId}"></div>
                 </div>
             </div>
         </div>
     `;
 
+    container.appendChild(card);
+
+    // Update active states in sidebar
+    updateInsightItemActiveStates();
+
     // Animate bars
     const maxVal = Math.max(val, stateAvg, regionAvg, nationalAvg, 0.0001);
     setTimeout(() => {
-        const setWidth = (id, v) => {
-            const el = document.getElementById(id);
+        const setWidth = (selector, v) => {
+            const el = document.getElementById(selector);
             if (el) el.style.width = ((v / maxVal) * 100) + '%';
         };
-        setWidth('compCountyBar', val);
-        setWidth('compStateBar', stateAvg);
-        setWidth('compRegionBar', regionAvg);
-        setWidth('compNationalBar', nationalAvg);
+        setWidth(`bar-county-${countyId}`, val);
+        setWidth(`bar-state-${countyId}`, stateAvg);
+        setWidth(`bar-region-${countyId}`, regionAvg);
+        setWidth(`bar-national-${countyId}`, nationalAvg);
     }, 100);
+}
+
+function removeMetricDNA(countyId) {
+    const card = document.getElementById(`comp-card-${countyId}`);
+    if (card) {
+        card.classList.add('removing');
+        setTimeout(() => {
+            card.remove();
+            updateInsightItemActiveStates();
+        }, 300);
+    }
+}
+
+function updateInsightItemActiveStates() {
+    const activeIds = Array.from(document.querySelectorAll('.rich-comparison-card'))
+        .map(card => card.id.replace('comp-card-', ''));
+
+    document.querySelectorAll('.insight-item').forEach(item => {
+        const onclick = item.getAttribute('onclick') || '';
+        const match = onclick.match(/showMetricDNA\('(.+?)'\)/);
+        if (match && activeIds.includes(match[1])) {
+            item.classList.add('active');
+        } else {
+            item.classList.remove('active');
+        }
+    });
 }
 
 
