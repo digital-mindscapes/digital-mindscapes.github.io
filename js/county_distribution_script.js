@@ -67,6 +67,7 @@ function normalizeCountyName(name) {
 }
 
 let chartRoot, chart, legend, barSeries, xAxis, yAxis, simulation, nodes;
+let mapRoot, mapPolygonSeries;
 
 function isMobile() {
     return window.innerWidth < 768;
@@ -92,15 +93,26 @@ async function loadAndMergeData() {
             ? am5geodata_region_usa_usaCountiesLow
             : null;
 
-        // Build a mapping from State_NormalizedName -> FIPS from geodata
-        const fipsLookup = {};
+        // Build robust lookups: State_NormalizedName -> ID/FIPS
+        const geoIdLookup = {};
+        const nameToFipsLookup = {};
         if (geoData && geoData.features) {
             geoData.features.forEach(f => {
-                const fips = f.id;
-                const state = f.properties.STATE;
-                const name = normalizeCountyName(f.properties.name);
-                if (state && name) {
-                    fipsLookup[state + "_" + name] = fips;
+                const fullId = f.id;
+                const stateAbbr = (f.properties.STATE || "").toUpperCase();
+                const nameNorm = normalizeCountyName(f.properties.name);
+                if (stateAbbr && nameNorm) {
+                    const key = stateAbbr + "_" + nameNorm;
+                    geoIdLookup[key] = fullId;
+
+                    // Extract FIPS: pure 5-digit ID or suffix of hyphenated ID
+                    if (fullId.length === 5 && !isNaN(fullId)) {
+                        nameToFipsLookup[key] = fullId;
+                    } else if (fullId.includes("-")) {
+                        const parts = fullId.split("-");
+                        const last = parts[parts.length - 1];
+                        if (last.length === 5 && !isNaN(last)) nameToFipsLookup[key] = last;
+                    }
                 }
             });
         }
@@ -109,41 +121,38 @@ async function loadAndMergeData() {
         placesData.forEach(d => {
             if (d.state_abbr && d.name) {
                 const norm = normalizeCountyName(d.name);
-                placesLookup[d.state_abbr.toUpperCase() + "_" + norm] = d;
-            } else if (d.id) {
-                placesLookup[d.id] = d;
+                placesLookup[(d.state_abbr + "_" + norm).toUpperCase()] = d;
             }
         });
 
         console.log("Merging data for", acsData.length, "counties...");
 
         return acsData.map(acs => {
+            const state = (acs.state_abbr || "").toUpperCase();
             const normName = normalizeCountyName(acs.name);
-            const lookupKey = (acs.state_abbr || "").toUpperCase() + "_" + normName;
-            const places = placesLookup[lookupKey] || placesLookup[acs.id] || {};
-            const merged = { ...acs, ...places, id: acs.id, name: acs.name, state_abbr: acs.state_abbr };
+            const lookupKey = state + "_" + normName;
 
-            // Attach RUCC metadata
-            let fips = merged.GEOID || merged.fips || fipsLookup[lookupKey];
+            const places = placesLookup[lookupKey] || {};
+            const item = { ...acs, ...places };
 
-            if (fips && typeof fips === "string") {
-                if (fips.includes("-")) {
-                    const parts = fips.split("-");
-                    fips = parts[parts.length - 1];
-                }
-                if (/^\d{1,4}$/.test(fips)) fips = fips.padStart(5, "0");
-            }
+            // Vital Metadata
+            item.id = geoIdLookup[lookupKey] || item.GEOID || item.id;
+
+            let fips = nameToFipsLookup[lookupKey] || item.GEOID || item.fips || "";
+            if (fips && typeof fips === "string" && fips.includes("-")) fips = fips.split("-").pop();
+            if (fips && /^\d{1,4}$/.test(fips)) fips = fips.padStart(5, "0");
 
             if (fips && globalRuccData[fips]) {
-                merged.rucc_class = globalRuccData[fips].classification;
+                const cls = (globalRuccData[fips].classification || "").trim();
+                item.rucc_class = cls.includes("Nonmetro") ? "Nonmetro" : "Metro";
             } else {
-                merged.rucc_class = "Unknown";
+                item.rucc_class = "Unknown";
             }
 
-            // Attach Region metadata
-            merged.region = stateToRegion[merged.state_abbr] || "Unknown";
+            item.region = stateToRegion[state] || "Unknown";
+            item.state_abbr = state;
 
-            return merged;
+            return item;
         });
     } catch (e) {
         console.error("Error loading or merging data:", e);
@@ -399,7 +408,12 @@ function fastUpdatePlotRange() {
         }
     });
 
-    // 3. Update Title Count (Fast)
+    // 3. Update Map if visible
+    if (document.getElementById("mapPanelOverlay").style.display === "flex") {
+        updateMapLayers();
+    }
+
+    // 4. Update Title Count (Fast)
     const meta = tableMetricMeta[activeMetric];
     const titleLabel = chart.get("titleLabel");
     if (titleLabel) {
@@ -456,6 +470,163 @@ function refreshTable() {
 // =========================================
 // CHARTING
 // =========================================
+
+function showMapPanel() {
+    const overlay = document.getElementById("mapPanelOverlay");
+    overlay.style.display = "flex";
+    if (!mapRoot) {
+        initDistributionMap();
+    } else {
+        updateMapLayers();
+    }
+}
+
+function hideMapPanel() {
+    const overlay = document.getElementById("mapPanelOverlay");
+    overlay.style.display = "none";
+}
+
+function initDistributionMap() {
+    mapRoot = am5.Root.new("distributionMapDiv");
+    mapRoot.setThemes([am5themes_Animated.new(mapRoot)]);
+
+    const mapChart = am5map.MapChart.new(mapRoot, {
+        panX: "translateX",
+        panY: "translateY",
+        wheelY: "zoom",
+        projection: am5map.geoAlbersUsa()
+    });
+    mapChart.set("zoomControl", am5map.ZoomControl.new(mapRoot, {}));
+    // Add a proper "Home" button with an icon instead of "Reset Zoom" text
+    const homeButton = am5.Button.new(mapRoot, {
+        paddingTop: 8,
+        paddingBottom: 8,
+        paddingLeft: 8,
+        paddingRight: 8,
+        x: am5.percent(98),
+        y: am5.percent(10),
+        centerX: am5.percent(100),
+        centerY: am5.percent(0),
+        icon: am5.Graphics.new(mapRoot, {
+            svgPath: "M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z",
+            fill: am5.color(0x334155),
+            scale: 0.7
+        })
+    });
+
+    homeButton.events.on("click", function () {
+        mapChart.goHome();
+    });
+
+    mapChart.set("homeButton", homeButton);
+    mapChart.children.push(homeButton);
+    mapChart.children.push(mapChart.get("zoomControl"));
+
+    mapPolygonSeries = mapChart.series.push(am5map.MapPolygonSeries.new(mapRoot, {
+        geoJSON: am5geodata_region_usa_usaCountiesLow
+    }));
+
+    mapPolygonSeries.mapPolygons.template.setAll({
+        fill: am5.color(0xd9cec8),
+        stroke: am5.color(0xffffff),
+        strokeWidth: 0.5,
+        fillOpacity: 1,
+        tooltipText: "{name}: [bold]{value}[/]",
+        tooltipY: 0
+    });
+
+    // Tooltip Adapter to match beeswarm plot formatting
+    mapPolygonSeries.mapPolygons.template.adapters.add("tooltipText", function (text, target) {
+        const dataContext = target.dataItem.dataContext;
+        if (!dataContext || dataContext.dummy) return "";
+
+        // Find the county record in allCountyData to get extra metadata
+        const countyRecord = allCountyData.find(c => c.id === target.dataItem.get("id"));
+        if (!countyRecord) return "{name}";
+
+        const val = countyRecord[activeMetric];
+        const isPercent = activeMetric.startsWith("pct_") || activeMetric.includes("prevalence");
+        const formattedVal = val !== undefined && val !== null ? (parseFloat(val).toFixed(1) + (isPercent ? "%" : "")) : "N/A";
+
+        const name = (countyRecord.name || "").replace(/ County$/i, "") + ", " + countyRecord.state_abbr;
+        const region = countyRecord.region || "Unknown";
+        const rc = countyRecord.rucc_class || "Unknown";
+
+        return `[bold]${name}: ${formattedVal}[/]\n[font-size: 12px]Region: ${region} | Class: ${rc}[/]`;
+    });
+
+    mapPolygonSeries.mapPolygons.template.states.create("hover", {
+        stroke: am5.color(0x334155),
+        strokeWidth: 1.5,
+        fillOpacity: 1
+    });
+
+    // Initial load
+    mapPolygonSeries.events.once("datavalidated", () => {
+        updateMapLayers();
+    });
+
+    mapChart.appear(1000, 100);
+    mapRoot.container.children.push(mapChart);
+}
+
+function updateMapLayers() {
+    if (!mapPolygonSeries || !allCountyData.length) return;
+
+    // Build a map of color and status from the existing data logic
+    const colorStatusMap = {};
+
+    // We can't always trust barSeries.dataItems bullets if they haven't finished rendering
+    // So we use the same filtering logic used in the beeswarm chart
+    allCountyData.forEach(item => {
+        const val = item[activeMetric];
+        const isInRange = (val >= rangeMin && val <= rangeMax);
+        const matchesRUCC = (ruccFilter === "All" || item.rucc_class === ruccFilter);
+        const matchesRegion = (regionFilter === "All" || item.region === regionFilter);
+        const matchesState = (stateFilter === "All" || item.state_abbr === stateFilter);
+
+        let highlightMatch = true;
+        // Ensure tableMetricMeta[activeMetric].avg is available, otherwise default to 0
+        const nationalAvg = (tableMetricMeta[activeMetric] && tableMetricMeta[activeMetric].avg !== undefined) ? tableMetricMeta[activeMetric].avg : 0;
+
+        if (highlightFilter === "Above") highlightMatch = (val > nationalAvg);
+        if (highlightFilter === "Below") highlightMatch = (val < nationalAvg);
+
+        const isHighlighted = (isInRange && matchesRUCC && matchesRegion && matchesState && highlightMatch);
+
+        // Color logic
+        let bColor = am5.color(0xc83830); // default
+        if (colorMode === "rucc") {
+            bColor = am5.color(ruccColors[item.rucc_class] || "#94a3b8");
+        } else if (colorMode === "region") {
+            bColor = am5.color(regionColors[item.region] || "#94a3b8");
+        }
+
+        colorStatusMap[item.id] = {
+            active: isHighlighted,
+            color: bColor
+        };
+        // Also map by direct GEOID for fallback
+        if (item.GEOID) colorStatusMap[item.GEOID] = { active: isHighlighted, color: bColor };
+    });
+
+    mapPolygonSeries.mapPolygons.each((polygon) => {
+        const id = polygon.dataItem.get("id");
+        const status = colorStatusMap[id];
+
+        if (status && status.active) {
+            polygon.set("fill", status.color);
+            polygon.set("fillOpacity", 0.95);
+            polygon.set("stroke", am5.color(0xffffff));
+            polygon.set("strokeWidth", 0.5);
+        } else {
+            polygon.set("fill", am5.color(0x94a3b8));
+            polygon.set("fillOpacity", 0.1);
+            polygon.set("stroke", am5.color(0xe2e8f0));
+            polygon.set("strokeWidth", 0.2);
+        }
+    });
+}
 
 function initChart() {
     if (chartRoot) chartRoot.dispose();
@@ -596,7 +767,12 @@ function updateChart() {
             count++;
         }
     });
+
     const nationalAvg = count > 0 ? total / count : 0;
+    // Store back in meta for map synchronization
+    if (tableMetricMeta[activeMetric]) {
+        tableMetricMeta[activeMetric].avg = nationalAvg;
+    }
 
     // 2. Clear existing lines
     xAxis.axisRanges.clear();
@@ -625,10 +801,11 @@ function updateChart() {
         // Determine base Color
         let bColor = am5.color(0xc83830); // Default Red
         if (colorMode === "rucc") {
-            bColor = am5.color(ruccColors[rc] || "#7f7f7f");
+            const rc_cls = (rc === "Unknown" || !ruccColors[rc]) ? "Unknown" : rc;
+            bColor = am5.color(ruccColors[rc_cls] || "#7f8c8d");
         } else if (colorMode === "region") {
-            const reg = c.region || "Unknown";
-            bColor = am5.color(regionColors[reg] || "#7f7f7f");
+            const reg_cls = (reg === "Unknown" || !regionColors[reg]) ? "Unknown" : reg;
+            bColor = am5.color(regionColors[reg_cls] || "#7f8c8d");
         }
 
         // Apply Highlight Logic
@@ -680,6 +857,12 @@ function updateChart() {
     const highlightedCount = data.filter(d => d.bulletSettings.fillOpacity > 0.1).length;
 
     barSeries.data.setAll(data);
+
+    // Sync Map if visible
+    if (document.getElementById("mapPanelOverlay").style.display === "flex") {
+        // Full update needs a small delay to ensure bullet sprites are updated
+        setTimeout(updateMapLayers, 50);
+    }
 
     // Sync Table (Filter table rows to only show points in range)
     if (typeof renderComparisonTable === "function") {
