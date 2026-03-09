@@ -17,7 +17,7 @@ let activeFilters = {
 
 // --- Metric DNA Global State ---
 let dnaMetricList = [];
-let activeDnaCounty = null;
+let activeDnaCounties = []; // Now an array for multi-county support
 let activeInfoMetric = null; // Tracks current metric highlighted in sidebar
 
 const higherIsBetter = {
@@ -838,13 +838,13 @@ function toggleInfo(metric, isUpdate = false) {
             <h4><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Positive Deviation</h4>
             <div class="insights-list">
                 ${successes.map(c => `
-                    <div class="insight-item ${activeDnaCounty === c.id ? 'dna-active' : ''}" onclick="showMetricDNA('${c.id}')">
+                    <div class="insight-item ${activeDnaCounties.includes(c.id) ? 'dna-active' : ''}" onclick="showMetricDNA('${c.id}', event)">
                         <div class="county-info">
                             <span class="c-name">${c.name}</span>
                             <span class="c-state">${c.state_name || c.state_abbr}</span>
                         </div>
                         <div class="c-value-wrapper">
-                            ${activeDnaCounty === c.id ? '<span class="dna-active-badge">DNA</span>' : ''}
+                            ${activeDnaCounties.includes(c.id) ? '<span class="dna-active-badge">DNA</span>' : ''}
                             <span class="c-value">${formatValue(c[metric], metric)}</span>
                         </div>
                     </div>
@@ -856,13 +856,13 @@ function toggleInfo(metric, isUpdate = false) {
             <h4><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="19"/><path d="M12 8v5"/></svg> Critical Focus</h4>
             <div class="insights-list">
                 ${criticals.map(c => `
-                    <div class="insight-item ${activeDnaCounty === c.id ? 'dna-active' : ''}" onclick="showMetricDNA('${c.id}')">
+                    <div class="insight-item ${activeDnaCounties.includes(c.id) ? 'dna-active' : ''}" onclick="showMetricDNA('${c.id}', event)">
                         <div class="county-info">
                             <span class="c-name">${c.name}</span>
                             <span class="c-state">${c.state_name || c.state_abbr}</span>
                         </div>
                         <div class="c-value-wrapper">
-                            ${activeDnaCounty === c.id ? '<span class="dna-active-badge">DNA</span>' : ''}
+                            ${activeDnaCounties.includes(c.id) ? '<span class="dna-active-badge">DNA</span>' : ''}
                             <span class="c-value" style="color: #dc2626;">${formatValue(c[metric], metric)}</span>
                         </div>
                     </div>
@@ -901,8 +901,18 @@ function toggleInfo(metric, isUpdate = false) {
     }, 400); // More time to ensure DOM is ready
 }
 
-function showMetricDNA(countyId) {
-    activeDnaCounty = countyId;
+function showMetricDNA(countyId, event = null) {
+    if (event && event.ctrlKey) {
+        const idx = activeDnaCounties.indexOf(countyId);
+        if (idx > -1) {
+            activeDnaCounties.splice(idx, 1);
+        } else if (activeDnaCounties.length < 3) {
+            activeDnaCounties.push(countyId);
+        }
+    } else {
+        activeDnaCounties = [countyId];
+    }
+
     const county = allCountyData.find(c => c.id === countyId);
     if (!county) return;
 
@@ -998,11 +1008,27 @@ function showMetricDNA(countyId) {
     updateInsightItemActiveStates();
 
     // Clear previous active DNA card styling
-    document.querySelectorAll('.rich-comparison-card').forEach(c => c.classList.remove('active-dna'));
-    card.classList.add('active-dna');
+    const dColors = ["#10b981", "#3b82f6", "#f59e0b"];
+    const isDnaVisible = dnaMetricList.length >= 3;
 
-    // Render Radar Chart if axes are selected
-    renderRadarChart(countyId);
+    document.querySelectorAll('.rich-comparison-card').forEach(c => {
+        c.classList.remove('active-dna');
+        c.classList.remove('dna-plotting');
+        c.style.borderColor = "#f1f5f9";
+    });
+
+    activeDnaCounties.forEach((id, idx) => {
+        const c = document.getElementById(`comp-card-${id}`);
+        if (c) {
+            c.classList.add('active-dna');
+            if (isDnaVisible) c.classList.add('dna-plotting');
+            c.style.setProperty('--dna-active-color', dColors[idx]);
+            c.style.borderColor = dColors[idx];
+        }
+    });
+
+    // Render Radar Chart for all active counties
+    renderRadarChart();
 
     // Animate bars
     const maxVal = Math.max(val, stateAvg, regionAvg, nationalAvg, 0.0001);
@@ -1033,9 +1059,12 @@ function updateInsightItemActiveStates() {
     const activeIds = Array.from(document.querySelectorAll('.rich-comparison-card'))
         .map(card => card.id.replace('comp-card-', ''));
 
+    const dColors = ["#10b981", "#3b82f6", "#f59e0b"];
+    const isDnaVisible = dnaMetricList.length >= 3;
+
     document.querySelectorAll('.insight-item').forEach(item => {
         const onclick = item.getAttribute('onclick') || '';
-        const match = onclick.match(/showMetricDNA\('(.+?)'\)/);
+        const match = onclick.match(/showMetricDNA\('(.+?)'/);
         if (match) {
             const countyId = match[1];
 
@@ -1046,18 +1075,29 @@ function updateInsightItemActiveStates() {
                 item.classList.remove('active');
             }
 
-            // Check if it's the active DNA county
+            // Check if it's in the active DNA counties
+            const dnaIndex = activeDnaCounties.indexOf(countyId);
             const valueWrapper = item.querySelector('.c-value-wrapper');
-            if (activeDnaCounty === countyId) {
+
+            if (dnaIndex > -1 && isDnaVisible) {
                 item.classList.add('dna-active');
-                if (valueWrapper && !valueWrapper.querySelector('.dna-active-badge')) {
-                    const badge = document.createElement('span');
+                item.style.borderLeftColor = dColors[dnaIndex];
+
+                let badge = item.querySelector('.dna-active-badge');
+                if (valueWrapper && !badge) {
+                    badge = document.createElement('span');
                     badge.className = 'dna-active-badge';
                     badge.textContent = 'DNA';
                     valueWrapper.insertBefore(badge, valueWrapper.firstChild);
                 }
+                if (badge) {
+                    badge.style.background = dColors[dnaIndex] + '26';
+                    badge.style.color = dColors[dnaIndex];
+                    badge.style.borderColor = dColors[dnaIndex] + '4D';
+                }
             } else {
                 item.classList.remove('dna-active');
+                item.style.borderLeftColor = "";
                 const badge = item.querySelector('.dna-active-badge');
                 if (badge) badge.remove();
             }
@@ -1147,9 +1187,25 @@ function toggleDNA(metric) {
     updateDnaHud();
     updateCardStates();
 
-    // Refresh chart for active county if exists
-    if (activeDnaCounty) {
-        renderRadarChart(activeDnaCounty);
+    // Refresh card highlighting styles
+    const dColors = ["#10b981", "#3b82f6", "#f59e0b"];
+    const isDnaVisible = dnaMetricList.length >= 3;
+    activeDnaCounties.forEach((id, idx) => {
+        const c = document.getElementById(`comp-card-${id}`);
+        if (c) {
+            if (isDnaVisible) c.classList.add('dna-plotting');
+            else c.classList.remove('dna-plotting');
+            c.style.setProperty('--dna-active-color', dColors[idx]);
+            c.style.borderColor = dColors[idx];
+        }
+    });
+
+    // Update left sidebar badges too
+    updateInsightItemActiveStates();
+
+    // Refresh chart for active counties if exists
+    if (activeDnaCounties.length > 0) {
+        renderRadarChart();
     }
 }
 
@@ -1177,7 +1233,7 @@ function clearDNASelection() {
     if (container) container.innerHTML = '';
 }
 
-function renderRadarChart(countyId) {
+function renderRadarChart() {
     const container = document.getElementById('dna-radar-container');
     if (!container || dnaMetricList.length < 3) {
         if (container) {
@@ -1190,25 +1246,42 @@ function renderRadarChart(countyId) {
         return;
     }
 
-    const county = allCountyData.find(c => c.id === countyId);
-    if (!county) return;
+    if (activeDnaCounties.length === 0) {
+        container.innerHTML = '';
+        return;
+    }
 
-    // Ensure the corresponding card (if exists) is highlighted
+    const counties = activeDnaCounties.map(id => allCountyData.find(c => c.id === id)).filter(c => c);
+    if (counties.length === 0) return;
+
+    // Highlights logic moved to showMetricDNA update
     document.querySelectorAll('.rich-comparison-card').forEach(c => c.classList.remove('active-dna'));
-    const activeCard = document.getElementById(`comp-card-${countyId}`);
-    if (activeCard) activeCard.classList.add('active-dna');
+    activeDnaCounties.forEach(id => {
+        const activeCard = document.getElementById(`comp-card-${id}`);
+        if (activeCard) activeCard.classList.add('active-dna');
+    });
+
+    const colors = ["#10b981", "#3b82f6", "#f59e0b"]; // Emerald, Blue, Amber
 
     container.innerHTML = `
         <div class="radar-card">
             <div class="radar-title">
                 <span style="color: #10b981; font-weight: 900;">•</span> 
-                DNA Profile: ${county.name}
+                DNA Comparison: ${counties.length} Counties
             </div>
-            <div id="radar-viz-${countyId}" class="radar-container" style="min-height: 300px;"></div>
+            <div id="radar-viz-dna" class="radar-container" style="min-height: 300px;"></div>
+            <div class="radar-legend" style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 10px;">
+                ${counties.map((c, i) => `
+                    <div style="display: flex; align-items: center; gap: 4px; font-size: 0.65rem; font-weight: 700; color: #64748b;">
+                        <span style="width: 8px; height: 8px; border-radius: 50%; background: ${colors[i]};"></span>
+                        ${c.name}
+                    </div>
+                `).join('')}
+            </div>
         </div>
     `;
 
-    const vizElement = document.getElementById(`radar-viz-${countyId}`);
+    const vizElement = document.getElementById(`radar-viz-dna`);
     if (!vizElement) return;
 
     const width = vizElement.offsetWidth || 300;
@@ -1224,27 +1297,17 @@ function renderRadarChart(countyId) {
 
     const angleSlice = (Math.PI * 2) / dnaMetricList.length;
 
-    // Normalization scales for each metric across the national dataset
+    // Normalization scales
     const scales = dnaMetricList.map(m => {
         const vals = allCountyData.map(c => c[m]).filter(v => typeof v === 'number' && v !== 0);
         const extent = d3.extent(vals);
-        // Ensure valid domain even if data is skewed
         const domain = (extent[0] === extent[1]) ? [0, 100] : extent;
         return d3.scaleLinear().domain(domain).range([0, radius]);
     });
 
-    const data = dnaMetricList.map((m, i) => {
-        const val = county[m] || 0;
-        return {
-            axis: metricLabels[m] || m,
-            value: scales[i](val)
-        };
-    });
-
-    // Draw grid levels (concentric polygons)
+    // Draw grid
     const levels = 5;
     const gridG = svg.append("g").attr("class", "radar-grid");
-
     for (let j = 0; j < levels; j++) {
         const levelFactor = radius * ((j + 1) / levels);
         gridG.append("polygon")
@@ -1259,7 +1322,7 @@ function renderRadarChart(countyId) {
             .style("fill", "none");
     }
 
-    // Draw axes lines and labels
+    // Draw axes
     const axisG = svg.selectAll(".radar-axis")
         .data(dnaMetricList)
         .enter().append("g")
@@ -1276,8 +1339,8 @@ function renderRadarChart(countyId) {
     axisG.append("text")
         .attr("text-anchor", "middle")
         .attr("dy", "0.35em")
-        .attr("x", (d, i) => (radius + 20) * Math.cos(angleSlice * i - Math.PI / 2))
-        .attr("y", (d, i) => (radius + 20) * Math.sin(angleSlice * i - Math.PI / 2))
+        .attr("x", (d, i) => (radius + 25) * Math.cos(angleSlice * i - Math.PI / 2))
+        .attr("y", (d, i) => (radius + 25) * Math.sin(angleSlice * i - Math.PI / 2))
         .style("font-size", "10px")
         .style("font-weight", "600")
         .style("fill", "#64748b")
@@ -1286,57 +1349,83 @@ function renderRadarChart(countyId) {
             return label.length > 12 ? label.substring(0, 10) + '...' : label;
         });
 
-    // Draw the radar area (the "DNA" shape)
-    const radarLine = d3.lineRadial()
-        .radius(d => d.value)
-        .angle((d, i) => i * angleSlice)
-        .curve(d3.curveLinearClosed);
+    // Draw each county area
+    counties.forEach((county, idx) => {
+        const data = dnaMetricList.map((m, i) => ({
+            axis: metricLabels[m] || m,
+            value: scales[i](county[m] || 0)
+        }));
 
-    svg.append("path")
-        .datum(data)
-        .attr("class", "radar-area")
-        .attr("d", radarLine)
-        .attr("transform", `rotate(0)`)
-        .style("fill", "rgba(16, 185, 129, 0.3)")
-        .style("stroke", "#10b981")
-        .style("stroke-width", "3px")
-        .style("opacity", 0)
-        .transition().duration(800)
-        .style("opacity", 1);
+        const radarLine = d3.lineRadial()
+            .radius(d => d.value)
+            .angle((d, i) => i * angleSlice)
+            .curve(d3.curveLinearClosed);
 
-    // Create Tooltip element if it doesn't exist
-    let tooltip = d3.select("#radar-tooltip");
-    if (tooltip.empty()) {
-        tooltip = d3.select("body").append("div")
-            .attr("id", "radar-tooltip")
-            .attr("class", "radar-tooltip")
-            .style("opacity", 0);
-    }
+        const color = colors[idx];
 
-    // Add interactive dots
-    svg.selectAll(".radar-dot")
-        .data(data)
-        .enter().append("circle")
-        .attr("class", "radar-dot")
-        .attr("r", 4)
-        .attr("cx", (d, i) => d.value * Math.cos(angleSlice * i - Math.PI / 2))
-        .attr("cy", (d, i) => d.value * Math.sin(angleSlice * i - Math.PI / 2))
-        .on("mouseover", function (event, d) {
-            const metric = dnaMetricList[data.indexOf(d)];
-            const formattedVal = formatValue(county[metric], metric);
+        svg.append("path")
+            .datum(data)
+            .attr("class", "radar-area")
+            .attr("d", radarLine)
+            .attr("transform", `rotate(0)`)
+            .style("fill", color)
+            .style("fill-opacity", 0.15)
+            .style("stroke", color)
+            .style("stroke-width", "3px")
+            .style("stroke-opacity", 0.7)
+            .style("opacity", 0)
+            .transition().duration(800)
+            .style("opacity", 1);
 
-            tooltip.transition().duration(200).style("opacity", 1);
-            tooltip.html(`${d.axis}<span class="tip-val">${formattedVal}</span>`)
-                .style("left", (event.pageX + 10) + "px")
-                .style("top", (event.pageY - 28) + "px");
-        })
-        .on("mousemove", function (event) {
-            tooltip.style("left", (event.pageX + 10) + "px")
-                .style("top", (event.pageY - 28) + "px");
-        })
-        .on("mouseout", function () {
-            tooltip.transition().duration(500).style("opacity", 0);
-        });
+        // Create Tooltip element if it doesn't exist
+        let tooltip = d3.select("#radar-tooltip");
+        if (tooltip.empty()) {
+            tooltip = d3.select("body").append("div")
+                .attr("id", "radar-tooltip")
+                .attr("class", "radar-tooltip")
+                .style("opacity", 0);
+        }
+
+        // Add interactive dots for this county
+        svg.selectAll(`.radar-dot-${idx}`)
+            .data(data)
+            .enter().append("circle")
+            .attr("class", `radar-dot radar-dot-${idx}`)
+            .attr("r", 4)
+            .attr("cx", (d, i) => d.value * Math.cos(angleSlice * i - Math.PI / 2))
+            .attr("cy", (d, i) => d.value * Math.sin(angleSlice * i - Math.PI / 2))
+            .style("fill", color)
+            .style("stroke", "white")
+            .style("stroke-width", "2px")
+            .on("mouseover", function (event, d) {
+                const metric = dnaMetricList[data.indexOf(d)];
+                const formattedVal = formatValue(county[metric], metric);
+
+                let tooltip = d3.select("#radar-tooltip");
+                if (tooltip.empty()) {
+                    tooltip = d3.select("body").append("div")
+                        .attr("id", "radar-tooltip")
+                        .attr("class", "radar-tooltip")
+                        .style("opacity", 0);
+                }
+
+                tooltip.transition().duration(200).style("opacity", 1);
+                tooltip.html(`<b>${county.name}</b><br>${d.axis}: <span class="tip-val" style="color:${color}">${formattedVal}</span>`)
+                    .style("left", (event.pageX + 10) + "px")
+                    .style("top", (event.pageY - 28) + "px");
+
+                d3.select(this).attr("r", 6).style("stroke-width", "3px");
+            })
+            .on("mousemove", function (event) {
+                d3.select("#radar-tooltip")
+                    .style("left", (event.pageX + 10) + "px")
+                    .style("top", (event.pageY - 28) + "px");
+            })
+            .on("mouseout", function () {
+                d3.select("#radar-tooltip").transition().duration(500).style("opacity", 0);
+                d3.select(this).attr("r", 4).style("stroke-width", "2px");
+            });
+    });
 }
 
 function runCorrelation() {
