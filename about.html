@@ -536,6 +536,13 @@
             </svg>
             State Multi-Metric Comparison
         </a>
+        <a href="metric_visualization.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 20v-6M6 20V10M18 20V4" />
+            </svg>
+            Metric Insights
+        </a>
         <a href="about.html" class="comparison-pill active-pill">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -679,6 +686,13 @@
                     <path d="M22 12A10 10 0 0 0 12 2v10z"></path>
                 </svg>
                 State Multi-Metric
+            </div>
+            <div class="about-nav-item" onclick="switchAboutTab('page_metric_insights', this)">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 20v-6M6 20V10M18 20V4" />
+                </svg>
+                Metric Insights
             </div>
         </div>
 
@@ -1834,6 +1848,93 @@
                                     insecurity.</span>
                             </li>
                         </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div id="content_page_metric_insights" class="about-content-section">
+                <h2>Metric Insights</h2>
+                <div class="content-body">
+                    <div
+                        style="background: #ffffff; border: 1px solid #e9ecef; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02); margin-bottom: 30px;">
+                        <h4
+                            style="color: #c83830; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; font-size: 1.25rem;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" style="color: #c83830;">
+                                <path d="M12 20v-6M6 20V10M18 20V4" />
+                            </svg>
+                            Deep-Dive Analysis & Outlier Detection
+                        </h4>
+
+                        <p
+                            style="font-size: 1.1rem; color: #2b2e31; line-height: 1.7; margin-bottom: 20px; font-weight: 500;">
+                            The <strong>Metric Insights</strong> page provides a high-resolution look at the geographic
+                            leaders and laggards for every metric in the dataset.
+                        </p>
+
+                        <div
+                            style="background: #f8f9fa; border-radius: 10px; padding: 20px; margin-bottom: 25px; border-left: 4px solid #c83830;">
+                            <h5
+                                style="margin-top: 0; color: #495057; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                                Significance</h5>
+                            <p style="margin-bottom: 0; color: #495057; line-height: 1.6;">
+                                While aggregate maps are useful for seeing broad patterns, identifying the specific
+                                counties that represent the "extreme" ends of the spectrum is critical for learning from
+                                success stories (positive deviants) and directing resources to areas of greatest need.
+                                This view bridges the gap between high-level mapping and granular, actionable geographic
+                                data.
+                            </p>
+                        </div>
+
+                        <h5 style="color: #2b2e31; margin-bottom: 15px; font-weight: 700;">What this information
+                            conveys:</h5>
+                        <ul style="list-style-type: none; padding-left: 0; margin-bottom: 25px;">
+                            <li style="margin-bottom: 12px; display: flex; gap: 10px;">
+                                <span style="color: #c83830; font-weight: bold;">•</span>
+                                <span style="color: #495057; line-height: 1.5;"><strong>Positive Deviants:</strong>
+                                    Identify the top 5 counties that are performing best for a given metric, regardless
+                                    of their size or location.</span>
+                            </li>
+                            <li style="margin-bottom: 12px; display: flex; gap: 10px;">
+                                <span style="color: #c83830; font-weight: bold;">•</span>
+                                <span style="color: #495057; line-height: 1.5;"><strong>Critical Focus Areas:</strong>
+                                    Pinpoint the 5 counties with the highest prevalence of health risks or socioeconomic
+                                    challenges.</span>
+                            </li>
+                            <li style="display: flex; gap: 10px;">
+                                <span style="color: #c83830; font-weight: bold;">•</span>
+                                <span style="color: #495057; line-height: 1.5;"><strong>Distribution Context:</strong>
+                                    Visualize the entire national dataset as a smooth distribution curve or boxplot,
+                                    providing immediate context for local performance.</span>
+                            </li>
+                        </ul>
+
+                        <h5 style="color: #2b2e31; margin-bottom: 15px; font-weight: 700;">Key Features:</h5>
+                        <div
+                            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                            <div
+                                style="padding: 15px; background: #fff; border: 1px solid #e9ecef; border-radius: 8px;">
+                                <strong style="display: block; color: #c83830; margin-bottom: 5px;">Data
+                                    Snapshot</strong>
+                                <span style="font-size: 0.9rem; color: #6c757d;">Real-time calculation of Mean, Median,
+                                    and Standard Deviation for the currently filtered geography.</span>
+                            </div>
+                            <div
+                                style="padding: 15px; background: #fff; border: 1px solid #e9ecef; border-radius: 8px;">
+                                <strong style="display: block; color: #c83830; margin-bottom: 5px;">Mini-Map
+                                    Locator</strong>
+                                <span style="font-size: 0.9rem; color: #6c757d;">An integrated US map that reveals
+                                    geographic clustering of outliers across the entire nation.</span>
+                            </div>
+                            <div
+                                style="padding: 15px; background: #fff; border: 1px solid #e9ecef; border-radius: 8px;">
+                                <strong style="display: block; color: #c83830; margin-bottom: 5px;">National
+                                    Scales</strong>
+                                <span style="font-size: 0.9rem; color: #6c757d;">Every metric card includes a boxplot
+                                    for rapid visual benchmarking against national medians.</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

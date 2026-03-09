@@ -20,6 +20,8 @@ let nationalAvgLineDataItem = null;
 let stateAverages = {}; // Stores state_abbr -> average_value
 let nationalStdDev = 0;
 let nationalAvgValue = 0;
+let showDensity = true;
+let densitySeries = null;
 
 const ruccColors = {
     "Metro": "#3b82f6",
@@ -816,6 +818,37 @@ function initChart() {
         xAxis.setAll({ min: -100, max: 100, strictMinMax: true });
     }
 
+    // DENSITY SERIES (Violin Plot Overlay)
+    densitySeries = chart.series.push(am5xy.LineSeries.new(chartRoot, {
+        xAxis: xAxis,
+        yAxis: yAxis,
+        valueXField: mobile ? "density" : "value",
+        valueYField: mobile ? "value" : "density",
+        openValueYField: mobile ? undefined : "densityNegative",
+        openValueXField: mobile ? "densityNegative" : undefined,
+        stroke: am5.color(0x3b82f6),
+        fill: am5.color(0x3b82f6),
+        connect: true
+    }));
+
+    densitySeries.fills.template.setAll({
+        fillOpacity: 0.12,
+        visible: true,
+        fillGradient: am5.LinearGradient.new(chartRoot, {
+            stops: [
+                { color: am5.color(0x3b82f6) },
+                { color: am5.color(0x94a3b8) }
+            ]
+        })
+    });
+
+    densitySeries.strokes.template.setAll({
+        strokeWidth: 1.5,
+        strokeOpacity: 0.3
+    });
+
+    if (!showDensity) densitySeries.hide();
+
     barSeries = chart.series.push(am5xy.LineSeries.new(chartRoot, {
         xAxis: xAxis, yAxis: yAxis,
         valueXField: mobile ? "x" : "value",
@@ -1038,6 +1071,16 @@ function updateChart() {
         rowData[activeMetric] = val;
         data.push(rowData);
     });
+
+    // UPDATE DENSITY (KDE)
+    const activeValues = data.filter(d => d.bulletSettings.fillOpacity > 0.1).map(d => d.value);
+    if (densitySeries && showDensity && activeValues.length > 5) {
+        const kdeData = calculateKDE(activeValues);
+        densitySeries.data.setAll(kdeData);
+        densitySeries.show();
+    } else if (densitySeries) {
+        densitySeries.hide();
+    }
 
     const highlightedCount = data.filter(d => d.bulletSettings.fillOpacity > 0.1).length;
 
@@ -1270,3 +1313,62 @@ function hideRichComparisonCard() {
     const card = document.getElementById("richComparisonCard");
     card.classList.remove("active");
 }
+
+function toggleDensity() {
+    showDensity = !showDensity;
+    const btn = document.getElementById("densityToggleBtn");
+    if (showDensity) {
+        btn.classList.add("active");
+        updateChart();
+    } else {
+        btn.classList.remove("active");
+        if (densitySeries) densitySeries.hide();
+    }
+}
+
+// Silverman's rule of thumb for KDE bandwidth
+function calculateKDE(values, samples = 100) {
+    if (values.length === 0) return [];
+
+    // Adaptive grid based on metric range
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+    const range = max - min;
+    const pad = range * 0.1;
+    const start = min - pad;
+    const end = max + pad;
+    const step = (end - start) / (samples - 1);
+
+    // Bandwidth calculation (Silverman's rule)
+    const mean = values.reduce((a, b) => a + b, 0) / values.length;
+    const stdDev = Math.sqrt(values.reduce((sq, v) => sq + Math.pow(v - mean, 2), 0) / values.length) || 1;
+    const bandwidth = 0.9 * Math.min(stdDev, (range / 1.34)) * Math.pow(values.length, -0.2) || 1;
+
+    const kde = [];
+    for (let i = 0; i < samples; i++) {
+        const x = start + i * step;
+        let density = 0;
+        for (let j = 0; j < values.length; j++) {
+            const z = (x - values[j]) / bandwidth;
+            density += Math.exp(-0.5 * z * z) / Math.sqrt(2 * Math.PI);
+        }
+        const d = density / (values.length * bandwidth);
+        kde.push({
+            value: x,
+            density: d,
+            densityNegative: -d
+        });
+    }
+
+    // Scale density to fit the chart's +/- 100 coordinate space
+    const maxD = Math.max(...kde.map(k => k.density));
+    if (maxD > 0) {
+        kde.forEach(k => {
+            k.density = (k.density / maxD) * 85;
+            k.densityNegative = -k.density;
+        });
+    }
+
+    return kde;
+}
+

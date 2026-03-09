@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metric Visualization - Digital Mindscapes</title>
+    <link rel="stylesheet" href="css/style.css?v=5">
+    <link rel="stylesheet" href="css/responsive.css">
+    <link rel="stylesheet" href="css/metric_viz.css">
+    <!-- D3.js for high-quality visualizations -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <!-- amCharts 5 Core & Map for Mini-Map Locator (matching platform standard) -->
+    <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/map.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+    <!-- amCharts 5 Geodata for Name-to-FIPS mapping -->
+    <script src="https://cdn.amcharts.com/lib/5/geodata/region/usa/usaCountiesLow.js"></script>
+</head>
+
+<body>
+    <div class="header">
+        <div class="header-content">
+            <div class="app-logo-container">
+                <a href="index.html">
+                    <img src="assets/app_logo.png" alt="App Logo" class="app-logo">
+                </a>
+            </div>
+            <div class="header-text-container">
+                <h1>Digital Mindscapes: An Interactive Public Health & Socioeconomic Data Visualization Platform</h1>
+                <p class="authors">
+                    <strong>Arpita Datta</strong><sup>*</sup>,
+                    <strong>Dr. Sabirat Rubiya</strong><sup>*</sup>,
+                    <strong>Dr. Avik Chakrabarti</strong><sup>†</sup>,
+                    <strong>Dr. Anjishnu Banerjee</strong><sup>‡</sup>
+                </p>
+                <p class="affiliations">
+                    <sup>*</sup>Marquette University &nbsp;|&nbsp; <sup>†</sup>University of Wisconsin-Milwaukee (UWM)
+                    &nbsp;|&nbsp; <sup>‡</sup>Medical College of Wisconsin (MCW)
+                </p>
+            </div>
+            <div class="banner-logos-row">
+                <div class="banner-logos-top">
+                    <img src="assets/marquette_logo.png" id="marquetteLogo" alt="Marquette University Logo"
+                        class="banner-logo">
+                    <img src="assets/mcw_logo.png" id="mcwLogo" alt="MCW Logo" class="banner-logo">
+                </div>
+                <div class="banner-logos-bottom">
+                    <img src="assets/uwm_logo.png" id="uwmLogo" alt="UWM Logo" class="banner-logo">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="navigation-bar">
+        <a href="index.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+            </svg>
+            Main Dashboard
+        </a>
+        <a href="comparison.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="20" x2="18" y2="10"></line>
+                <line x1="12" y1="20" x2="12" y2="4"></line>
+                <line x1="6" y1="20" x2="6" y2="14"></line>
+            </svg>
+            States Comparison
+        </a>
+        <a href="county_comparison.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="7" height="7"></rect>
+                <rect x="14" y="3" width="7" height="7"></rect>
+                <rect x="14" y="14" width="7" height="7"></rect>
+                <rect x="3" y="14" width="7" height="7"></rect>
+            </svg>
+            Counties Comparison
+        </a>
+        <a href="urban_rural_comparison.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 4h16v16H4z"></path>
+                <path d="M4 12h16"></path>
+                <path d="M12 4v16"></path>
+            </svg>
+            Urban-Rural Comparison
+        </a>
+        <a href="county_distribution.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3" />
+                <circle cx="6" cy="16" r="3" />
+                <circle cx="18" cy="16" r="3" />
+                <circle cx="9" cy="8" r="3" />
+                <circle cx="15" cy="8" r="3" />
+            </svg>
+            County Distribution
+        </a>
+        <a href="multi_metric.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path>
+                <path d="M22 12A10 10 0 0 0 12 2v10z"></path>
+            </svg>
+            State Multi-Metric Comparison
+        </a>
+        <a href="metric_visualization.html" class="comparison-pill active-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 20v-6M6 20V10M18 20V4" />
+            </svg>
+            Metric Insights
+        </a>
+        <a href="about.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+            About
+        </a>
+    </div>
+
+    <main class="metric-insights-layout">
+        <!-- New Insights Sidebar (Left) -->
+        <aside id="info-sidebar" class="info-sidebar">
+            <div class="sidebar-header">
+                <div class="header-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10" />
+                        <line x1="12" y1="16" x2="12" y2="12" />
+                        <line x1="12" y1="8" x2="12.01" y2="8" />
+                    </svg>
+                </div>
+                <div>
+                    <h3>Local Performance</h3>
+                    <p>Select a metric to view leaders</p>
+                </div>
+            </div>
+            <div id="sidebar-content" class="sidebar-content">
+                <div class="sidebar-empty-state">
+                    <div class="empty-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+                            opacity="0.3">
+                            <circle cx="12" cy="12" r="10" />
+                            <path d="M12 16v-4" />
+                            <path d="M12 8h.01" />
+                        </svg>
+                    </div>
+                    <p>Click the <b>"i"</b> icon on any metric card to reveal the Top 5 and Bottom 5 counties for your
+                        current selected region.</p>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Viz Area -->
+        <div class="main-viz-area">
+            <div class="viz-controls">
+                <div class="control-group">
+                    <label>Filters:</label>
+                    <select id="regionFilter" onchange="updateFilters('region', this.value)">
+                        <option value="All">All Regions</option>
+                        <option value="Northeast">Northeast</option>
+                        <option value="Midwest">Midwest</option>
+                        <option value="South">South</option>
+                        <option value="West">West</option>
+                    </select>
+                    <select id="stateFilter" onchange="updateFilters('state', this.value)">
+                        <option value="All">All States</option>
+                    </select>
+                    <select id="metroFilter" onchange="updateFilters('metro', this.value)">
+                        <option value="All">All Metro/Rural</option>
+                        <option value="Metro">Metro</option>
+                        <option value="Nonmetro">Nonmetro</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label>View:</label>
+                    <div class="toggle-group">
+                        <button id="toggle-dist" class="toggle-btn active"
+                            onclick="setViewMode('distribution')">Dist.</button>
+                        <button id="toggle-box" class="toggle-btn" onclick="setViewMode('boxplot')">Box</button>
+                    </div>
+                </div>
+                <div class="control-group search-group">
+                    <input type="text" id="metricSearch" placeholder="Search metrics..."
+                        oninput="updateFilters('search', this.value)">
+                </div>
+            </div>
+
+            <!-- Metric Correlation HUD (Hidden by default) -->
+            <div id="comparison-hud" class="comparison-hud" style="display: none;">
+                <div class="hud-content">
+                    <div class="hud-text">
+                        <span id="comp-count">0</span>/4 Metrics Selected for Correlation
+                    </div>
+                    <div id="hud-metrics-list" class="hud-metrics"></div>
+                    <div class="hud-actions">
+                        <button class="hud-btn clear-btn" onclick="clearComparison()">Clear Selection</button>
+                        <button id="compare-go-btn" class="hud-btn go-btn" disabled onclick="runCorrelation()">Compare
+                            Shapes</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="metric-viz-content" class="metric-viz-content">
+                <!-- Categories and grids will be injected here -->
+                <div class="loader-container">
+                    <div class="loader"></div>
+                    <p>Loading National Data...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Geographic Insight Panel (Right) -->
+        <aside id="right-insight-panel" class="right-sidebar">
+            <div class="sidebar-header secondary">
+                <div class="header-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                        <circle cx="12" cy="10" r="3" />
+                    </svg>
+                </div>
+                <div>
+                    <h3 style="margin: 0; font-size: 1.1rem;">Spatial Context</h3>
+                    <p style="margin: 5px 0 0 0; opacity: 0.8; font-size: 0.85rem;">Geographic cluster analysis</p>
+                </div>
+            </div>
+            <div id="right-sidebar-content" class="sidebar-content">
+                <div class="sidebar-empty-state">
+                    <div class="empty-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
+                            <line x1="8" y1="2" x2="8" y2="18"></line>
+                            <line x1="16" y1="6" x2="16" y2="22"></line>
+                        </svg>
+                    </div>
+                    <p>Select a metric to visualize geographic clustering and spatial outliers across the nation.</p>
+                </div>
+            </div>
+        </aside>
+    </main>
+
+    <footer class="viz-footer">
+        <p>© 2026 Digital Mindscapes Platform | Data Sources: ACS 5-Year Estimates & CDC PLACES</p>
+    </footer>
+
+    <script src="js/metric_visualization.js"></script>
+</body>
+
+</html>
