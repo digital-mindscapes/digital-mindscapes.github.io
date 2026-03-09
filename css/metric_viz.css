@@ -13,25 +13,25 @@
     display: flex;
     gap: 25px;
     padding: 20px;
-    max-width: 1980px;
-    /* Wider for 3 columns */
+    max-width: 1600px;
     margin: 0 auto;
     align-items: flex-start;
 }
 
 .info-sidebar,
 .right-sidebar {
-    width: 380px;
+    width: 340px;
     background: white;
     border-radius: var(--border-radius);
     box-shadow: var(--card-shadow);
     position: sticky;
     top: 20px;
-    height: calc(100vh - 100px);
+    height: calc(100vh - 40px);
     display: flex;
     flex-direction: column;
     overflow: hidden;
     flex-shrink: 0;
+    transition: all 0.3s ease;
 }
 
 /* Secondary header for right sidebar */
@@ -390,7 +390,7 @@
 
 /* Categories */
 .category-section {
-    margin-bottom: 60px;
+    margin-bottom: 40px;
     transition: all 0.4s ease;
 }
 
@@ -1167,13 +1167,176 @@
 }
 
 @keyframes slideUp {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-
     to {
         opacity: 1;
         transform: translateY(0);
     }
+}
+
+/* Responsive Adjustments */
+@media (max-width: 1400px) {
+
+    .info-sidebar,
+    .right-sidebar {
+        width: 300px;
+    }
+
+    .category-grid {
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    }
+}
+
+@media (max-width: 1200px) {
+    .metric-insights-layout {
+        flex-direction: column;
+    }
+
+    .info-sidebar,
+    .right-sidebar {
+        width: 100%;
+        position: relative;
+        top: 0;
+        height: auto;
+        max-height: 600px;
+    }
+
+    .main-viz-area {
+        width: 100%;
+    }
+
+    .comparison-hud {
+        min-width: 90%;
+    }
+}
+
+@media (max-width: 768px) {
+    .category-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .viz-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .search-group input {
+        width: 100%;
+    }
+
+    .stat-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Rich Comparison Card Styles (matching platform style) */
+.rich-comparison-card {
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    border: 1px solid #f1f5f9;
+    animation: fadeInScale 0.4s ease-out;
+}
+
+@keyframes fadeInScale {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.rich-comparison-card .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+    background: none;
+    padding: 0;
+    color: inherit;
+}
+
+.rich-comparison-card .comparison-title h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.rich-comparison-card .comparison-title p {
+    margin: 4px 0 0;
+    font-size: 0.8rem;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.rich-comparison-card .comparison-metric-name {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #c83830;
+    margin-bottom: 20px;
+    padding: 8px 12px;
+    background: rgba(200, 56, 48, 0.05);
+    border-radius: 10px;
+    display: inline-block;
+}
+
+.comp-bar-container {
+    margin-bottom: 15px;
+}
+
+.comp-bar-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.7rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: #475569;
+}
+
+.comp-bar-label span:last-child {
+    color: #0f172a;
+    font-weight: 800;
+}
+
+.comp-bar-bg {
+    height: 8px;
+    background: #f1f5f9;
+    border-radius: 4px;
+    overflow: hidden;
+    border: 1px solid rgba(0, 0, 0, 0.02);
+}
+
+.comp-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 1.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    width: 0;
+}
+
+.bar-county {
+    background: linear-gradient(90deg, #c83830, #ff4d4d);
+    box-shadow: 0 0 10px rgba(200, 56, 48, 0.2);
+}
+
+.bar-state {
+    background: linear-gradient(90deg, #64748b, #94a3b8);
+}
+
+.bar-region {
+    background: linear-gradient(90deg, #334155, #475569);
+}
+
+.bar-national {
+    background: linear-gradient(90deg, #1e293b, #334155);
+}
+
+.insight-item.active {
+    background: white !important;
+    box-shadow: 0 4px 15px rgba(200, 56, 48, 0.15);
+    border-left: 4px solid var(--accent-color) !important;
 }

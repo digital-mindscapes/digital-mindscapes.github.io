@@ -737,9 +737,9 @@ function toggleInfo(metric, isUpdate = false) {
                     <p>Click the <b>"i"</b> icon on any metric card to reveal the Top 5 and Bottom 5 counties for your current selected region.</p>
                 </div>
             `;
-            const rightSidebarContent = document.getElementById('right-sidebar-content');
-            if (rightSidebarContent) {
-                rightSidebarContent.innerHTML = `
+            const rightSidebarDynamic = document.getElementById('right-sidebar-dynamic-content');
+            if (rightSidebarDynamic) {
+                rightSidebarDynamic.innerHTML = `
                     <div class="sidebar-empty-state">
                         <div class="empty-icon">
                             <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" opacity="0.3">
@@ -752,14 +752,23 @@ function toggleInfo(metric, isUpdate = false) {
                     </div>
                 `;
             }
+            const compCardContainer = document.getElementById('comparison-card-container');
+            if (compCardContainer) compCardContainer.innerHTML = '';
+
             // Re-render without highlights
             renderPlot(metric, values);
             return;
         } else {
             // Un-highlight previous
-            if (activeInfoMetric) {
-                const prevCard = document.getElementById(`card-${activeInfoMetric}`);
-                if (prevCard) prevCard.classList.remove('show-info');
+            if (activeInfoMetric && activeInfoMetric !== metric) {
+                const prevMetric = activeInfoMetric;
+                const prevCard = document.getElementById(`card-${prevMetric}`);
+                if (prevCard) {
+                    prevCard.classList.remove('show-info');
+                    // Reset previous visualization to normal (clear highlights)
+                    const prevValues = filteredData.map(c => c[prevMetric]).filter(v => typeof v === 'number' && v !== 0);
+                    renderPlot(prevMetric, prevValues, []);
+                }
             }
             card.classList.add('show-info');
             activeInfoMetric = metric;
@@ -860,15 +869,15 @@ function toggleInfo(metric, isUpdate = false) {
     renderPlot(metric, values, highlights);
 
     // Render Mini-Map Locator on the right side
-    const rightSidebarContent = document.getElementById('right-sidebar-content');
-    if (rightSidebarContent) {
-        rightSidebarContent.innerHTML = `
+    const rightSidebarDynamic = document.getElementById('right-sidebar-dynamic-content');
+    if (rightSidebarDynamic) {
+        rightSidebarDynamic.innerHTML = `
             <div class="mini-map-box">
                 <div class="box-header">
                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
                     GEOGRAPHIC OUTlier LOCATOR
                 </div>
-                <div id="mini-map-locator" class="sidebar-mini-map" style="height: 350px;">
+                <div id="mini-map-locator" class="sidebar-mini-map" style="height: 250px;">
                     <div class="map-loader">PROJECTING GEODATA...</div>
                 </div>
                 <div class="map-overlay-hint">USA ALBERS PROJECTION</div>
@@ -880,6 +889,105 @@ function toggleInfo(metric, isUpdate = false) {
         renderMiniMap('mini-map-locator', highlights);
     }, 400); // More time to ensure DOM is ready
 }
+
+function showMetricDNA(countyId) {
+    activeDnaCounty = countyId;
+    const county = allCountyData.find(c => c.id === countyId);
+    if (!county) return;
+
+    const metric = activeInfoMetric;
+    const label = metricLabels[metric] || metric;
+    const val = county[metric];
+
+    // Calculate averages for current metric and filtered subset
+    const filteredData = getFilteredData();
+    const nationalValues = allCountyData.map(c => c[metric]).filter(v => typeof v === 'number' && v !== 0);
+    const stateValues = allCountyData.filter(c => c.state_abbr === county.state_abbr).map(c => c[metric]).filter(v => typeof v === 'number' && v !== 0);
+    const regionValues = allCountyData.filter(c => c.region === county.region).map(c => c[metric]).filter(v => typeof v === 'number' && v !== 0);
+
+    const nationalAvg = nationalValues.reduce((a, b) => a + b, 0) / nationalValues.length;
+    const stateAvg = stateValues.reduce((a, b) => a + b, 0) / stateValues.length;
+    const regionAvg = regionValues.reduce((a, b) => a + b, 0) / regionValues.length;
+
+    // Update active state in sidebar
+    document.querySelectorAll('.insight-item').forEach(item => {
+        item.classList.toggle('active', item.getAttribute('onclick').includes(countyId));
+    });
+
+    const container = document.getElementById('comparison-card-container');
+    if (!container) return;
+
+    container.innerHTML = `
+        <div class="rich-comparison-card">
+            <div class="card-header">
+                <div class="comparison-title">
+                    <h3 id="compCountyName">${county.name}</h3>
+                    <p id="compStateName">${county.state_name || county.state_abbr}</p>
+                </div>
+            </div>
+
+            <div class="comparison-metric-name" id="compMetricName">
+                ${label}
+            </div>
+
+            <div class="comp-bar-wrapper">
+                <div class="comp-bar-container">
+                    <div class="comp-bar-label">
+                        <span>County</span>
+                        <span id="compCountyVal">${formatValue(val, metric)}</span>
+                    </div>
+                    <div class="comp-bar-bg">
+                        <div class="comp-bar-fill bar-county" id="compCountyBar"></div>
+                    </div>
+                </div>
+
+                <div class="comp-bar-container">
+                    <div class="comp-bar-label">
+                        <span>${county.state_abbr} State Average</span>
+                        <span id="compStateVal">${formatValue(stateAvg, metric)}</span>
+                    </div>
+                    <div class="comp-bar-bg">
+                        <div class="comp-bar-fill bar-state" id="compStateBar"></div>
+                    </div>
+                </div>
+
+                <div class="comp-bar-container">
+                    <div class="comp-bar-label">
+                        <span>${county.region} Region Average</span>
+                        <span id="compRegionVal">${formatValue(regionAvg, metric)}</span>
+                    </div>
+                    <div class="comp-bar-bg">
+                        <div class="comp-bar-fill bar-region" id="compRegionBar"></div>
+                    </div>
+                </div>
+
+                <div class="comp-bar-container">
+                    <div class="comp-bar-label">
+                        <span>National Average</span>
+                        <span id="compNationalVal">${formatValue(nationalAvg, metric)}</span>
+                    </div>
+                    <div class="comp-bar-bg">
+                        <div class="comp-bar-fill bar-national" id="compNationalBar"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Animate bars
+    const maxVal = Math.max(val, stateAvg, regionAvg, nationalAvg, 0.0001);
+    setTimeout(() => {
+        const setWidth = (id, v) => {
+            const el = document.getElementById(id);
+            if (el) el.style.width = ((v / maxVal) * 100) + '%';
+        };
+        setWidth('compCountyBar', val);
+        setWidth('compStateBar', stateAvg);
+        setWidth('compRegionBar', regionAvg);
+        setWidth('compNationalBar', nationalAvg);
+    }, 100);
+}
+
 
 function toggleCompare(metric) {
     const idx = compareList.indexOf(metric);
