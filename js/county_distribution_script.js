@@ -18,6 +18,8 @@ let currentActiveMetricForRange = "";
 let rangeLineMinDataItem = null, rangeLineMaxDataItem = null;
 let nationalAvgLineDataItem = null;
 let stateAverages = {}; // Stores state_abbr -> average_value
+let nationalStdDev = 0;
+let nationalAvgValue = 0;
 
 const ruccColors = {
     "Metro": "#3b82f6",
@@ -412,8 +414,17 @@ function fastUpdatePlotRange() {
         } else if (effectiveVisible) {
             // Restore theme color
             let bColor = am5.color(0xc83830);
-            if (colorMode === "rucc") bColor = am5.color(ruccColors[dataContext.rucc_class] || "#94a3b8");
-            else if (colorMode === "region") bColor = am5.color(regionColors[dataContext.region] || "#94a3b8");
+            if (colorMode === "rucc") {
+                bColor = am5.color(ruccColors[dataContext.rucc_class] || "#94a3b8");
+            } else if (colorMode === "region") {
+                bColor = am5.color(regionColors[dataContext.region] || "#94a3b8");
+            } else if (colorMode === "sigma") {
+                const diff = Math.abs(val - nationalAvgValue);
+                const sigma = nationalStdDev > 0 ? diff / nationalStdDev : 0;
+                if (sigma > 2) bColor = am5.color(0xdc2626); // Red-600
+                else if (sigma > 1) bColor = am5.color(0xfbbf24); // Amber-400
+                else bColor = am5.color(0x94a3b8); // Slate-400
+            }
 
             sprite.setAll({
                 fill: bColor,
@@ -711,6 +722,12 @@ function updateMapLayers() {
             bColor = am5.color(ruccColors[item.rucc_class] || "#94a3b8");
         } else if (colorMode === "region") {
             bColor = am5.color(regionColors[item.region] || "#94a3b8");
+        } else if (colorMode === "sigma") {
+            const diff = Math.abs(val - nationalAvgValue);
+            const sigmaScore = nationalStdDev > 0 ? diff / nationalStdDev : 0;
+            if (sigmaScore > 2) bColor = am5.color(0xdc2626);
+            else if (sigmaScore > 1) bColor = am5.color(0xfbbf24);
+            else bColor = am5.color(0x94a3b8);
         }
 
         const isPinned = pinnedCounties.has(item.id) || (item.GEOID && pinnedCounties.has(item.GEOID));
@@ -887,14 +904,16 @@ function updateChart() {
         updateRangeSliderUI();
     }
 
-    // 1. Calculate National & State Averages
+    // 1. Calculate National & State Averages + Sigma
     let total = 0, count = 0;
+    let vals = [];
     let stateStat = {};
     allCountyData.forEach(c => {
         let v = parseFloat(c[activeMetric]);
         if (!isNaN(v) && v !== 0) {
             total += v;
             count++;
+            vals.push(v);
 
             let s = c.state_abbr;
             if (s) {
@@ -906,6 +925,14 @@ function updateChart() {
     });
 
     const nationalAvg = count > 0 ? total / count : 0;
+    nationalAvgValue = nationalAvg;
+
+    // Calculate Standard Deviation
+    nationalStdDev = 0;
+    if (count > 1) {
+        const sumSq = vals.reduce((sum, v) => sum + Math.pow(v - nationalAvg, 2), 0);
+        nationalStdDev = Math.sqrt(sumSq / count);
+    }
     stateAverages = {};
     for (let s in stateStat) {
         stateAverages[s] = stateStat[s].t / stateStat[s].c;
@@ -947,6 +974,12 @@ function updateChart() {
         } else if (colorMode === "region") {
             const reg_cls = (reg === "Unknown" || !regionColors[reg]) ? "Unknown" : reg;
             bColor = am5.color(regionColors[reg_cls] || "#7f8c8d");
+        } else if (colorMode === "sigma") {
+            const diff = Math.abs(val - nationalAvg);
+            const score = nationalStdDev > 0 ? diff / nationalStdDev : 0;
+            if (score > 2) bColor = am5.color(0xdc2626); // Red
+            else if (score > 1) bColor = am5.color(0xfbbf24); // Amber
+            else bColor = am5.color(0x94a3b8); // Slate/Typical
         }
 
         // Apply Highlight Logic
@@ -1044,6 +1077,13 @@ function updateChart() {
                 name: k,
                 fill: am5.color(regionColors[k])
             })));
+        legend.show();
+    } else if (colorMode === "sigma") {
+        legend.data.setAll([
+            { name: "Extreme Outlier (>2σ)", fill: am5.color(0xdc2626) },
+            { name: "Significant Deviation (1-2σ)", fill: am5.color(0xfbbf24) },
+            { name: "Typical Performers (<1σ)", fill: am5.color(0x94a3b8) }
+        ]);
         legend.show();
     } else {
         legend.hide();
