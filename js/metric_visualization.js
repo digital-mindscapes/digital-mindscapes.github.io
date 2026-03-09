@@ -241,11 +241,20 @@ async function init() {
 }
 
 async function loadData() {
+    // Retry logic for geodata script if it loads slowly on external hosting
+    let geoJSONSource = window.am5geodata_region_usa_usaCountiesLow || window.am5geodata_usaCountiesLow;
+    let attempts = 0;
+    while (!geoJSONSource && attempts < 10) {
+        await new Promise(r => setTimeout(r, 200));
+        geoJSONSource = window.am5geodata_region_usa_usaCountiesLow || window.am5geodata_usaCountiesLow;
+        attempts++;
+    }
+
     const [acsRes, placesRes, acsCountyRes, placesCountyRes, ruccRes] = await Promise.all([
-        fetch("data/ACS Data/state_acs_flat.json"),
-        fetch("data/PLACES Data/state_places_flat.json"),
-        fetch("data/ACS Data/county_acs_flat.json"),
-        fetch("data/PLACES Data/county_places_flat.json"),
+        fetch("data/ACS%20Data/state_acs_flat.json"),
+        fetch("data/PLACES%20Data/state_places_flat.json"),
+        fetch("data/ACS%20Data/county_acs_flat.json"),
+        fetch("data/PLACES%20Data/county_places_flat.json"),
         fetch("data/Rural_Urban_Comparison/county_rucc.json")
     ]);
 
@@ -273,12 +282,12 @@ async function loadData() {
     });
 
     const nameToFips = {};
-    if (typeof am5geodata_region_usa_usaCountiesLow !== "undefined") {
-        am5geodata_region_usa_usaCountiesLow.features.forEach(f => {
+    if (geoJSONSource && geoJSONSource.features) {
+        geoJSONSource.features.forEach(f => {
             const state = (f.properties.STATE || "").toUpperCase();
             const norm = normalizeCountyName(f.properties.name);
             const key = (state + "_" + norm).toUpperCase();
-            let fId = f.id;
+            let fId = f.id || f.properties.id;
             if (fId && fId.includes("-")) fId = fId.split("-").pop();
             nameToFips[key] = fId;
         });
@@ -1008,6 +1017,14 @@ function renderMiniMap(containerId, markers) {
         miniMapRoot.dispose();
     }
 
+    // Secondary check for Geodata script presence
+    const geoJSON = window.am5geodata_region_usa_usaCountiesLow || window.am5geodata_usaCountiesLow;
+    if (!geoJSON) {
+        console.warn("MiniMap: Geodata not found yet. Retrying in 500ms.");
+        setTimeout(() => renderMiniMap(containerId, markers), 500);
+        return;
+    }
+
     miniMapRoot = am5.Root.new(containerId);
 
     // Set themes
@@ -1031,7 +1048,7 @@ function renderMiniMap(containerId, markers) {
     );
 
     // Create main polygon series for counties
-    const geoJSON = window.am5geodata_region_usa_usaCountiesLow || window.am5geodata_usaCountiesLow;
+    // Reuse the verified geoJSON from the check above
 
     if (!geoJSON) {
         container.innerHTML = `<div class="map-loader" style="color: #ef4444; background: #fff1f2; padding: 20px; border-radius: 12px;">ERROR: USA GEODATA NOT FOUND</div>`;
