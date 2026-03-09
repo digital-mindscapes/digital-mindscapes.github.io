@@ -1024,3 +1024,156 @@
         height: 16px;
     }
 }
+
+/* --- Metric DNA Sidebar Integration --- */
+.metric-dna-sidebar-section {
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px dashed rgba(226, 232, 240, 0.6);
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    animation: slideUp 0.4s ease-out;
+}
+
+.dna-sidebar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.dna-sidebar-title {
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: var(--text-dark);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.dna-sidebar-title svg {
+    color: var(--accent-color);
+}
+
+.dna-config-panel {
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    max-height: 120px;
+    overflow-y: auto;
+    border: 1px solid #edf2f7;
+}
+
+.dna-chip {
+    padding: 4px 10px;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.dna-chip:hover {
+    border-color: var(--accent-color);
+    color: var(--accent-color);
+}
+
+.dna-chip.active {
+    background: var(--accent-color);
+    border-color: var(--accent-color);
+    color: white;
+    box-shadow: 0 4px 10px rgba(16, 185, 129, 0.2);
+}
+
+.dna-sidebar-viz-container {
+    width: 100%;
+    height: 260px;
+    background: white;
+    border-radius: 16px;
+    border: 1px solid #f1f5f9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.dna-sidebar-footer {
+    font-size: 0.65rem;
+    color: #94a3b8;
+    text-align: center;
+    font-style: italic;
+    padding-bottom: 10px;
+}
+
+/* Radar Chart SVG Styles (Updated for Sidebar) */
+.radar-axis line {
+    stroke: #f1f5f9;
+    stroke-width: 1.5;
+}
+
+.radar-axis-label {
+    font-size: 8px;
+    font-weight: 800;
+    fill: #64748b;
+    text-transform: uppercase;
+}
+
+.radar-area {
+    fill: var(--accent-color);
+    fill-opacity: 0.2;
+    stroke: var(--accent-color);
+    stroke-width: 2.5;
+    stroke-linejoin: round;
+    filter: drop-shadow(0 4px 6px rgba(16, 185, 129, 0.1));
+}
+
+.radar-point {
+    fill: white;
+    stroke: var(--accent-color);
+    stroke-width: 2.5;
+}
+
+.radar-grid-circle {
+    fill: none;
+    stroke: #f1f5f9;
+    stroke-width: 1;
+}
+
+/* Enhanced insight-item for Sidebar DNA trigger */
+.insight-item {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.insight-item:hover {
+    background: #f1f5f9;
+    transform: translateX(4px);
+}
+
+.insight-item.active {
+    background: #ecfdf5;
+    border-left: 3px solid var(--accent-color);
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

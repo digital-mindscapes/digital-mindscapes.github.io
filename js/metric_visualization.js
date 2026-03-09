@@ -10,6 +10,19 @@ let viewMode = 'distribution'; // 'distribution' or 'boxplot'
 let compareList = []; // Tracks metrics for correlation
 let activeInfoMetric = null; // Tracks current metric highlighted in sidebar
 
+// --- Metric DNA Global State ---
+let dnaAnchorMins = {};
+let dnaAnchorMaxes = {};
+let selectedDnaMetrics = [
+    'pct_unemployment_rate',
+    'pct_graduate_professional_degree',
+    'obesity_prevalence',
+    'depression_prevalence',
+    'checkup_prevalence',
+    'food_insecurity_prevalence'
+];
+let activeDnaCounty = null;
+
 const higherIsBetter = {
     "pct_in_labor_force": true,
     "pct_natural_resources_construction": true,
@@ -227,24 +240,13 @@ const metricIcons = {
     "default": '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>'
 };
 
-// Initialization
-async function init() {
-    try {
-        const data = await loadData();
-        allCountyData = data.countyData;
-        allStateData = data.stateData;
-
-        renderGroupedGrid();
-    } catch (e) {
-        console.error("Initialization failed", e);
-    }
-}
+// (Removed duplicate init function, logic moved to definition at line 713)
 
 async function loadData() {
     // Retry logic for geodata script if it loads slowly on external hosting
     let geoJSONSource = window.am5geodata_region_usa_usaCountiesLow || window.am5geodata_usaCountiesLow;
     let attempts = 0;
-    while (!geoJSONSource && attempts < 10) {
+    while (!geoJSONSource && attempts < 25) {
         await new Promise(r => setTimeout(r, 200));
         geoJSONSource = window.am5geodata_region_usa_usaCountiesLow || window.am5geodata_usaCountiesLow;
         attempts++;
@@ -698,12 +700,16 @@ function setViewMode(mode) {
 
 // --- Initialization ---
 async function init() {
-    const data = await loadData();
-    allCountyData = data.countyData;
-    allStateData = data.stateData;
+    try {
+        const data = await loadData();
+        allCountyData = data.countyData;
+        allStateData = data.stateData;
 
-    populateStateDropdown();
-    renderGroupedGrid();
+        populateStateDropdown();
+        renderGroupedGrid();
+    } catch (e) {
+        console.error("Initialization failed", e);
+    }
 }
 
 init();
@@ -818,7 +824,7 @@ function toggleInfo(metric, isUpdate = false) {
             <h4><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Positive Deviation</h4>
             <div class="insights-list">
                 ${successes.map(c => `
-                    <div class="insight-item">
+                    <div class="insight-item ${activeDnaCounty === c.id ? 'active' : ''}" onclick="showMetricDNA('${c.id}')">
                         <div class="county-info">
                             <span class="c-name">${c.name}</span>
                             <span class="c-state">${c.state_name || c.state_abbr}</span>
@@ -833,7 +839,7 @@ function toggleInfo(metric, isUpdate = false) {
             <h4><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="19"/><path d="M12 8v5"/></svg> Critical Focus</h4>
             <div class="insights-list">
                 ${criticals.map(c => `
-                    <div class="insight-item">
+                    <div class="insight-item ${activeDnaCounty === c.id ? 'active' : ''}" onclick="showMetricDNA('${c.id}')">
                         <div class="county-info">
                             <span class="c-name">${c.name}</span>
                             <span class="c-state">${c.state_name || c.state_abbr}</span>
@@ -1096,13 +1102,6 @@ function renderMiniMap(containerId, markers) {
     );
 
     // Create main polygon series for counties
-    // Reuse the verified geoJSON from the check above
-
-    if (!geoJSON) {
-        container.innerHTML = `<div class="map-loader" style="color: #ef4444; background: #fff1f2; padding: 20px; border-radius: 12px;">ERROR: USA GEODATA NOT FOUND</div>`;
-        return;
-    }
-
     const polygonSeries = chart.series.push(
         am5map.MapPolygonSeries.new(miniMapRoot, {
             geoJSON: geoJSON,
@@ -1120,15 +1119,15 @@ function renderMiniMap(containerId, markers) {
     // Create point series for the outliers
     const pointSeries = chart.series.push(
         am5map.MapPointSeries.new(miniMapRoot, {
-            polygonSeries: polygonSeries // CRITICAL: Link to polygons for ID resolution
+            polygonSeries: polygonSeries // Link to polygons for ID resolution if needed
         })
     );
 
     pointSeries.bullets.push(function () {
         const circle = am5.Circle.new(miniMapRoot, {
-            radius: 10, // Max visibility
+            radius: 10,
             stroke: am5.color(0xffffff),
-            strokeWidth: 3, // Thicker stroke for "pop"
+            strokeWidth: 3,
             tooltipText: "{name}",
             fill: am5.color(0xef4444)
         });
@@ -1142,8 +1141,8 @@ function renderMiniMap(containerId, markers) {
         });
     });
 
-    // Strategic Event: Only plot dots once the map base is fully ready
-    polygonSeries.events.on("datavalidated", function () {
+    // Plotting Logic (Extracted from event to avoid race condition)
+    function plotMarkers() {
         const pointData = [];
 
         markers.forEach(m => {
@@ -1189,12 +1188,16 @@ function renderMiniMap(containerId, markers) {
         });
 
         pointSeries.data.setAll(pointData);
-        chart.appear(1000, 100);
-    });
+    }
 
-    // Force Home Zoom
+    // Run plotting immediately and ensure chart appears
+    plotMarkers();
+    chart.appear(1000, 100);
+
+    // Force Home Zoom after a short delay
     setTimeout(() => {
         chart.goHome();
-    }, 200);
+    }, 300);
 }
+
 
