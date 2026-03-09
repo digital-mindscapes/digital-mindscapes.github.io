@@ -415,6 +415,11 @@ function renderGroupedGrid() {
         let cardsRendered = 0;
         const filteredData = getFilteredData();
 
+        const isFilteredView = activeFilters.region !== 'All' || activeFilters.state !== 'All' || activeFilters.metro !== 'All';
+        const filterLabel = activeFilters.region !== 'All' ? activeFilters.region :
+            (activeFilters.state !== 'All' ? activeFilters.state :
+                (activeFilters.metro !== 'All' ? activeFilters.metro : 'National'));
+
         group.metrics.forEach((metric, mIndex) => {
             const values = filteredData.map(c => c[metric]).filter(v => typeof v === 'number' && v !== 0);
             if (values.length === 0) return;
@@ -436,7 +441,7 @@ function renderGroupedGrid() {
                     <div class="card-icon">${icon}</div>
                     <div class="card-title-group">
                         <h3 class="card-title">${label}</h3>
-                        <span class="card-meta">National Distribution</span>
+                        <span class="card-meta">${isFilteredView ? filterLabel + ' vs. National' : 'National Distribution'}</span>
                     </div>
                     <div class="card-actions">
                         <button class="info-btn" onclick="toggleInfo('${metric}')" title="Top / Bottom 5">
@@ -471,6 +476,10 @@ function renderPlot(metric, values, highlights = []) {
     const container = document.getElementById(`viz-${metric}`);
     if (!container) return;
 
+    // Get National values for Benchmark
+    const nationalValues = allCountyData.map(c => c[metric]).filter(v => typeof v === 'number' && v !== 0);
+    const isFiltered = activeFilters.region !== 'All' || activeFilters.state !== 'All' || activeFilters.metro !== 'All';
+
     const width = container.offsetWidth;
     const height = 150;
     const margin = { top: 15, right: 10, bottom: 25, left: 10 };
@@ -490,6 +499,7 @@ function renderPlot(metric, values, highlights = []) {
         const g = svg.append('g')
             .attr('transform', `translate(${margin.left},${margin.top})`);
 
+        g.append('g').attr('class', 'national-layer');
         g.append('g').attr('class', 'dist-layer');
         g.append('g').attr('class', 'boxplot-layer').style('opacity', 0);
         g.append('g').attr('class', 'highlight-layer');
@@ -497,10 +507,12 @@ function renderPlot(metric, values, highlights = []) {
             .attr('transform', `translate(0,${chartHeight})`);
     }
 
+    // Always use National Domain for stable comparison
     const x = d3.scaleLinear()
-        .domain(d3.extent(values))
+        .domain(d3.extent(nationalValues))
         .range([0, chartWidth]);
 
+    const nationalLayer = svg.select('.national-layer');
     const distLayer = svg.select('.dist-layer');
     const boxplotLayer = svg.select('.boxplot-layer');
     const highlightLayer = svg.select('.highlight-layer');
@@ -510,19 +522,49 @@ function renderPlot(metric, values, highlights = []) {
     axisLayer.transition().duration(600)
         .call(d3.axisBottom(x).ticks(5).tickSizeOuter(0));
 
-    // 2. Prepare Distribution (KDE-like Histogram)
+    // 2. Prepare National Benchmark (Ghost Curve)
+    const nationalHistogram = d3.bin()
+        .domain(x.domain())
+        .thresholds(x.ticks(40))(nationalValues);
+
+    const nationalY = d3.scaleLinear()
+        .domain([0, d3.max(nationalHistogram, d => d.length)])
+        .range([chartHeight, 0]);
+
+    const nationalArea = d3.area()
+        .x(d => x(d.x0))
+        .y0(chartHeight)
+        .y1(d => nationalY(d.length))
+        .curve(d3.curveBasis);
+
+    let nationalPath = nationalLayer.select('path.benchmark-path');
+    if (nationalPath.empty()) {
+        nationalPath = nationalLayer.append('path')
+            .attr('class', 'benchmark-path')
+            .attr('fill', '#e5e7eb')
+            .attr('fill-opacity', 0.4)
+            .attr('stroke', '#9ca3af')
+            .attr('stroke-width', 1.5)
+            .attr('stroke-dasharray', '4,2');
+    }
+
+    nationalPath.datum(nationalHistogram)
+        .transition().duration(600)
+        .attr('d', nationalArea);
+
+    // 3. Prepare Distribution (KDE-like Histogram)
     const histogram = d3.bin()
         .domain(x.domain())
         .thresholds(x.ticks(40))(values);
 
-    const y = d3.scaleLinear()
-        .domain([0, d3.max(histogram, d => d.length)])
+    const activeY = d3.scaleLinear()
+        .domain([0, d3.max(isFiltered ? histogram : nationalHistogram, d => d.length)])
         .range([chartHeight, 0]);
 
     const area = d3.area()
         .x(d => x(d.x0))
         .y0(chartHeight)
-        .y1(d => y(d.length))
+        .y1(d => activeY(d.length))
         .curve(d3.curveBasis);
 
     let path = distLayer.select('path.viz-path');
@@ -608,11 +650,17 @@ function renderPlot(metric, values, highlights = []) {
             .style('opacity', 0)
             .attr('transform', 'translate(0,20)');
 
+        nationalLayer.transition().duration(600)
+            .style('opacity', isFiltered ? 1 : 0);
+
         highlightLayer.transition().duration(600).style('opacity', 1);
     } else {
         distLayer.transition().duration(600)
             .style('opacity', 0)
             .attr('transform', 'translate(0,-20)');
+
+        nationalLayer.transition().duration(600)
+            .style('opacity', 0);
 
         boxplotLayer.transition().duration(600)
             .style('opacity', 1)
