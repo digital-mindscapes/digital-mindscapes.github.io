@@ -145,16 +145,26 @@
                 <path d="M3 9h18"></path>
                 <path d="M9 21V9"></path>
             </svg>
-            Correlation Matrix
+            Correlation Analysis
         </a>
         <a href="regression_sandbox.html" class="comparison-pill active-pill">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
             </svg>
-            OLS Regression
+            Regression Analysis
+        </a>
+        <a href="dimensionality_reduction.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+                <path d="M2 17l10 5 10-5"></path>
+                <path d="M2 12l10 5 10-5"></path>
+            </svg>
+            Dimensionality Reduction
         </a>
         <a href="about.html" class="comparison-pill">
+
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="10"></circle>
@@ -229,12 +239,31 @@
                     </select>
                 </div>
 
+                <div class="sidebar-section" style="margin-top: 15px;">
+                    <h4>Model Options</h4>
+                    <p style="margin:0; font-size:0.8rem; color:var(--text-muted);">Configure advanced estimation parameters.</p>
+                </div>
+
+                <div class="control-group">
+                    <label for="regType">Regularization Method:</label>
+                    <div style="position:relative;">
+                        <select id="regType" class="modern-select" onchange="toggleRegPenalty(this.value)">
+                            <option value="none">None (Standard OLS)</option>
+                            <option value="ridge">Ridge Regression (L2)</option>
+                        </select>
+                        <div id="penaltyContainer" style="display: none; margin-top: 10px; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 8px; border: 1px solid rgba(255,255,255,0.2);">
+                            <label for="regPenalty" style="font-size: 0.75rem; margin-bottom: 5px; display: block;">Penalty Strength (λ): <span id="penaltyValue">1.0</span></label>
+                            <input type="range" id="regPenalty" min="0.01" max="10" step="0.01" value="1.0" style="width: 100%; cursor: pointer;" oninput="document.getElementById('penaltyValue').textContent = this.value">
+                        </div>
+                    </div>
+                </div>
+
                 <button id="runModelBtn" class="primary-btn calculate-btn">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M5 12h14"></path>
                         <path d="m12 5 7 7-7 7"></path>
                     </svg>
-                    Run OLS Regression
+                    Run Regression Analysis
                 </button>
 
                 <div class="loading-status" id="initLoader" style="display:none;">
@@ -244,15 +273,42 @@
             </div>
         </aside>
         
+        <div id="errorDisplay" class="error-card-container" style="display: none; margin-bottom: 20px;">
+            <div class="error-card">
+                <div class="error-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="15.01" x2="12.01" y2="15.01"></line>
+                    </svg>
+                </div>
+                <div class="error-content">
+                    <h4 class="error-title">Analysis Error</h4>
+                    <p id="errorMessageText" class="error-message"></p>
+                </div>
+                <button class="close-error-btn" onclick="document.getElementById('errorDisplay').style.display='none'">&times;</button>
+            </div>
+        </div>
+
         <div class="results-container-wrapper" id="resultsDisplay" style="display: none;">
              
              <!-- Model Summary Headline -->
              <div class="model-header" style="padding-bottom:10px;">
-                 <h2>
+                 <h2 style="display:flex; align-items:center; gap:12px;">
                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#c83830" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                          <path d="M2 12h4l3-9 5 18 3-9h5"></path>
                      </svg>
                      Regression Model Summary
+                     <button id="modelSummaryInfoBtn" onclick="openModelSummaryModal()" title="What do these metrics mean?" style="
+                         display: inline-flex; align-items: center; justify-content: center;
+                         width: 26px; height: 26px; border-radius: 50%;
+                         background: linear-gradient(135deg, #c83830, #a02820);
+                         color: white; border: none; cursor: pointer;
+                         font-size: 13px; font-weight: 800; font-style: italic; font-family: Georgia, serif;
+                         box-shadow: 0 2px 8px rgba(200,56,48,0.35);
+                         transition: transform 0.2s, box-shadow 0.2s;
+                         flex-shrink: 0;
+                     " onmouseover="this.style.transform='scale(1.15)';this.style.boxShadow='0 4px 14px rgba(200,56,48,0.5)'" onmouseout="this.style.transform='scale(1)';this.style.boxShadow='0 2px 8px rgba(200,56,48,0.35)'">i</button>
                  </h2>
                  <div class="summary-stats-grid">
                      <div class="stat-box">
@@ -326,6 +382,18 @@
                     Y = &beta;<sub>0</sub> + &beta;<sub>1</sub>X<sub>1</sub> + &beta;<sub>2</sub>X<sub>2</sub> + ... + &beta;<sub>k</sub>X<sub>k</sub> + &epsilon;
                 </div>
                 
+                <h4 style="margin: 24px 0 10px 0; color: var(--main-color, #c83830); font-size: 1.05rem;">Ridge Regularization (Tikhonov)</h4>
+                <p>When "Ridge" is enabled, the model adds a penalty term proportional to the square of the magnitude of coefficients. This addresses <strong>multicollinearity</strong> (redundant variables) and prevents overfitting by shrinking coefficients toward zero.</p>
+                
+                <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; margin: 15px 0; font-family: 'Courier New', Courier, monospace; text-align: center; font-size: 1.1rem; color: #0f172A; font-weight: 600;">
+                    &beta; = (X<sup>T</sup>X + &lambda;I)<sup>-1</sup> X<sup>T</sup>Y
+                </div>
+                
+                <ul style="padding-left: 20px; margin-bottom: 20px;">
+                    <li><strong>&lambda; (Lambda):</strong> Higher values increase the penalty, leading to smaller coefficients and a "simpler" model.</li>
+                    <li><strong>Effect:</strong> Reduces variance at the cost of slight bias, stabilizing estimates when variables are highly correlated.</li>
+                </ul>
+
                 <h4 style="margin: 24px 0 10px 0; color: var(--main-color, #c83830); font-size: 1.05rem;">Model Evaluation</h4>
                 <ul style="padding-left: 20px; margin-bottom: 20px;">
                     <li><strong>R-Squared:</strong> The proportion of the variance in the dependent variable that is predictable from the independent variable(s).</li>
@@ -342,6 +410,368 @@
             </div>
         </div>
     </div>
+
+    <!-- Model Summary Explained Modal -->
+    <div id="modelSummaryModal" style="
+        display: none; position: fixed; inset: 0; z-index: 9999;
+        background: rgba(15,23,42,0.65); backdrop-filter: blur(6px);
+        align-items: center; justify-content: center; padding: 20px;
+    ">
+        <div style="
+            background: #fff; border-radius: 20px; max-width: 760px; width: 100%;
+            max-height: 88vh; overflow: hidden; display: flex; flex-direction: column;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.25);
+            animation: modalFadeIn 0.25s ease-out;
+        ">
+            <!-- Modal Header -->
+            <div style="
+                padding: 24px 28px 18px; border-bottom: 1px solid #f1f5f9;
+                display: flex; align-items: center; justify-content: space-between;
+                flex-shrink: 0;
+            ">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <div style="
+                        width: 40px; height: 40px; border-radius: 50%;
+                        background: linear-gradient(135deg,#c83830,#a02820);
+                        display: flex; align-items: center; justify-content: center;
+                        flex-shrink:0;
+                    ">
+                        <span style="color:white; font-size:18px; font-weight:900; font-style:italic; font-family:Georgia,serif;">i</span>
+                    </div>
+                    <div>
+                        <h2 style="margin:0; font-size:1.25rem; color:#0f172a; font-weight:800;">Understanding Your Model Summary</h2>
+                        <p style="margin:0; font-size:0.82rem; color:#64748b; margin-top:2px;">A plain-English guide to every metric in the output table</p>
+                    </div>
+                </div>
+                <button onclick="closeModelSummaryModal()" style="
+                    background: #f1f5f9; border: none; width: 36px; height: 36px; border-radius: 50%;
+                    font-size: 20px; cursor: pointer; color: #64748b; display: flex; align-items: center;
+                    justify-content: center; transition: all 0.2s; flex-shrink:0;
+                " onmouseover="this.style.background='#e2e8f0';this.style.color='#0f172a'" onmouseout="this.style.background='#f1f5f9';this.style.color='#64748b'">&times;</button>
+            </div>
+
+            <!-- Tab Pills -->
+            <div style="padding: 14px 28px 0; display:flex; gap:8px; flex-wrap:wrap; flex-shrink:0; border-bottom:1px solid #f1f5f9;">
+                <button class="msm-tab active" onclick="switchMsmTab(this,'msm-goodnessOfFit')" id="tab-goodnessOfFit">Goodness-of-Fit</button>
+                <button class="msm-tab" onclick="switchMsmTab(this,'msm-coefficients')" id="tab-coefficients">Coefficients</button>
+                <button class="msm-tab" onclick="switchMsmTab(this,'msm-significance')" id="tab-significance">Significance & Stars</button>
+                <button class="msm-tab" onclick="switchMsmTab(this,'msm-howToRead')" id="tab-howToRead">How to Read Results</button>
+            </div>
+
+            <!-- Modal Body (scrollable) -->
+            <div style="overflow-y: auto; flex: 1; padding: 24px 28px;">
+
+                <!-- TAB 1: Goodness of Fit -->
+                <div id="msm-goodnessOfFit" class="msm-tab-panel">
+                    <div class="msm-metric-card">
+                        <div class="msm-metric-badge" style="background:#dbeafe; color:#1d4ed8;">R²</div>
+                        <div>
+                            <div class="msm-metric-name">R-Squared (Coefficient of Determination)</div>
+                            <p class="msm-metric-desc">Measures the proportion of variance in the <em>outcome</em> (Y) that is explained by your predictors. Ranges from <strong>0 to 1</strong>.</p>
+                            <div class="msm-example-box">
+                                <strong>Example:</strong> R² = 0.72 means your predictors explain <strong>72%</strong> of the county-level variation in the outcome. The remaining 28% is explained by factors not in your model.
+                            </div>
+                            <div class="msm-tip">⚠️ A high R² does not guarantee a good model. More predictors always increase R² — use Adjusted R² to account for this.</div>
+                        </div>
+                    </div>
+
+                    <div class="msm-metric-card">
+                        <div class="msm-metric-badge" style="background:#f3e8ff; color:#7e22ce;">Adj. R²</div>
+                        <div>
+                            <div class="msm-metric-name">Adjusted R-Squared</div>
+                            <p class="msm-metric-desc">A version of R² that is penalised for the number of predictors. It goes <em>down</em> if a new predictor adds no real explanatory power.</p>
+                            <div class="msm-example-box">
+                                <strong>Rule of thumb:</strong> If Adj. R² ≈ R², your predictors are all contributing meaningfully. If Adj. R² is much lower than R², you likely have redundant or noise predictors.
+                            </div>
+                            <div class="msm-tip">✅ Prefer Adjusted R² when comparing models with different numbers of predictors.</div>
+                        </div>
+                    </div>
+
+                    <div class="msm-metric-card">
+                        <div class="msm-metric-badge" style="background:#fef3c7; color:#b45309;">F</div>
+                        <div>
+                            <div class="msm-metric-name">F-Statistic</div>
+                            <p class="msm-metric-desc">Tests whether the model as a <em>whole</em> explains a statistically significant proportion of the variance — i.e., whether any predictor is useful at all.</p>
+                            <div class="msm-example-box">
+                                <strong>Formula:</strong> F = (R² / k) / ((1 − R²) / (N − k − 1)), where k = number of predictors, N = observations.
+                            </div>
+                            <div class="msm-tip">📌 A large F paired with a small Model p-value tells you the model is collectively significant even before looking at individual predictors.</div>
+                        </div>
+                    </div>
+
+                    <div class="msm-metric-card">
+                        <div class="msm-metric-badge" style="background:#fce7f3; color:#be185d;">p</div>
+                        <div>
+                            <div class="msm-metric-name">Model p-value (Overall F-test)</div>
+                            <p class="msm-metric-desc">The probability of observing an F-statistic this large (or larger) <em>if none</em> of the predictors actually mattered.</p>
+                            <div class="msm-example-box">
+                                <strong>Interpretation:</strong> p &lt; 0.05 → reject the null hypothesis that all coefficients are zero. Your model has statistically significant predictive power.
+                            </div>
+                            <div class="msm-tip">✅ Always check this first. If Model p-value &gt; 0.05, the model is not statistically significant overall.</div>
+                        </div>
+                    </div>
+
+                    <div class="msm-metric-card">
+                        <div class="msm-metric-badge" style="background:#dcfce7; color:#15803d;">N</div>
+                        <div>
+                            <div class="msm-metric-name">Observations (N)</div>
+                            <p class="msm-metric-desc">The number of complete county records used to fit the model. Records are dropped if <em>any</em> selected variable has a missing value (listwise deletion).</p>
+                            <div class="msm-example-box">
+                                <strong>Why it matters:</strong> Larger N → more statistical power → smaller standard errors → easier to detect real effects. Fewer than 30 observations can make OLS unreliable.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 2: Coefficients -->
+                <div id="msm-coefficients" class="msm-tab-panel" style="display:none;">
+                    <div class="msm-metric-card">
+                        <div class="msm-metric-badge" style="background:#dbeafe; color:#1d4ed8;">β</div>
+                        <div>
+                            <div class="msm-metric-name">Estimate (Coefficient)</div>
+                            <p class="msm-metric-desc">The estimated change in Y for a <strong>one-unit increase</strong> in this predictor, <em>holding all other predictors constant</em>.</p>
+                            <div class="msm-example-box">
+                                <strong>Example:</strong> Coefficient for Poverty Rate = 0.42 means that, on average, each additional 1-percentage-point increase in poverty is associated with a <strong>0.42 pp increase</strong> in the outcome, after controlling for other variables.
+                            </div>
+                            <div class="msm-tip">📌 The <strong>intercept (β₀)</strong> is the predicted value of Y when all predictors equal zero — it rarely has a direct policy interpretation.</div>
+                        </div>
+                    </div>
+
+                    <div class="msm-metric-card">
+                        <div class="msm-metric-badge" style="background:#f3e8ff; color:#7e22ce;">SE</div>
+                        <div>
+                            <div class="msm-metric-name">Standard Error of the Estimate</div>
+                            <p class="msm-metric-desc">Quantifies the <em>uncertainty</em> in the coefficient estimate. A smaller SE relative to the estimate means a more precise estimate.</p>
+                            <div class="msm-example-box">
+                                <strong>Confidence Interval:</strong> An approximate 95% CI for the coefficient is Estimate ± 1.96 × SE. If this interval does not cross zero, the predictor is significant at p &lt; 0.05.
+                            </div>
+                            <div class="msm-tip">⚠️ Large SE relative to the Estimate (SE &gt; |Estimate| / 2) suggests the predictor coefficient is imprecisely estimated — possibly due to multicollinearity.</div>
+                        </div>
+                    </div>
+
+                    <div class="msm-metric-card">
+                        <div class="msm-metric-badge" style="background:#fef3c7; color:#b45309;">t</div>
+                        <div>
+                            <div class="msm-metric-name">t-value (t-statistic)</div>
+                            <p class="msm-metric-desc">The ratio of the coefficient to its standard error: <strong>t = Estimate / SE</strong>. Tests whether the coefficient is significantly different from zero.</p>
+                            <div class="msm-example-box">
+                                <strong>Rule of thumb:</strong> |t| &gt; 2 generally indicates statistical significance at the 5% level (for large N). The farther t is from zero, the stronger the evidence against H₀: β = 0.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="msm-metric-card">
+                        <div class="msm-metric-badge" style="background:#fce7f3; color:#be185d;">p</div>
+                        <div>
+                            <div class="msm-metric-name">Pr(&gt;|t|) — Variable p-value</div>
+                            <p class="msm-metric-desc">The probability of observing a t-statistic this extreme if the true coefficient were zero. Derived from the t-distribution with (N − k − 1) degrees of freedom, computed via <strong>jStat</strong>.</p>
+                            <div class="msm-example-box">
+                                <strong>Decision:</strong> p &lt; 0.05 → the predictor is a statistically significant contributor to the model at the 5% level.
+                            </div>
+                            <div class="msm-tip">✅ Computed via the two-tailed t-distribution CDF using the <strong>jStat</strong> library.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 3: Significance Stars -->
+                <div id="msm-significance" class="msm-tab-panel" style="display:none;">
+                    <p style="color:#475569; font-size:0.92rem; line-height:1.7; margin-top:0;">
+                        Significance stars are a compact shorthand for the p-value of each predictor's t-test. They follow the standard R-style convention:
+                    </p>
+                    <table style="width:100%; border-collapse:collapse; font-size:0.9rem; margin-bottom:20px;">
+                        <thead>
+                            <tr style="background:#f8fafc;">
+                                <th style="padding:10px 14px; text-align:left; border-bottom:2px solid #e2e8f0; color:#0f172a;">Symbol</th>
+                                <th style="padding:10px 14px; text-align:left; border-bottom:2px solid #e2e8f0; color:#0f172a;">p-value range</th>
+                                <th style="padding:10px 14px; text-align:left; border-bottom:2px solid #e2e8f0; color:#0f172a;">Interpretation</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr style="border-bottom:1px solid #f1f5f9;">
+                                <td style="padding:10px 14px; font-weight:800; color:#15803d; font-size:1.1rem;">***</td>
+                                <td style="padding:10px 14px; color:#475569;">p &lt; 0.001</td>
+                                <td style="padding:10px 14px; color:#475569;">Extremely significant — very strong evidence against H₀</td>
+                            </tr>
+                            <tr style="border-bottom:1px solid #f1f5f9; background:#fafafa;">
+                                <td style="padding:10px 14px; font-weight:800; color:#16a34a; font-size:1.1rem;">**</td>
+                                <td style="padding:10px 14px; color:#475569;">0.001 ≤ p &lt; 0.01</td>
+                                <td style="padding:10px 14px; color:#475569;">Highly significant — strong evidence</td>
+                            </tr>
+                            <tr style="border-bottom:1px solid #f1f5f9;">
+                                <td style="padding:10px 14px; font-weight:800; color:#ca8a04; font-size:1.1rem;">*</td>
+                                <td style="padding:10px 14px; color:#475569;">0.01 ≤ p &lt; 0.05</td>
+                                <td style="padding:10px 14px; color:#475569;">Significant at the conventional 5% level</td>
+                            </tr>
+                            <tr style="border-bottom:1px solid #f1f5f9; background:#fafafa;">
+                                <td style="padding:10px 14px; font-weight:700; color:#d97706;">.</td>
+                                <td style="padding:10px 14px; color:#475569;">0.05 ≤ p &lt; 0.1</td>
+                                <td style="padding:10px 14px; color:#475569;">Marginally significant — weak evidence, interpret with caution</td>
+                            </tr>
+                            <tr>
+                                <td style="padding:10px 14px; color:#94a3b8;">(blank)</td>
+                                <td style="padding:10px 14px; color:#475569;">p ≥ 0.1</td>
+                                <td style="padding:10px 14px; color:#475569;">Not significant — insufficient evidence to reject H₀</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="msm-tip" style="margin-top:0;">
+                        ⚠️ <strong>Important caveat:</strong> Statistical significance ≠ practical significance. A coefficient can be highly significant (p &lt; 0.001) but tiny in magnitude, or non-significant but large in effect, due to low power (small N). Always consider both p-values <em>and</em> effect sizes together.
+                    </div>
+                </div>
+
+                <!-- TAB 4: How to Read -->
+                <div id="msm-howToRead" class="msm-tab-panel" style="display:none;">
+                    <p style="color:#475569; font-size:0.92rem; line-height:1.7; margin-top:0;">
+                        Here is a step-by-step guide to interpreting a full regression output from this sandbox:
+                    </p>
+                    <div class="msm-step-card">
+                        <div class="msm-step-number">1</div>
+                        <div>
+                            <strong>Check Model p-value first.</strong> If Model p &gt; 0.05, stop — the model as a whole is not significant and individual coefficients are unreliable.
+                        </div>
+                    </div>
+                    <div class="msm-step-card">
+                        <div class="msm-step-number">2</div>
+                        <div>
+                            <strong>Read R² and Adjusted R².</strong> These tell you how well your predictors collectively explain the outcome. An Adj. R² of 0.60+ is considered strong for public-health cross-sectional data.
+                        </div>
+                    </div>
+                    <div class="msm-step-card">
+                        <div class="msm-step-number">3</div>
+                        <div>
+                            <strong>Scan the Sig. column.</strong> Predictors with *** or ** are the most reliable contributors. Those with no stars may be noise.
+                        </div>
+                    </div>
+                    <div class="msm-step-card">
+                        <div class="msm-step-number">4</div>
+                        <div>
+                            <strong>Read Estimates (coefficients) for direction &amp; magnitude.</strong> A positive coefficient means the predictor and outcome move together; negative means they move in opposite directions.
+                        </div>
+                    </div>
+                    <div class="msm-step-card">
+                        <div class="msm-step-number">5</div>
+                        <div>
+                            <strong>Check Standard Errors relative to Estimates.</strong> If SE is close to or larger than |Estimate|, the effect is poorly estimated — consider removing correlated predictors.
+                        </div>
+                    </div>
+                    <div class="msm-step-card">
+                        <div class="msm-step-number">6</div>
+                        <div>
+                            <strong>Inspect the Residuals vs Fitted plot.</strong> A random scatter (no pattern) confirms OLS assumptions are roughly met. Obvious curves suggest a non-linear relationship or omitted predictors.
+                        </div>
+                    </div>
+                    <div class="msm-tip" style="margin-top:16px;">
+                        📚 <strong>Libraries used:</strong> Coefficients and standard errors are computed via <strong>Math.js</strong> matrix algebra ((XᵀX)⁻¹Xᵀy). p-values use the two-tailed t-distribution from <strong>jStat</strong>. The F-statistic p-value uses the F-distribution from <strong>jStat</strong>.
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <style>
+        @keyframes modalFadeIn { from { opacity:0; transform:scale(0.97) translateY(10px); } to { opacity:1; transform:scale(1) translateY(0); } }
+        .msm-tab {
+            padding: 7px 16px; border-radius: 20px; border: 1.5px solid #e2e8f0;
+            background: transparent; color: #64748b; font-size: 0.82rem; font-weight: 700;
+            cursor: pointer; transition: all 0.2s; margin-bottom: 12px;
+        }
+        .msm-tab:hover { border-color: #c83830; color: #c83830; }
+        .msm-tab.active { background: #c83830; color: white; border-color: #c83830; }
+        .msm-metric-card {
+            display: flex; gap: 16px; align-items: flex-start;
+            background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px;
+            padding: 16px 18px; margin-bottom: 14px;
+        }
+        .msm-metric-badge {
+            flex-shrink: 0; width: 42px; height: 42px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1rem; font-weight: 800; font-style: italic;
+        }
+        .msm-metric-name { font-weight: 800; color: #0f172a; font-size: 0.95rem; margin-bottom: 5px; }
+        .msm-metric-desc { color: #475569; font-size: 0.88rem; line-height: 1.65; margin: 0 0 10px 0; }
+        .msm-example-box {
+            background: #fff; border: 1px solid #e2e8f0; border-left: 3px solid #c83830;
+            border-radius: 8px; padding: 10px 14px; font-size: 0.85rem; color: #334155;
+            line-height: 1.6; margin-bottom: 8px;
+        }
+        .msm-tip {
+            background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px;
+            padding: 8px 12px; font-size: 0.82rem; color: #78350f; line-height: 1.55;
+        }
+        .msm-step-card {
+            display: flex; gap: 14px; align-items: flex-start;
+            padding: 14px 18px; border-radius: 12px; margin-bottom: 12px;
+            background: #f8fafc; border: 1px solid #e2e8f0; font-size: 0.88rem;
+            color: #334155; line-height: 1.65;
+        }
+        .msm-step-number {
+            flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%;
+            background: linear-gradient(135deg,#c83830,#a02820); color: white;
+            font-size: 0.85rem; font-weight: 800; display: flex; align-items: center;
+            justify-content: center; margin-top: 1px;
+        }
+
+        /* Error Card Styles */
+        .error-card-container {
+            animation: slideInDown 0.4s ease-out;
+        }
+        @keyframes slideInDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .error-card {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            background: #fff5f5;
+            border-left: 4px solid #f87171;
+            border-radius: 12px;
+            padding: 16px 20px;
+            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.08);
+            position: relative;
+        }
+        .error-icon {
+            color: #ef4444;
+            flex-shrink: 0;
+            background: #ffe4e6;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+        .error-content {
+            flex-grow: 1;
+        }
+        .error-title {
+            margin: 0;
+            color: #991b1b;
+            font-size: 0.95rem;
+            font-weight: 700;
+        }
+        .error-message {
+            margin: 2px 0 0 0;
+            color: #b91c1c;
+            font-size: 0.88rem;
+            line-height: 1.5;
+        }
+        .close-error-btn {
+            background: transparent;
+            border: none;
+            font-size: 20px;
+            color: #991b1b;
+            cursor: pointer;
+            padding: 4px;
+            line-height: 1;
+            opacity: 0.6;
+            transition: opacity 0.2s;
+        }
+        .close-error-btn:hover {
+            opacity: 1;
+        }
+    </style>
 
     <div id="regTooltip" class="regression-tooltip"></div>
 

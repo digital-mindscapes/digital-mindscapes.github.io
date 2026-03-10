@@ -183,15 +183,19 @@ function runRegressionModel() {
             const xIds = Array.from(xCheckboxes).map(c => c.value);
             
             if(xIds.includes(yId)) {
-                alert("The dependent variable cannot also be an independent predictor.");
+                showModelError("The dependent variable cannot also be an independent predictor.");
                 if(loader) loader.style.display = 'none';
                 return;
             }
             if(xIds.length === 0) {
-                alert("Please select at least one independent variable.");
+                showModelError("Please select at least one independent variable.");
                 if(loader) loader.style.display = 'none';
                 return;
             }
+
+            // Hide previous errors before and show loader
+            document.getElementById('errorDisplay').style.display = 'none';
+            document.getElementById('resultsDisplay').style.display = 'none';
 
             const rawData = getFilteredData();
             
@@ -220,19 +224,31 @@ function runRegressionModel() {
             });
             
             if(Y_vec.length < xIds.length + 2) {
-                alert("Not enough valid data points for this model.");
+                showModelError(`Not enough valid data points (${Y_vec.length}) to estimate a model with ${xIds.length} predictors. Need at least ${xIds.length + 2} points.`);
                 if(loader) loader.style.display = 'none';
                 return;
             }
 
-            // --- Math.js Matrix Math OLS Formulation ---
+            // --- Estimation (OLS or Ridge) ---
             const n = Y_vec.length;
-            const k = xIds.length + 1;
+            const k = xIds.length + 1; // including intercept
             
             const Y = math.matrix(Y_vec);
             const X = math.matrix(X_mat_arr);
             const Xt = math.transpose(X);
-            const XtX = math.multiply(Xt, X);
+            let XtX = math.multiply(Xt, X);
+            
+            const regType = document.getElementById('regType').value;
+            if (regType === 'ridge') {
+                const lambda = parseFloat(document.getElementById('regPenalty').value) || 0.1;
+                // Add lambda to diagonal of XtX, but usually skip intercept (index 0)
+                const I = math.identity(k);
+                // Set intercept penalty to 0
+                I.set([0, 0], 0);
+                const penalty = math.multiply(lambda, I);
+                XtX = math.add(XtX, penalty);
+            }
+            
             const XtX_inv = math.inv(XtX);
             const XtY = math.multiply(Xt, Y);
             const B = math.multiply(XtX_inv, XtY); // Coefficients matrix
@@ -329,7 +345,7 @@ function runRegressionModel() {
 
         } catch (err) {
             console.error("Regression failed:", err);
-            alert("Model failed to compute. This is typically due to perfectly collinear variables (a singular matrix) or lack of variance. Try removing redundant variables.");
+            showModelError("Model failed to compute. This is typically due to perfectly collinear variables (a singular matrix) or lack of variance in your filtered data. Try removing redundant variables.");
         }
         
         if(loader) loader.style.display = 'none';
@@ -464,4 +480,60 @@ function renderResidualPlot(data, yLabel) {
               .style("stroke-width", 0.5);
             tooltip.style.opacity = 0;
         });
+}
+
+// ─── Model Summary Info Modal ───────────────────────────────────────────────
+
+function openModelSummaryModal() {
+    const modal = document.getElementById('modelSummaryModal');
+    if (!modal) return;
+    modal.style.display = 'flex';
+    // Reset to first tab on open
+    switchMsmTab(document.querySelector('.msm-tab.active') || document.querySelector('.msm-tab'), 'msm-goodnessOfFit');
+    // Backdrop click to close
+    modal.addEventListener('click', function handler(e) {
+        if (e.target === modal) {
+            closeModelSummaryModal();
+            modal.removeEventListener('click', handler);
+        }
+    });
+    // Escape key to close
+    function escHandler(e) {
+        if (e.key === 'Escape') { closeModelSummaryModal(); document.removeEventListener('keydown', escHandler); }
+    }
+    document.addEventListener('keydown', escHandler);
+}
+
+function closeModelSummaryModal() {
+    const modal = document.getElementById('modelSummaryModal');
+    if (modal) modal.style.display = 'none';
+}
+
+function switchMsmTab(btnEl, panelId) {
+    // Deactivate all tabs
+    document.querySelectorAll('.msm-tab').forEach(b => b.classList.remove('active'));
+    // Hide all panels
+    document.querySelectorAll('.msm-tab-panel').forEach(p => p.style.display = 'none');
+    // Activate selected
+    if (btnEl) btnEl.classList.add('active');
+    const panel = document.getElementById(panelId);
+    if (panel) panel.style.display = '';
+}
+
+function showModelError(msg) {
+    const errContainer = document.getElementById('errorDisplay');
+    const errText = document.getElementById('errorMessageText');
+    if (errContainer && errText) {
+        errText.textContent = msg;
+        errContainer.style.display = 'block';
+        // Scroll to error if not in view
+        errContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
+
+function toggleRegPenalty(val) {
+    const container = document.getElementById('penaltyContainer');
+    if (container) {
+        container.style.display = (val === 'ridge') ? 'block' : 'none';
+    }
 }
