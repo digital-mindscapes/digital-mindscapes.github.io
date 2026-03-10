@@ -613,6 +613,88 @@
     flex-shrink: 0;
 }
 
+/* ── Template Search ─────────────────────────────────────── */
+
+.template-search-container {
+    margin-bottom: 24px;
+}
+
+.search-input-wrapper {
+    position: relative;
+    max-width: 100%;
+}
+
+.search-icon {
+    position: absolute;
+    left: 18px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--q-text-muted);
+    pointer-events: none;
+}
+
+#templateSearch {
+    width: 100%;
+    padding: 16px 20px 16px 52px;
+    border-radius: var(--q-radius-sm);
+    border: 1.5px solid var(--q-border);
+    background: var(--q-surface);
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--q-text);
+    transition: all 0.25s var(--q-transition);
+    box-shadow: var(--q-shadow-xs);
+}
+
+#templateSearch:focus {
+    outline: none;
+    border-color: var(--q-primary);
+    box-shadow: 0 0 0 4px var(--q-primary-soft), var(--q-shadow-sm);
+}
+
+/* ── Smart Insight Card ──────────────────────────────────── */
+
+.insight-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    background: linear-gradient(135deg, #f8faff 0%, #fff 100%);
+    border: 1.5px solid #dbeafe;
+    border-radius: 20px;
+    padding: 24px 28px;
+    margin-top: 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.05);
+    animation: cardFadeIn 0.5s var(--q-transition) both;
+}
+
+.insight-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: #eff6ff;
+    color: #3b82f6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.insight-content {
+    font-size: 1.05rem;
+    line-height: 1.55;
+    color: #1e3a8a;
+}
+
+.insight-content strong {
+    display: block;
+    color: #3b82f6;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 4px;
+}
+
 .multi-metric-dot {
     width: 10px;
     height: 10px;
@@ -1101,17 +1183,47 @@
 
 .history-sidebar-header {
     display: flex;
-    align-items: center;
-    gap: 10px;
+    flex-direction: column;
+    gap: 16px;
     margin-bottom: 24px;
     color: var(--q-text);
 }
 
-.history-sidebar-header h4 {
+.history-title-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.history-title-row h4 {
     font-size: 1rem;
     font-weight: 700;
     margin: 0;
 }
+
+.history-search-wrapper {
+    width: 100%;
+}
+
+#historySearch {
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1.5px solid var(--q-border);
+    background: #f8fafc;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--q-text);
+    transition: all 0.2s;
+}
+
+#historySearch:focus {
+    outline: none;
+    border-color: var(--q-primary);
+    background: #fff;
+    box-shadow: 0 0 0 3px var(--q-primary-soft);
+}
+
 
 .history-list {
     flex: 1;

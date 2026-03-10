@@ -442,14 +442,14 @@ function renderTemplates() {
     });
 }
 
-function setCategory(category, el) {
-    QueryState.activeCategory = category;
+function setCategory(cat, el) {
+    QueryState.activeCategory = cat;
     QueryState.activeTemplate = null;
     QueryState.placeholders = {};
 
-    document.querySelectorAll('.cat-item').forEach(item => item.classList.remove('active'));
-    el.classList.add('active');
-
+    document.querySelectorAll('.cat-item').forEach(item => {
+        item.classList.toggle('active', item.dataset.category === cat);
+    });
     renderTemplates();
 
     document.getElementById('queryEditor').style.display = 'none';
@@ -1396,7 +1396,54 @@ function renderRealResults(targetId = "amChartResults") {
     }
 
     chart.appear(800, 100);
+
+    // ── Generate Smart Insight ──
+    if (!isModal) {
+        generateSmartInsight(data);
+    }
 }
+
+function generateSmartInsight(data) {
+    const container = document.getElementById('smartInsightContainer');
+    const textEl = document.getElementById('insightText');
+    if (!container || !textEl || !data || data.length === 0) {
+        if (container) container.style.display = 'none';
+        return;
+    }
+
+    let insight = "";
+    const p = QueryState.placeholders;
+    const template = QueryState.activeTemplate;
+    
+    // Sort logic to find true top/bottom if not already sorted
+    const sorted = [...data].sort((a,b) => b.value - a.value);
+    const top = sorted[0];
+    const bottom = sorted[sorted.length - 1];
+    const metricLabel = p.metric ? (typeof p.metric === 'object' ? p.metric.label : p.metric) : 'this metric';
+
+    // Different insight strategies based on query type
+    if (template.resultType.includes('top')) {
+        insight = `<strong>${top.name || top.state}</strong> ranks at the top with a value of <strong>${top.value.toFixed(1)}</strong>. This is significantly higher than the rest of the group.`;
+    } else if (template.resultType.includes('bottom')) {
+        insight = `<strong>${bottom.name || bottom.state}</strong> has the lowest recorded value of <strong>${bottom.value.toFixed(1)}</strong> for ${metricLabel}.`;
+    } else if (template.resultType.includes('national')) {
+        const nat = data.find(d => d.name === 'National Average' || d.category === 'National');
+        const state = data.find(d => d.name !== 'National Average' && d.category !== 'National');
+        if (nat && state) {
+            const diff = ((state.value - nat.value) / nat.value * 100).toFixed(1);
+            const relative = state.value > nat.value ? "above" : "below";
+            insight = `Compared to the national average of <strong>${nat.value.toFixed(1)}</strong>, this location is <strong>${Math.abs(diff)}% ${relative}</strong> the benchmark.`;
+        }
+    } else {
+        // Generic spread insight
+        const spread = (top.value - bottom.value).toFixed(1);
+        insight = `The analysis shows a spread of <strong>${spread}</strong> between the highest and lowest points, with ${top.name || top.state} leading the group.`;
+    }
+
+    textEl.innerHTML = insight;
+    container.style.display = 'flex';
+}
+
 
 /* ── Data Computation per Template ─────────────────────────── */
 
@@ -1926,14 +1973,16 @@ function loadHistory() {
     renderHistory();
 }
 
-function renderHistory() {
+function renderHistory(filteredItems = null) {
     const listEl = document.getElementById('historyList');
     if (!listEl) return;
 
-    if (QueryState.history.length === 0) {
+    const itemsToRender = filteredItems || QueryState.history;
+
+    if (itemsToRender.length === 0) {
         listEl.innerHTML = `
             <div class="history-empty">
-                <p>No recent queries yet. Run an analysis to see history here.</p>
+                <p>${filteredItems ? 'No matching items found.' : 'No recent queries yet.'}</p>
             </div>
         `;
         return;
@@ -1941,7 +1990,8 @@ function renderHistory() {
 
     listEl.innerHTML = '';
 
-    if (QueryState.history.length === 20) {
+    // Only show warning if not searching and at limit
+    if (!filteredItems && QueryState.history.length === 20) {
         const warning = document.createElement('div');
         warning.className = 'history-warning';
         warning.innerHTML = `
@@ -1951,7 +2001,10 @@ function renderHistory() {
         listEl.appendChild(warning);
     }
 
-    QueryState.history.forEach((q, idx) => {
+    itemsToRender.forEach((q, idx) => {
+        // Find real index in QueryState.history if we are using filtered list
+        const realIdx = filteredItems ? QueryState.history.indexOf(q) : idx;
+        
         const item = document.createElement('div');
         item.className = 'history-item';
         
@@ -1964,10 +2017,25 @@ function renderHistory() {
             <div class="history-item-summary">${q.queryString}</div>
         `;
 
-        item.onclick = () => rerunQuery(idx);
+        item.onclick = () => rerunQuery(realIdx);
         listEl.appendChild(item);
     });
 }
+
+function filterHistory(value) {
+    const term = value.toLowerCase().trim();
+    if (!term) {
+        renderHistory();
+        return;
+    }
+
+    const filtered = QueryState.history.filter(q => {
+        return q.queryString.toLowerCase().includes(term);
+    });
+
+    renderHistory(filtered);
+}
+
 
 function rerunQuery(index) {
     const q = QueryState.history[index];
