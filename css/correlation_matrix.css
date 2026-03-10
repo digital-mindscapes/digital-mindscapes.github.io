@@ -1,0 +1,405 @@
+/* Correlation Matrix Layout */
+.correlation-layout {
+    display: grid;
+    grid-template-columns: 300px 1fr 350px;
+    gap: 20px;
+    padding: 20px 40px;
+    height: calc(100vh - 120px);
+}
+
+.left-controls, .right-scatter-panel {
+    background: #ffffff;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05); /* Matching var(--card-shadow) */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+/* Common Sidebar Styles */
+.sidebar-header {
+    background: linear-gradient(135deg, #c83830 0%, #a02820 100%);
+    color: white;
+    padding: 25px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.sidebar-header.secondary {
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+}
+
+.header-icon {
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sidebar-content {
+    flex: 1;
+    padding: 25px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.sidebar-section h4 {
+    font-size: 0.9rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-dark);
+    margin: 0 0 4px 0;
+}
+
+.heatmap-container-wrapper {
+    background: #ffffff;
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+    padding: 20px;
+}
+
+.matrix-legend {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-bottom: 20px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.legend-gradient {
+    width: 200px;
+    height: 12px;
+    border-radius: 6px;
+    background: linear-gradient(to right, #d73027, #f46d43, #fdae61, #fee090, #ffffff, #e0f3f8, #abd9e9, #74add1, #4575b4);
+    border: 1px solid var(--border-light);
+}
+
+.heatmap-canvas {
+    flex: 1;
+    overflow: auto;
+    position: relative;
+}
+
+/* Form Elements */
+.control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.control-group label {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text-dark, #333);
+}
+
+.modern-select {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    font-family: inherit;
+    color: var(--text-dark, #333);
+    background: #f8fafc;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    background-size: 14px;
+}
+
+.modern-select:hover {
+    border-color: #cbd5e1;
+    background-color: #f1f5f9;
+}
+
+.modern-select:focus {
+    outline: none;
+    border-color: var(--main-color, #c83830);
+    box-shadow: 0 0 0 4px rgba(200, 56, 48, 0.1);
+    background-color: #ffffff;
+}
+
+.primary-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: linear-gradient(135deg, var(--main-color, #c83830) 0%, #a02820 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 12px rgba(200, 56, 48, 0.2);
+}
+
+.primary-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(200, 56, 48, 0.3);
+    background: linear-gradient(135deg, #df433a 0%, #a02820 100%);
+}
+
+.primary-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(200, 56, 48, 0.2);
+}
+
+.primary-btn.calculate-btn {
+    width: 100%;
+    margin-top: 15px;
+    font-size: 1.05rem;
+    padding: 16px;
+    letter-spacing: 0.5px;
+}
+
+/* Tooltip */
+.custom-tooltip {
+    position: absolute;
+    background: rgba(15, 23, 42, 0.95);
+    color: #fff;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    pointer-events: none;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    width: max-content;
+    max-width: 300px;
+}
+
+.tooltip-header {
+    font-weight: 600;
+    margin-bottom: 4px;
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+    padding-bottom: 4px;
+}
+
+.tooltip-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    margin-top: 4px;
+}
+
+.tooltip-row .lbl {
+    color: #cbd5e1;
+}
+
+.tooltip-row .val {
+    font-weight: 600;
+}
+
+/* Loading Status */
+.loading-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    font-size: 0.9rem;
+    color: var(--main-color, #c83830);
+    font-weight: 600;
+}
+
+.loader-small {
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(200, 56, 48, 0.2);
+    border-top: 2px solid var(--main-color, #c83830);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Scatter Panel */
+.scatter-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 25px;
+    overflow-y: auto;
+}
+
+.empty-scatter {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    margin: auto;
+    color: var(--text-muted);
+}
+
+.empty-icon svg {
+    margin-bottom: 12px;
+    opacity: 0.5;
+}
+
+.scatter-wrapper {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.scatter-header {
+    text-align: center;
+    margin-bottom: 16px;
+}
+
+.scatter-y-label {
+    color: #d97706; /* AmCharts dark orange */
+    margin: 0;
+    font-size: 1rem;
+}
+
+.scatter-x-label {
+    color: #0ea5e9; /* Light blue */
+    margin: 0;
+    font-size: 1rem;
+}
+
+.scatter-header span {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.scatter-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.stat-box {
+    background: #f8fafc;
+    border: 1px solid var(--border-light);
+    border-radius: 6px;
+    padding: 8px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+}
+
+.stat-lbl {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.stat-val {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-dark, #333);
+}
+
+.d3-scatter-container {
+    flex: 1;
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+    background: #f8fafc;
+}
+
+.scatter-description {
+    margin-top: 16px;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    color: var(--text-dark, #333);
+    background: rgba(200, 56, 48, 0.05);
+    padding: 12px;
+    border-radius: 8px;
+    border-left: 4px solid var(--main-color, #c83830);
+}
+
+/* Responsive Overrides */
+@media (max-width: 1400px) {
+    .correlation-layout {
+        grid-template-columns: 260px 1fr 300px;
+        padding: 20px;
+    }
+}
+
+@media (max-width: 1024px) {
+    .correlation-layout {
+        display: flex;
+        flex-direction: column;
+        height: auto;
+        padding: 15px;
+        gap: 20px;
+    }
+    
+    .heatmap-container-wrapper {
+        min-height: 600px;
+        order: 2; /* Put heatmap below controls */
+    }
+
+    .left-controls {
+        order: 1; /* Controls on top */
+    }
+
+    .right-scatter-panel {
+        order: 3; /* Scatter at bottom */
+        min-height: 500px;
+    }
+    
+    .heatmap-canvas {
+        height: 600px;
+    }
+    
+    .d3-scatter-container {
+        height: 400px;
+    }
+}
+
+@media (max-width: 768px) {
+    .correlation-layout {
+        padding: 15px 10px;
+        gap: 15px;
+    }
+    
+    .left-controls, .right-scatter-panel, .heatmap-container-wrapper {
+        border-radius: 16px;
+    }
+
+    .sidebar-header, .sidebar-content {
+        padding: 20px;
+    }
+
+    .matrix-legend {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .scatter-stats {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+}

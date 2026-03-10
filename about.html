@@ -564,6 +564,15 @@
             </svg>
             Semi-Structured Query
         </a>
+        <a href="correlation_matrix.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                <path d="M3 9h18"></path>
+                <path d="M9 21V9"></path>
+            </svg>
+            Correlation Matrix
+        </a>
         <a href="about.html" class="comparison-pill active-pill">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -735,6 +744,15 @@
                     <path d="M8 11h6"></path>
                 </svg>
                 Semi-Structured Query
+            </div>
+            <div class="about-nav-item" onclick="switchAboutTab('page_correlation', this)">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                    <path d="M3 9h18"></path>
+                    <path d="M9 21V9"></path>
+                </svg>
+                Correlation Matrix
             </div>
         </div>
 
@@ -2109,6 +2127,49 @@
                                 <span style="color: #495057; line-height: 1.5;"><strong>Regional Benchmarking:</strong>
                                     Compare specific regions or states against national averages through simple sentence
                                     construction.</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div id="content_page_correlation" class="about-content-section">
+                <h2>Correlation Matrix</h2>
+                <div class="content-body">
+                    <div style="background: #ffffff; border: 1px solid #e9ecef; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02); margin-bottom: 30px;">
+                        <h4 style="color: #c83830; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; font-size: 1.25rem;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #c83830;">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                <path d="M3 9h18"></path>
+                                <path d="M9 21V9"></path>
+                            </svg>
+                            Statistical Relationship Discovery
+                        </h4>
+
+                        <p style="font-size: 1.1rem; color: #2b2e31; line-height: 1.7; margin-bottom: 20px; font-weight: 500;">
+                            The <strong>Correlation Matrix</strong> page provides an interactive, color-coded grid designed to reveal the statistical strength and direction of relationships between multiple socioeconomic and public health metrics simultaneously.
+                        </p>
+
+                        <div style="background: #f8f9fa; border-radius: 10px; padding: 20px; margin-bottom: 25px; border-left: 4px solid #c83830;">
+                            <h5 style="margin-top: 0; color: #495057; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.5px;">Significance</h5>
+                            <p style="margin-bottom: 0; color: #495057; line-height: 1.6;">
+                                While maps show us <em>where</em> issues occur, correlations help us understand <em>how</em> issues might be linked. By calculating Pearson correlation coefficients across thousands of counties, this tool quickly highlights robust systemic patterns—such as the strong negative correlation often found between income levels and chronic disease prevalence.
+                            </p>
+                        </div>
+
+                        <h5 style="color: #2b2e31; margin-bottom: 15px; font-weight: 700;">Key Features:</h5>
+                        <ul style="list-style-type: none; padding-left: 0; margin-bottom: 25px;">
+                            <li style="margin-bottom: 12px; display: flex; gap: 10px;">
+                                <span style="color: #c83830; font-weight: bold;">•</span>
+                                <span style="color: #495057; line-height: 1.5;"><strong>Customizable Plotting Matrix:</strong> Build your own grids by mixing and matching specific rows and columns of data, tailored to your distinct research inquiries.</span>
+                            </li>
+                            <li style="margin-bottom: 12px; display: flex; gap: 10px;">
+                                <span style="color: #c83830; font-weight: bold;">•</span>
+                                <span style="color: #495057; line-height: 1.5;"><strong>Multiple Layout Styles:</strong> Toggle between traditional numeric squares, visual correlogram circles, or mixed layouts to best represent the density and significance of variables.</span>
+                            </li>
+                            <li style="display: flex; gap: 10px;">
+                                <span style="color: #c83830; font-weight: bold;">•</span>
+                                <span style="color: #495057; line-height: 1.5;"><strong>Scatterplot Deep-Dive:</strong> Clicking any single square within the matrix dynamically generates a detailed 2D scatterplot revealing the exact distribution of counties making up that specific correlation.</span>
                             </li>
                         </ul>
                     </div>

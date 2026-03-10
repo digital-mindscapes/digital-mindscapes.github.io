@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Correlation Matrix - Digital Mindscapes</title>
+    <link rel="stylesheet" href="css/style.css?v=6">
+    <link rel="stylesheet" href="css/responsive.css">
+    <link rel="stylesheet" href="css/correlation_matrix.css">
+    
+    <!-- D3.js for the custom heatmap visualization -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <!-- Simple-statistics for correlation and p-value calculation -->
+    <script src="https://unpkg.com/simple-statistics@7.8.0/dist/simple-statistics.min.js"></script>
+</head>
+
+<body>
+    <div class="header">
+        <div class="header-content">
+            <div class="app-logo-container">
+                <a href="index.html">
+                    <img src="assets/app_logo.png" alt="App Logo" class="app-logo">
+                </a>
+            </div>
+            <div class="header-text-container">
+                <h1>Digital Mindscapes: An Interactive Public Health & Socioeconomic Data Visualization Platform</h1>
+                <p class="authors">
+                    <strong>Arpita Datta</strong><sup>*</sup>,
+                    <strong>Dr. Sabirat Rubiya</strong><sup>*</sup>,
+                    <strong>Dr. Avik Chakrabarti</strong><sup>†</sup>,
+                    <strong>Dr. Anjishnu Banerjee</strong><sup>‡</sup>
+                </p>
+                <p class="affiliations">
+                    <sup>*</sup>Marquette University &nbsp;|&nbsp; <sup>†</sup>University of Wisconsin-Milwaukee (UWM)
+                    &nbsp;|&nbsp; <sup>‡</sup>Medical College of Wisconsin (MCW)
+                </p>
+            </div>
+            <div class="banner-logos-row">
+                <div class="banner-logos-top">
+                    <img src="assets/marquette_logo.png" id="marquetteLogo" alt="Marquette University Logo"
+                        class="banner-logo">
+                    <img src="assets/mcw_logo.png" id="mcwLogo" alt="MCW Logo" class="banner-logo">
+                </div>
+                <div class="banner-logos-bottom">
+                    <img src="assets/uwm_logo.png" id="uwmLogo" alt="UWM Logo" class="banner-logo">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="navigation-bar">
+        <a href="index.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+            </svg>
+            Main Dashboard
+        </a>
+        <a href="comparison.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="20" x2="18" y2="10"></line>
+                <line x1="12" y1="20" x2="12" y2="4"></line>
+                <line x1="6" y1="20" x2="6" y2="14"></line>
+            </svg>
+            States Comparison
+        </a>
+        <a href="county_comparison.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="7" height="7"></rect>
+                <rect x="14" y="3" width="7" height="7"></rect>
+                <rect x="14" y="14" width="7" height="7"></rect>
+                <rect x="3" y="14" width="7" height="7"></rect>
+            </svg>
+            Counties Comparison
+        </a>
+        <a href="urban_rural_comparison.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 4h16v16H4z"></path>
+                <path d="M4 12h16"></path>
+                <path d="M12 4v16"></path>
+            </svg>
+            Urban-Rural Comparison
+        </a>
+        <a href="county_distribution.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3" />
+                <circle cx="6" cy="16" r="3" />
+                <circle cx="18" cy="16" r="3" />
+                <circle cx="9" cy="8" r="3" />
+                <circle cx="15" cy="8" r="3" />
+            </svg>
+            County Distribution
+        </a>
+        <a href="multi_metric.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path>
+                <path d="M22 12A10 10 0 0 0 12 2v10z"></path>
+            </svg>
+            State Multi-Metric Comparison
+        </a>
+        <a href="metric_visualization.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 20v-6M6 20V10M18 20V4" />
+            </svg>
+            Metric Insights
+        </a>
+        <a href="bivariate_analysis.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="3" y1="9" x2="21" y2="9"></line>
+                <line x1="3" y1="15" x2="21" y2="15"></line>
+                <line x1="9" y1="3" x2="9" y2="21"></line>
+                <line x1="15" y1="3" x2="15" y2="21"></line>
+            </svg>
+            Bivariate Analysis
+        </a>
+        <a href="query.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                <path d="M11 8v6"></path>
+                <path d="M8 11h6"></path>
+            </svg>
+            Semi-Structured Query
+        </a>
+        <a href="correlation_matrix.html" class="comparison-pill active-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                <path d="M3 9h18"></path>
+                <path d="M9 21V9"></path>
+            </svg>
+            Correlation Matrix
+        </a>
+        <a href="about.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+            About
+        </a>
+    </div>
+
+    <main class="correlation-layout">
+        <aside class="left-controls">
+            <div class="sidebar-header">
+                <div class="header-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                    </svg>
+                </div>
+                <div>
+                    <h3 style="margin: 0; font-size: 1.1rem; line-height:1.2;">Global Filters</h3>
+                    <p style="margin: 4px 0 0 0; font-size: 0.8rem; opacity: 0.85;">Calculate customized correlations.</p>
+                </div>
+            </div>
+            
+            <div class="sidebar-content">
+                <div class="control-group">
+                <label for="regionFilter">Region:</label>
+                <select id="regionFilter" class="modern-select">
+                    <option value="All">All U.S. Regions</option>
+                    <option value="Northeast">Northeast</option>
+                    <option value="Midwest">Midwest</option>
+                    <option value="South">South</option>
+                    <option value="West">West</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <label for="stateFilter">State:</label>
+                <select id="stateFilter" class="modern-select">
+                    <option value="All">All States</option>
+                </select>
+            </div>
+            
+
+
+                <div class="sidebar-section">
+                    <h4>Matrix Rows</h4>
+                    <p style="margin:0; font-size:0.8rem; color:var(--text-muted);">Select which sets of metrics to cross-correlate.</p>
+                </div>
+
+                <div class="control-group">
+                <label for="xAxisGroup">Row Category:</label>
+                <select id="xAxisGroup" class="modern-select">
+                    <option value="Health">Health Outcomes & Prevention (CDC)</option>
+                    <option value="Econ">Economic & Household (ACS)</option>
+                    <option value="All" selected>All Selected Metrics</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label for="yAxisGroup">Column Category:</label>
+                <select id="yAxisGroup" class="modern-select">
+                    <option value="Health">Health Outcomes & Prevention (CDC)</option>
+                    <option value="Econ">Economic & Household (ACS)</option>
+                    <option value="All" selected>All Selected Metrics</option>
+                </select>
+            </div>
+
+            <div class="sidebar-section" style="margin-top: 10px;">
+                <h4>Visualization Options</h4>
+                <p style="margin:0; font-size:0.8rem; color:var(--text-muted);">Customize the matrix appearance.</p>
+            </div>
+
+            <div class="control-group">
+                <label for="matrixLayout">Matrix Layout:</label>
+                <select id="matrixLayout" class="modern-select">
+                    <option value="full">Full Matrix</option>
+                    <option value="lower">Lower Triangle</option>
+                    <option value="upper">Upper Triangle</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label for="matrixStyle">Matrix Style:</label>
+                <select id="matrixStyle" class="modern-select">
+                    <option value="heatmap">Heatmap (Squares)</option>
+                    <option value="mixed_rect">Mixed (Squares & Values)</option>
+                    <option value="correlogram">Correlogram (Circles)</option>
+                    <option value="mixed_circle">Mixed (Circles & Values)</option>
+                    <option value="ellipse">Ellipses (Directional)</option>
+                    <option value="mixed_ellipse">Mixed (Ellipses & Values)</option>
+                </select>
+            </div>
+
+            <button id="calculateBtn" class="primary-btn calculate-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+                Calculate Matrix
+            </button>
+
+                <div class="loading-status" id="loadingStatus" style="display:none;">
+                    <div class="loader-small"></div>
+                    <span>Computing P-values & r...</span>
+                </div>
+            </div>
+        </aside>
+        
+        <div class="heatmap-container-wrapper">
+            <div class="matrix-legend">
+                <span>Strong Negative (-1.0)</span>
+                <div class="legend-gradient"></div>
+                <span>Strong Positive (+1.0)</span>
+            </div>
+            <div id="heatmap-container" class="heatmap-canvas">
+                <!-- D3 SVG injected here -->
+                <div class="loader-container" id="initLoader">
+                    <div class="loader"></div>
+                    <p>Loading Dataset...</p>
+                </div>
+            </div>
+        </div>
+
+        <aside class="right-scatter-panel">
+            <div class="sidebar-header secondary">
+                <div class="header-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="1"></circle>
+                        <circle cx="19" cy="6" r="1"></circle>
+                        <circle cx="5" cy="18" r="1"></circle>
+                        <circle cx="8" cy="10" r="1"></circle>
+                        <circle cx="16" cy="16" r="1"></circle>
+                        <path d="M22 22H2V2"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h3>Deep Dive</h3>
+                </div>
+                <button id="infoBtn" aria-label="Methodology Info" style="background: transparent; border: none; color: white; cursor: pointer; margin-left: auto; display: flex; align-items: center; justify-content: center; opacity: 0.8; transition: opacity 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.8">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    </svg>
+                </button>
+            </div>
+            
+            <div id="scatter-content" class="scatter-content">
+                <div class="empty-scatter" id="scatterEmpty">
+                    <div class="empty-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <path d="M3 9h18"></path>
+                            <path d="M9 21V9"></path>
+                        </svg>
+                    </div>
+                    <p>Click any cell in the heatmap to view the detailed scatterplot and statistical relationship between the two metrics.</p>
+                </div>
+
+                <div id="scatterWrapper" class="scatter-wrapper" style="display:none;">
+                    <div class="scatter-header">
+                        <h4 id="scatterTitleY" class="scatter-y-label">Metric Y</h4>
+                        <span>vs</span>
+                        <h4 id="scatterTitleX" class="scatter-x-label">Metric X</h4>
+                    </div>
+                    <div class="scatter-stats">
+                        <div class="stat-box">
+                            <span class="stat-lbl">r (Pearson)</span>
+                            <span class="stat-val" id="scatterR">0.00</span>
+                        </div>
+                        <div class="stat-box">
+                            <span class="stat-lbl">P-Value</span>
+                            <span class="stat-val" id="scatterP">&lt; .001</span>
+                        </div>
+                        <div class="stat-box">
+                            <span class="stat-lbl">Counties (N)</span>
+                            <span class="stat-val" id="scatterN">0</span>
+                        </div>
+                    </div>
+                    
+                    <div id="d3-scatter-container" class="d3-scatter-container"></div>
+                    
+                    <div class="scatter-description" id="scatterDesc">
+                        This shows a strong positive correlation.
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </main>
+    
+    <!-- Methodology Modal -->
+    <div id="infoModal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 650px;">
+            <button class="close-modal" id="closeModalBtn" style="position: absolute; top: 20px; right: 20px; background: transparent; border: none; font-size: 28px; cursor: pointer; color: #64748b; line-height: 1; transition: color 0.2s;" onmouseover="this.style.color='#0f172a'" onmouseout="this.style.color='#64748b'">&times;</button>
+            <h2 style="margin-top: 0; color: var(--text-dark, #333); font-size: 1.5rem; margin-bottom: 20px;">Statistical Methodology</h2>
+            
+            <div style="color: var(--text-dark, #333); font-size: 0.95rem; line-height: 1.6;">
+                <p>The <strong>Pearson Correlation Coefficient (<em>r</em>)</strong> measures the linear correlation between two variables, returning a value between <strong>-1</strong> (perfect negative correlation) and <strong>1</strong> (perfect positive correlation).</p>
+                
+                <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; margin: 15px 0; font-family: 'Courier New', Courier, monospace; text-align: center; font-size: 1.1rem; color: #0f172A; font-weight: 600;">
+                    r = &Sigma;((x<sub>i</sub> - x&#772;)(y<sub>i</sub> - y&#772;)) / &radic;(&Sigma;(x<sub>i</sub> - x&#772;)&sup2; &Sigma;(y<sub>i</sub> - y&#772;)&sup2;)
+                </div>
+                
+                <h4 style="margin: 24px 0 10px 0; color: var(--main-color, #c83830); font-size: 1.05rem;">Interpretation Guidelines</h4>
+                <ul style="padding-left: 20px; margin-bottom: 20px;">
+                    <li><strong>|r| &ge; 0.6:</strong> Strong correlation (distinct, highly concentrated linear trend)</li>
+                    <li><strong>0.3 &le; |r| &lt; 0.6:</strong> Moderate correlation (visible relationship, clear direction)</li>
+                    <li><strong>|r| &lt; 0.3:</strong> Weak correlation (highly scattered relationship)</li>
+                </ul>
+
+                <h4 style="margin: 24px 0 10px 0; color: var(--main-color, #c83830); font-size: 1.05rem;">Technical Notes</h4>
+                <ul style="padding-left: 20px; margin-bottom: 0;">
+                    <li>Computations are handled strictly client-side via the <code>simple-statistics</code> JavaScript module.</li>
+                    <li>Missing or null records for either axis variable drop that row entirely (Pairwise Deletion).</li>
+                    <li>The trendline inside the scatterplots represents an <strong>Ordinary Least Squares (OLS)</strong> simple linear regression (<code>y = mx + b</code>), rendering only if <code>n > 5</code> and <code>|r| > 0.05</code>.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Tooltip for Heatmap and Scatterplot -->
+    <div id="customTooltip" class="custom-tooltip"></div>
+
+    <!-- Include our custom JS -->
+    <script src="js/correlation_matrix.js?v=2"></script>
+</body>
+</html>
