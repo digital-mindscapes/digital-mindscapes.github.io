@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Semi-Structured Query - Digital Mindscapes</title>
+    <link rel="stylesheet" href="css/style.css?v=5">
+    <link rel="stylesheet" href="css/query_style.css">
+    <link rel="stylesheet" href="css/responsive.css">
+</head>
+
+<body>
+    <div class="header">
+        <div class="header-content">
+            <div class="app-logo-container">
+                <a href="index.html">
+                    <img src="assets/app_logo.png" alt="App Logo" class="app-logo">
+                </a>
+            </div>
+            <div class="header-text-container">
+                <h1>Digital Mindscapes: An Interactive Public Health &amp; Socioeconomic Data Visualization Platform
+                </h1>
+                <p class="authors">
+                    <strong>Arpita Datta</strong><sup>*</sup>,
+                    <strong>Dr. Sabirat Rubiya</strong><sup>*</sup>,
+                    <strong>Dr. Avik Chakrabarti</strong><sup>†</sup>,
+                    <strong>Dr. Anjishnu Banerjee</strong><sup>‡</sup>
+                </p>
+                <p class="affiliations">
+                    <sup>*</sup>Marquette University &nbsp;|&nbsp; <sup>†</sup>University of Wisconsin-Milwaukee (UWM)
+                    &nbsp;|&nbsp; <sup>‡</sup>Medical College of Wisconsin (MCW)
+                </p>
+            </div>
+            <div class="banner-logos-row">
+                <div class="banner-logos-top">
+                    <img src="assets/marquette_logo.png" id="marquetteLogo" alt="Marquette University Logo"
+                        class="banner-logo">
+                    <img src="assets/mcw_logo.png" id="mcwLogo" alt="MCW Logo" class="banner-logo">
+                </div>
+                <div class="banner-logos-bottom">
+                    <img src="assets/uwm_logo.png" id="uwmLogo" alt="UWM Logo" class="banner-logo">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="navigation-bar">
+        <a href="index.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+            </svg>
+            Main Dashboard
+        </a>
+        <a href="comparison.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="20" x2="18" y2="10"></line>
+                <line x1="12" y1="20" x2="12" y2="4"></line>
+                <line x1="6" y1="20" x2="6" y2="14"></line>
+            </svg>
+            States Comparison
+        </a>
+        <a href="county_comparison.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="7" height="7"></rect>
+                <rect x="14" y="3" width="7" height="7"></rect>
+                <rect x="14" y="14" width="7" height="7"></rect>
+                <rect x="3" y="14" width="7" height="7"></rect>
+            </svg>
+            Counties Comparison
+        </a>
+        <a href="urban_rural_comparison.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 4h16v16H4z"></path>
+                <path d="M4 12h16"></path>
+                <path d="M12 4v16"></path>
+            </svg>
+            Urban-Rural Comparison
+        </a>
+        <a href="county_distribution.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3" />
+                <circle cx="6" cy="16" r="3" />
+                <circle cx="18" cy="16" r="3" />
+                <circle cx="9" cy="8" r="3" />
+                <circle cx="15" cy="8" r="3" />
+            </svg>
+            County Distribution
+        </a>
+        <a href="multi_metric.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path>
+                <path d="M22 12A10 10 0 0 0 12 2v10z"></path>
+            </svg>
+            State Multi-Metric Comparison
+        </a>
+        <a href="metric_visualization.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 20v-6M6 20V10M18 20V4" />
+            </svg>
+            Metric Insights
+        </a>
+        <a href="query.html" class="comparison-pill active-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                <path d="M11 8v6"></path>
+                <path d="M8 11h6"></path>
+            </svg>
+            Semi-Structured Query
+        </a>
+        <a href="about.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+            About
+        </a>
+    </div>
+
+    <main class="query-page-layout">
+        <aside class="query-sidebar">
+            <div class="sidebar-title">Categories</div>
+            <nav class="cat-nav">
+                <div class="cat-item active" data-category="all" onclick="setCategory('all', this)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="14" width="7" height="7"></rect>
+                        <rect x="3" y="14" width="7" height="7"></rect>
+                    </svg>
+                    All Templates
+                    <span class="cat-count">0</span>
+                </div>
+                <div class="cat-item" data-category="topk" onclick="setCategory('topk', this)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 20v-6M6 20V10M18 20V4" />
+                    </svg>
+                    Top / Bottom K
+                    <span class="cat-count">0</span>
+                </div>
+                <div class="cat-item" data-category="county" onclick="setCategory('county', this)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="3" />
+                        <circle cx="6" cy="16" r="3" />
+                        <circle cx="18" cy="16" r="3" />
+                        <circle cx="9" cy="8" r="3" />
+                        <circle cx="15" cy="8" r="3" />
+                    </svg>
+                    County Level
+                    <span class="cat-count">0</span>
+                </div>
+                <div class="cat-item" data-category="state" onclick="setCategory('state', this)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="20" x2="18" y2="10"></line>
+                        <line x1="12" y1="20" x2="12" y2="4"></line>
+                        <line x1="6" y1="20" x2="6" y2="14"></line>
+                    </svg>
+                    State Level
+                    <span class="cat-count">0</span>
+                </div>
+                <div class="cat-item" data-category="national" onclick="setCategory('national', this)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path>
+                        <path d="M2 12h20"></path>
+                    </svg>
+                    National Level
+                    <span class="cat-count">0</span>
+                </div>
+                <div class="cat-item" data-category="correlation" onclick="setCategory('correlation', this)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path>
+                        <path d="M22 12A10 10 0 0 0 12 2v10z"></path>
+                    </svg>
+                    Correlations
+                    <span class="cat-count">0</span>
+                </div>
+                <div class="cat-item" data-category="multiMetric" onclick="setCategory('multiMetric', this)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="12" width="4" height="8" rx="1"></rect>
+                        <rect x="10" y="8" width="4" height="12" rx="1"></rect>
+                        <rect x="17" y="4" width="4" height="16" rx="1"></rect>
+                    </svg>
+                    Multi-Metric
+                    <span class="cat-count">0</span>
+                </div>
+                <div class="cat-item" data-category="range" onclick="setCategory('range', this)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="4" y1="12" x2="20" y2="12"></line>
+                        <circle cx="8" cy="12" r="3"></circle>
+                        <circle cx="16" cy="12" r="3"></circle>
+                    </svg>
+                    Range Queries
+                    <span class="cat-count">0</span>
+                </div>
+            </nav>
+        </aside>
+
+        <section class="query-main-content">
+            <div class="query-hero">
+                <h2>Semi-Structured Natural Language Query</h2>
+                <p>Explore health and socioeconomic data by selecting a template and filling in the placeholders. Each
+                    query produces a visual analysis.</p>
+            </div>
+
+            <div class="query-builder-section">
+                <div class="template-selector">
+                    <div class="step-header">
+                        <div class="step-number">1</div>
+                        <h3>Select a Query Template</h3>
+                    </div>
+                    <div class="template-grid" id="templateGrid"></div>
+                </div>
+
+                <div class="query-editor" id="queryEditor" style="display: none;">
+                    <div class="step-header">
+                        <div class="step-number">2</div>
+                        <h3>Customize Your Query</h3>
+                    </div>
+                    <div class="active-query-box">
+                        <div id="queryDisplay" class="query-sentence"></div>
+                    </div>
+                    <div class="placeholder-controls" id="placeholderControls"></div>
+                    <div class="action-buttons">
+                        <button id="resetQueryBtn" class="secondary-btn">Reset</button>
+                        <button id="runQueryBtn" class="primary-btn">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                            </svg>
+                            Run Analysis
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="results-section" id="resultsSection" style="display: none;">
+                <div class="results-header">
+                    <h3>Analysis Results</h3>
+                    <div class="result-summary" id="resultSummary"></div>
+                </div>
+                <div id="chartContainer" class="result-box"></div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Global Scripts -->
+    <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+
+    <script src="js/script.js"></script>
+    <script src="js/query_engine.js"></script>
+</body>
+
+</html>
