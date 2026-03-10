@@ -1608,3 +1608,284 @@
     color: #047857;
     font-weight: 700;
 }
+
+.insight-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.sidebar-dna-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1px solid #e2e8f0;
+    background: white;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 0;
+}
+
+.sidebar-dna-btn:hover {
+    color: #10b981;
+    border-color: #10b981;
+    background: #ecfdf5;
+    transform: scale(1.1);
+}
+
+.sidebar-dna-btn.active {
+    background: #10b981;
+    color: white;
+    border-color: #10b981;
+    box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
+}
+
+/* Interactive Radar Legend */
+.radar-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    background: #f1f5f9;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+}
+
+.radar-legend-item:hover {
+    background: #fee2e2;
+    border-color: #ef4444;
+    color: #ef4444 !important;
+}
+
+.radar-legend-item:hover span {
+    background: #ef4444 !important;
+}
+
+/* Toast Notification System */
+.dna-toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: #1e293b;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 50px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    opacity: 0;
+}
+
+.dna-toast.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+}
+
+.dna-toast svg {
+    color: #f59e0b;
+}
+
+/* Sidebar County Search Support */
+.sidebar-search-box {
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid #f1f5f9;
+}
+
+.sidebar-search-box h4 {
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+}
+
+.search-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.search-input-wrapper input {
+    width: 100%;
+    padding: 10px 12px 10px 36px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    color: var(--text-dark);
+    transition: all 0.2s ease;
+}
+
+.search-input-wrapper input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    background: white;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+}
+
+.search-input-wrapper svg {
+    position: absolute;
+    left: 12px;
+    color: #94a3b8;
+    pointer-events: none;
+}
+
+.searched-counties-section {
+    margin-top: 15px;
+}
+
+.insight-item.searched-highlight {
+    background: rgba(59, 130, 246, 0.05) !important;
+    border-left: 3px solid #3b82f6 !important;
+}
+
+.insight-item.searched-highlight .c-name {
+    color: #1d4ed8;
+}
+
+.insight-item.searched-highlight .c-value {
+    color: #1d4ed8 !important;
+}
+
+.search-results-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    max-height: 200px;
+    overflow-y: auto;
+    margin-top: 5px;
+    display: none;
+}
+
+.search-result-item {
+    padding: 8px 12px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.search-result-item:hover {
+    background: #f1f5f9;
+}
+
+.search-result-item .s-state {
+    font-size: 0.7rem;
+    color: #94a3b8;
+}
+
+.dna-search-badge {
+    background: #3b82f6;
+    color: white;
+    font-size: 0.6rem;
+    font-weight: 900;
+    padding: 1px 6px;
+    border-radius: 4px;
+    margin-right: 6px;
+}
+
+/* Responsive Layout */
+@media (max-width: 1200px) {
+    .metric-insights-layout {
+        flex-direction: column;
+        padding: 15px;
+    }
+
+    .info-sidebar,
+    .right-sidebar {
+        width: 100% !important;
+        position: relative !important;
+        top: 0 !important;
+        height: auto !important;
+        max-height: 450px !important;
+        /* Constrain height so user can reach cards */
+        margin-bottom: 20px;
+    }
+
+    .info-sidebar {
+        order: -1;
+        /* Spatial Context always on top */
+    }
+
+    .main-viz-area {
+        width: 100% !important;
+        order: 0;
+    }
+
+    .right-sidebar {
+        order: 1;
+        /* Competition cards move to bottom for easier access to main grid */
+    }
+
+    .viz-controls {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 15px;
+    }
+
+    .control-group {
+        width: 100%;
+        justify-content: flex-start;
+        display: flex;
+        flex-wrap: wrap;
+    }
+
+    .control-group select {
+        flex: 1;
+        min-width: 120px;
+    }
+
+    .search-group {
+        margin-left: 0;
+    }
+}
+
+@media (max-width: 768px) {
+    .metric-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .metric-insights-layout {
+        padding: 10px;
+    }
+
+    .info-sidebar,
+    .right-sidebar {
+        max-height: 400px !important;
+    }
+
+    /* Toast adjustments for small screens */
+    .dna-toast {
+        width: 90%;
+        font-size: 0.8rem;
+        padding: 10px 16px;
+        bottom: 15px;
+    }
+
+    .hud-content {
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+    }
+}

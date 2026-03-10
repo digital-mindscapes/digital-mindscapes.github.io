@@ -18,6 +18,7 @@ let activeFilters = {
 // --- Metric DNA Global State ---
 let dnaMetricList = [];
 let activeDnaCounties = []; // Now an array for multi-county support
+let searchedCountyIds = []; // Counties manually searched and added to sidebar
 let activeInfoMetric = null; // Tracks current metric highlighted in sidebar
 
 const higherIsBetter = {
@@ -632,8 +633,13 @@ function renderPlot(metric, values, highlights = []) {
     dots.exit().remove();
     dots.enter().append('circle').attr('class', 'highlight-dot')
         .merge(dots)
-        .attr('r', 3)
-        .attr('fill', d => d.isCritical ? '#dc2626' : '#059669')
+        .attr('r', 4)
+        .attr('fill', d => {
+            if (d.type === 'searched') return '#3b82f6';
+            return d.isCritical ? '#dc2626' : '#10b981';
+        })
+        .style('stroke', 'white')
+        .style('stroke-width', '1px')
         .transition().duration(400)
         .attr('cx', d => x(d.value)).attr('cy', chartHeight);
 
@@ -804,15 +810,14 @@ function toggleInfo(metric, isUpdate = false) {
         : (sortedValues[sortedValues.length / 2 - 1] + sortedValues[sortedValues.length / 2]) / 2;
     const stdDev = Math.sqrt(values.map(x => Math.pow(x - mean, 2)).reduce((a, b) => a + b) / values.length);
 
+    const searchedCounties = allCountyData.filter(c => searchedCountyIds.includes(c.id));
+
     sidebarContent.innerHTML = `
         <div class="sidebar-section active-metric-header">
             <h2 style="font-size: 1.3rem; margin: 0; color: var(--text-dark); border: none;">${label}</h2>
-            <p style="font-size: 0.85rem; color: var(--text-muted); margin: 5px 0 0 0;">Geographic Rankings and positive outliers</p>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin: 5px 0 0 0;">Geographic Rankings and target context</p>
         </div>
 
-        <!-- Left Sidebar: Stats & List only -->
-
-        <!-- Data Snapshot Card -->
         <div class="stats-snapshot-card">
             <div class="snapshot-header">
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17l-6-6-3 3-4-4"/></svg>
@@ -834,18 +839,34 @@ function toggleInfo(metric, isUpdate = false) {
             </div>
         </div>
 
+        <div class="sidebar-search-box" style="margin-top: 15px; border-top: none; padding-top: 0;">
+            <h4 style="margin-bottom: 8px;">Targeted County Lookup</h4>
+            <div class="search-input-wrapper">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                <input type="text" placeholder="Search a specific county..." oninput="handleSidebarSearch(event)" id="sidebar-county-search">
+                <div id="sidebar-search-results" class="search-results-dropdown"></div>
+            </div>
+        </div>
+
         <div class="sidebar-section success">
             <h4><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Positive Deviation</h4>
             <div class="insights-list">
                 ${successes.map(c => `
-                    <div class="insight-item ${activeDnaCounties.includes(c.id) ? 'dna-active' : ''}" onclick="showMetricDNA('${c.id}', event)">
+                    <div class="insight-item ${activeDnaCounties.includes(c.id) ? 'dna-active' : ''}" onclick="showMetricDNA('${c.id}')">
                         <div class="county-info">
                             <span class="c-name">${c.name}</span>
                             <span class="c-state">${c.state_name || c.state_abbr}</span>
                         </div>
-                        <div class="c-value-wrapper">
-                            ${activeDnaCounties.includes(c.id) ? '<span class="dna-active-badge">DNA</span>' : ''}
-                            <span class="c-value">${formatValue(c[metric], metric)}</span>
+                        <div class="insight-actions">
+                            <div class="c-value-wrapper">
+                                ${activeDnaCounties.includes(c.id) ? '<span class="dna-active-badge">DNA</span>' : ''}
+                                <span class="c-value">${formatValue(c[metric], metric)}</span>
+                            </div>
+                            <button class="sidebar-dna-btn ${activeDnaCounties.includes(c.id) ? 'active' : ''}" 
+                                    title="Add to DNA Profile (Max 3)"
+                                    onclick="event.stopPropagation(); toggleCountyDNA('${c.id}')">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"/><path d="M4.7 19.8 19.3 4.2"/><path d="M19.3 19.8 4.7 4.2"/><path d="M2 12h20"/><circle cx="12" cy="12" r="3"/></svg>
+                            </button>
                         </div>
                     </div>
                 `).join('')}
@@ -856,25 +877,60 @@ function toggleInfo(metric, isUpdate = false) {
             <h4><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="19"/><path d="M12 8v5"/></svg> Critical Focus</h4>
             <div class="insights-list">
                 ${criticals.map(c => `
-                    <div class="insight-item ${activeDnaCounties.includes(c.id) ? 'dna-active' : ''}" onclick="showMetricDNA('${c.id}', event)">
+                    <div class="insight-item ${activeDnaCounties.includes(c.id) ? 'dna-active' : ''}" onclick="showMetricDNA('${c.id}')">
                         <div class="county-info">
                             <span class="c-name">${c.name}</span>
                             <span class="c-state">${c.state_name || c.state_abbr}</span>
                         </div>
-                        <div class="c-value-wrapper">
-                            ${activeDnaCounties.includes(c.id) ? '<span class="dna-active-badge">DNA</span>' : ''}
-                            <span class="c-value" style="color: #dc2626;">${formatValue(c[metric], metric)}</span>
+                        <div class="insight-actions">
+                            <div class="c-value-wrapper">
+                                ${activeDnaCounties.includes(c.id) ? '<span class="dna-active-badge">DNA</span>' : ''}
+                                <span class="c-value" style="color: #dc2626;">${formatValue(c[metric], metric)}</span>
+                            </div>
+                            <button class="sidebar-dna-btn ${activeDnaCounties.includes(c.id) ? 'active' : ''}" 
+                                    title="Add to DNA Profile (Max 3)"
+                                    onclick="event.stopPropagation(); toggleCountyDNA('${c.id}')">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"/><path d="M4.7 19.8 19.3 4.2"/><path d="M19.3 19.8 4.7 4.2"/><path d="M2 12h20"/><circle cx="12" cy="12" r="3"/></svg>
+                            </button>
                         </div>
                     </div>
                 `).join('')}
             </div>
         </div>
+
+        ${searchedCounties.length > 0 ? `
+        <div class="sidebar-section targeted">
+            <h4 style="color: #3b82f6;">RECENT LOOKUPS</h4>
+            <div class="insights-list">
+                ${searchedCounties.map(c => `
+                    <div class="insight-item searched-highlight ${activeDnaCounties.includes(c.id) ? 'dna-active' : ''}" onclick="showMetricDNA('${c.id}')">
+                        <div class="county-info">
+                            <span class="c-name">${c.name}</span>
+                            <span class="c-state">${c.state_name || c.state_abbr}</span>
+                        </div>
+                        <div class="insight-actions">
+                            <div class="c-value-wrapper">
+                                ${activeDnaCounties.includes(c.id) ? '<span class="dna-active-badge">DNA</span>' : ''}
+                                <span class="c-value">${formatValue(c[metric], metric)}</span>
+                            </div>
+                            <button class="sidebar-dna-btn ${activeDnaCounties.includes(c.id) ? 'active' : ''}" 
+                                    title="Add to DNA Profile (Max 3)"
+                                    onclick="event.stopPropagation(); toggleCountyDNA('${c.id}')">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"/><path d="M4.7 19.8 19.3 4.2"/><path d="M19.3 19.8 4.7 4.2"/><path d="M2 12h20"/><circle cx="12" cy="12" r="3"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+        ` : ''}
     `;
 
     // Highlight in plot
     const highlights = [
-        ...successes.map(c => ({ id: c.id, value: c[metric], isCritical: false })),
-        ...criticals.map(c => ({ id: c.id, value: c[metric], isCritical: true }))
+        ...successes.map(c => ({ id: c.id, value: c[metric], isCritical: false, type: 'rank' })),
+        ...criticals.map(c => ({ id: c.id, value: c[metric], isCritical: true, type: 'rank' })),
+        ...searchedCounties.map(c => ({ id: c.id, value: c[metric], isCritical: false, type: 'searched' }))
     ];
 
     renderPlot(metric, values, highlights);
@@ -901,18 +957,7 @@ function toggleInfo(metric, isUpdate = false) {
     }, 400); // More time to ensure DOM is ready
 }
 
-function showMetricDNA(countyId, event = null) {
-    if (event && event.ctrlKey) {
-        const idx = activeDnaCounties.indexOf(countyId);
-        if (idx > -1) {
-            activeDnaCounties.splice(idx, 1);
-        } else if (activeDnaCounties.length < 3) {
-            activeDnaCounties.push(countyId);
-        }
-    } else {
-        activeDnaCounties = [countyId];
-    }
-
+function showMetricDNA(countyId) {
     const county = allCountyData.find(c => c.id === countyId);
     if (!county) return;
 
@@ -1007,28 +1052,8 @@ function showMetricDNA(countyId, event = null) {
     // Update active states in sidebar
     updateInsightItemActiveStates();
 
-    // Clear previous active DNA card styling
-    const dColors = ["#10b981", "#3b82f6", "#f59e0b"];
-    const isDnaVisible = dnaMetricList.length >= 3;
-
-    document.querySelectorAll('.rich-comparison-card').forEach(c => {
-        c.classList.remove('active-dna');
-        c.classList.remove('dna-plotting');
-        c.style.borderColor = "#f1f5f9";
-    });
-
-    activeDnaCounties.forEach((id, idx) => {
-        const c = document.getElementById(`comp-card-${id}`);
-        if (c) {
-            c.classList.add('active-dna');
-            if (isDnaVisible) c.classList.add('dna-plotting');
-            c.style.setProperty('--dna-active-color', dColors[idx]);
-            c.style.borderColor = dColors[idx];
-        }
-    });
-
-    // Render Radar Chart for all active counties
-    renderRadarChart();
+    // Re-highlight cards
+    updateDnaCardHighlighting();
 
     // Animate bars
     const maxVal = Math.max(val, stateAvg, regionAvg, nationalAvg, 0.0001);
@@ -1042,6 +1067,48 @@ function showMetricDNA(countyId, event = null) {
         setWidth(`bar-region-${countyId}`, regionAvg);
         setWidth(`bar-national-${countyId}`, nationalAvg);
     }, 100);
+}
+
+function toggleCountyDNA(countyId) {
+    const idx = activeDnaCounties.indexOf(countyId);
+    if (idx > -1) {
+        // If already in, remove it
+        activeDnaCounties.splice(idx, 1);
+    } else if (activeDnaCounties.length < 3) {
+        // If not in and under limit, add it
+        activeDnaCounties.push(countyId);
+    } else {
+        showDnaToast("You can compare up to 3 counties. Please remove one first.");
+        return;
+    }
+
+    // Update global UI states
+    updateInsightItemActiveStates();
+    updateDnaCardHighlighting();
+    renderRadarChart();
+}
+
+function updateDnaCardHighlighting() {
+    const dColors = ["#10b981", "#8b5cf6", "#f59e0b"];
+    const isDnaVisible = dnaMetricList.length >= 3;
+    const container = document.getElementById('comparison-card-container');
+
+    document.querySelectorAll('.rich-comparison-card').forEach(c => {
+        c.classList.remove('active-dna');
+        c.classList.remove('dna-plotting');
+        c.style.borderColor = "#f1f5f9";
+    });
+
+    activeDnaCounties.forEach((id, idx) => {
+        const c = document.getElementById(`comp-card-${id}`);
+        if (c) {
+            if (container) container.prepend(c);
+            c.classList.add('active-dna');
+            if (isDnaVisible) c.classList.add('dna-plotting');
+            c.style.setProperty('--dna-active-color', dColors[idx]);
+            c.style.borderColor = dColors[idx];
+        }
+    });
 }
 
 function removeMetricDNA(countyId) {
@@ -1059,7 +1126,7 @@ function updateInsightItemActiveStates() {
     const activeIds = Array.from(document.querySelectorAll('.rich-comparison-card'))
         .map(card => card.id.replace('comp-card-', ''));
 
-    const dColors = ["#10b981", "#3b82f6", "#f59e0b"];
+    const dColors = ["#10b981", "#8b5cf6", "#f59e0b"];
     const isDnaVisible = dnaMetricList.length >= 3;
 
     document.querySelectorAll('.insight-item').forEach(item => {
@@ -1078,24 +1145,36 @@ function updateInsightItemActiveStates() {
             // Check if it's in the active DNA counties
             const dnaIndex = activeDnaCounties.indexOf(countyId);
             const valueWrapper = item.querySelector('.c-value-wrapper');
+            const dnaBtn = item.querySelector('.sidebar-dna-btn');
 
-            if (dnaIndex > -1 && isDnaVisible) {
-                item.classList.add('dna-active');
-                item.style.borderLeftColor = dColors[dnaIndex];
+            if (dnaIndex > -1) {
+                // DNA Button high priority color syncing
+                if (dnaBtn) dnaBtn.classList.add('active');
 
-                let badge = item.querySelector('.dna-active-badge');
-                if (valueWrapper && !badge) {
-                    badge = document.createElement('span');
-                    badge.className = 'dna-active-badge';
-                    badge.textContent = 'DNA';
-                    valueWrapper.insertBefore(badge, valueWrapper.firstChild);
-                }
-                if (badge) {
-                    badge.style.background = dColors[dnaIndex] + '26';
-                    badge.style.color = dColors[dnaIndex];
-                    badge.style.borderColor = dColors[dnaIndex] + '4D';
+                if (isDnaVisible) {
+                    item.classList.add('dna-active');
+                    item.style.borderLeftColor = dColors[dnaIndex];
+
+                    let badge = item.querySelector('.dna-active-badge');
+                    if (valueWrapper && !badge) {
+                        badge = document.createElement('span');
+                        badge.className = 'dna-active-badge';
+                        badge.textContent = 'DNA';
+                        valueWrapper.insertBefore(badge, valueWrapper.firstChild);
+                    }
+                    if (badge) {
+                        badge.style.background = dColors[dnaIndex] + '26';
+                        badge.style.color = dColors[dnaIndex];
+                        badge.style.borderColor = dColors[dnaIndex] + '4D';
+                    }
+                } else {
+                    item.classList.remove('dna-active');
+                    item.style.borderLeftColor = "";
+                    const badge = item.querySelector('.dna-active-badge');
+                    if (badge) badge.remove();
                 }
             } else {
+                if (dnaBtn) dnaBtn.classList.remove('active');
                 item.classList.remove('dna-active');
                 item.style.borderLeftColor = "";
                 const badge = item.querySelector('.dna-active-badge');
@@ -1182,23 +1261,16 @@ function toggleDNA(metric) {
         dnaMetricList.splice(idx, 1);
     } else if (dnaMetricList.length < 8) {
         dnaMetricList.push(metric);
+    } else {
+        showDnaToast("DNA Radar is limited to 8 metrics for optimal visibility.");
+        return;
     }
 
     updateDnaHud();
     updateCardStates();
 
     // Refresh card highlighting styles
-    const dColors = ["#10b981", "#3b82f6", "#f59e0b"];
-    const isDnaVisible = dnaMetricList.length >= 3;
-    activeDnaCounties.forEach((id, idx) => {
-        const c = document.getElementById(`comp-card-${id}`);
-        if (c) {
-            if (isDnaVisible) c.classList.add('dna-plotting');
-            else c.classList.remove('dna-plotting');
-            c.style.setProperty('--dna-active-color', dColors[idx]);
-            c.style.borderColor = dColors[idx];
-        }
-    });
+    updateDnaCardHighlighting();
 
     // Update left sidebar badges too
     updateInsightItemActiveStates();
@@ -1261,7 +1333,7 @@ function renderRadarChart() {
         if (activeCard) activeCard.classList.add('active-dna');
     });
 
-    const colors = ["#10b981", "#3b82f6", "#f59e0b"]; // Emerald, Blue, Amber
+    const colors = ["#10b981", "#8b5cf6", "#f59e0b"]; // Emerald, Purple, Amber
 
     container.innerHTML = `
         <div class="radar-card">
@@ -1270,9 +1342,11 @@ function renderRadarChart() {
                 DNA Comparison: ${counties.length} Counties
             </div>
             <div id="radar-viz-dna" class="radar-container" style="min-height: 300px;"></div>
-            <div class="radar-legend" style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 10px;">
+            <div class="radar-legend" style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 10px;">
                 ${counties.map((c, i) => `
-                    <div style="display: flex; align-items: center; gap: 4px; font-size: 0.65rem; font-weight: 700; color: #64748b;">
+                    <div class="radar-legend-item" title="Click to remove from Radar" 
+                         onclick="toggleCountyDNA('${c.id}')"
+                         style="font-size: 0.65rem; font-weight: 700; color: #64748b;">
                         <span style="width: 8px; height: 8px; border-radius: 50%; background: ${colors[i]};"></span>
                         ${c.name}
                     </div>
@@ -1657,19 +1731,25 @@ function renderMiniMap(containerId, markers) {
                 try {
                     const centroid = d3.geoCentroid(feature);
                     if (centroid && !isNaN(centroid[0])) {
+                        let dotColor = m.isCritical ? 0xef4444 : 0x10b981;
+                        if (m.type === 'searched') dotColor = 0x3b82f6;
+
                         pointData.push({
                             longitude: centroid[0],
                             latitude: centroid[1],
                             name: fullCountyObj.name,
-                            fill: am5.color(m.isCritical ? 0xef4444 : 0x10b981)
+                            fill: am5.color(dotColor)
                         });
                     }
                 } catch (e) {
                     // Fallback to polygonId if D3 fails
+                    let dotColor = m.isCritical ? 0xef4444 : 0x10b981;
+                    if (m.type === 'searched') dotColor = 0x3b82f6;
+
                     pointData.push({
                         polygonId: feature.id || feature.properties.id,
                         name: fullCountyObj.name,
-                        fill: am5.color(m.isCritical ? 0xef4444 : 0x10b981)
+                        fill: am5.color(dotColor)
                     });
                 }
             }
@@ -1689,3 +1769,70 @@ function renderMiniMap(containerId, markers) {
 }
 
 
+function handleSidebarSearch(event) {
+    const query = event.target.value.toLowerCase();
+    const resultsContainer = document.getElementById('sidebar-search-results');
+    if (!resultsContainer) return;
+
+    if (query.length < 2) {
+        resultsContainer.style.display = 'none';
+        return;
+    }
+
+    const matches = allCountyData.filter(c =>
+        c.name.toLowerCase().includes(query) ||
+        c.state_name?.toLowerCase().includes(query) ||
+        c.state_abbr?.toLowerCase().includes(query)
+    ).slice(0, 10);
+
+    if (matches.length > 0) {
+        resultsContainer.style.display = 'block';
+        resultsContainer.innerHTML = matches.map(c => `
+            <div class="search-result-item" onclick="addSearchedCounty('${c.id}')">
+                <span style="font-weight: 700;">${c.name}</span>
+                <span class="s-state">${c.state_name || c.state_abbr}</span>
+            </div>
+        `).join('');
+    } else {
+        resultsContainer.style.display = 'none';
+    }
+}
+
+function addSearchedCounty(id) {
+    if (!searchedCountyIds.includes(id)) {
+        searchedCountyIds.push(id);
+    }
+
+    // Hide dropdown
+    const resultsContainer = document.getElementById('sidebar-search-results');
+    if (resultsContainer) resultsContainer.style.display = 'none';
+
+    // Refresh sidebar with new list
+    if (activeInfoMetric) {
+        toggleInfo(activeInfoMetric, true);
+
+        // Also show benchmarking card
+        showMetricDNA(id);
+    }
+}
+// --- UI Helpers ---
+function showDnaToast(message) {
+    let toast = document.getElementById('dna-toast-msg');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'dna-toast-msg';
+        toast.className = 'dna-toast';
+        document.body.appendChild(toast);
+    }
+
+    toast.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span>${message}</span>
+    `;
+
+    setTimeout(() => toast.classList.add('show'), 10);
+
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, 4000);
+}
