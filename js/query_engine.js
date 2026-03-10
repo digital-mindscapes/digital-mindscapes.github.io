@@ -15,12 +15,14 @@ const QueryState = {
     activeTemplate: null,
     placeholders: {},
     currentChartRoot: null,
+    currentMapRoot: null,
     // Real data
     countyData: [],
     stateData: [],
     stateCountyMap: {},   // { "Wisconsin": ["Milwaukee", "Dane", ...] }
     allStates: [],
-    allMetrics: []
+    allMetrics: [],
+    history: [] // Last 10 queries
 };
 
 /* ── Region → State mapping ────────────────────────────────── */
@@ -227,14 +229,14 @@ const PLACEHOLDER_LABELS = {
 };
 
 const CATEGORY_META = {
-    all: { label: 'All Templates' },
-    topk: { label: 'Top / Bottom K' },
-    county: { label: 'County Level' },
-    state: { label: 'State Level' },
-    national: { label: 'National Level' },
-    correlation: { label: 'Correlations' },
-    multiMetric: { label: 'Multi-Metric' },
-    range: { label: 'Range Queries' }
+    all: { label: 'All Templates', color: '#c83830' },
+    topk: { label: 'Top / Bottom K', color: '#6366f1' },
+    county: { label: 'County Level', color: '#0891b2' },
+    state: { label: 'State Level', color: '#16a34a' },
+    national: { label: 'National Level', color: '#f59e0b' },
+    correlation: { label: 'Correlations', color: '#8b5cf6' },
+    multiMetric: { label: 'Multi-Metric', color: '#ec4899' },
+    range: { label: 'Range Queries', color: '#64748b' }
 };
 
 const MULTI_METRIC_COLORS = [
@@ -257,6 +259,35 @@ async function initQueryEngine() {
 
     document.getElementById('runQueryBtn').addEventListener('click', executeQuery);
     document.getElementById('resetQueryBtn').addEventListener('click', resetQuery);
+
+    // Viz toggle bindings
+    document.getElementById('showChartBtn').addEventListener('click', () => switchViz('chart'));
+    document.getElementById('showMapBtn').addEventListener('click', () => switchViz('map'));
+
+    // History
+    document.getElementById('clearHistoryBtn').addEventListener('click', clearHistory);
+    loadHistory();
+}
+
+function switchViz(type) {
+    const chartBox = document.getElementById('chartContainer');
+    const mapBox = document.getElementById('mapContainer');
+    const chartBtn = document.getElementById('showChartBtn');
+    const mapBtn = document.getElementById('showMapBtn');
+
+    if (type === 'map') {
+        chartBox.style.display = 'none';
+        mapBox.style.display = 'block';
+        chartBtn.classList.remove('active');
+        mapBtn.classList.add('active');
+        // If map hasn't been rendered yet or needs update
+        renderMapResults();
+    } else {
+        chartBox.style.display = 'block';
+        mapBox.style.display = 'none';
+        chartBtn.classList.add('active');
+        mapBtn.classList.remove('active');
+    }
 }
 
 async function loadRealData() {
@@ -362,11 +393,16 @@ function updateCategoryCounts() {
     document.querySelectorAll('.cat-item').forEach(item => {
         const cat = item.getAttribute('data-category');
         if (!cat) return;
+        const meta = CATEGORY_META[cat] || { color: '#64748b' };
         const count = cat === 'all'
             ? TEMPLATES.length
             : TEMPLATES.filter(t => t.category === cat).length;
+        
         const badge = item.querySelector('.cat-count');
         if (badge) badge.textContent = count;
+
+        // Apply color
+        item.style.setProperty('--item-color', meta.color);
     });
 }
 
@@ -394,9 +430,11 @@ function renderTemplates() {
         card.className = 'template-card';
         card.style.animationDelay = `${i * 0.06}s`;
 
-        const tagLabel = CATEGORY_META[tpl.category]?.label || tpl.category;
+        const meta = CATEGORY_META[tpl.category] || { label: tpl.category, color: '#64748b' };
+        card.style.setProperty('--tag-color', meta.color);
+
         card.innerHTML = `
-            <div class="template-tag">${tagLabel}</div>
+            <div class="template-tag">${meta.label}</div>
             <div class="template-text">${tpl.text.replace(/{(\w+)}/g, '<span class="ph-static" data-key="$1">$1</span>')}</div>
         `;
         card.onclick = (e) => selectTemplate(tpl, e.currentTarget);
@@ -1067,20 +1105,42 @@ function executeQuery() {
 
     document.getElementById('resultSummary').textContent = queryString;
 
+    // Save to history
+    addToHistory({
+        templateId: QueryState.activeTemplate.id,
+        placeholders: { ...QueryState.placeholders },
+        queryString: queryString,
+        date: new Date().toISOString()
+    });
+
+    const canShowMap = [
+        'top_states', 'bottom_states', 'state_vs_national', 'range_states', 'range_above_states', 'national_extremes'
+    ].includes(QueryState.activeTemplate.resultType);
+    const toggleGroup = document.getElementById('vizToggleGroup');
+    if (canShowMap) {
+        toggleGroup.style.display = 'flex';
+        // Reset to chart view by default
+        switchViz('chart');
+    } else {
+        toggleGroup.style.display = 'none';
+        switchViz('chart'); // Ensure chart is visible
+    }
+
     renderRealResults();
 }
 
 /* ── Real Data Results ─────────────────────────────────────── */
 
-function renderRealResults() {
-    const container = document.getElementById('chartContainer');
+function renderRealResults(targetId = "amChartResults") {
+    const isModal = targetId === "modalAmRoot";
+    const container = isModal ? document.getElementById('modalVizContainer') : document.getElementById('chartContainer');
 
-    if (QueryState.currentChartRoot) {
+    if (!isModal && QueryState.currentChartRoot) {
         QueryState.currentChartRoot.dispose();
         QueryState.currentChartRoot = null;
     }
 
-    container.innerHTML = '<div id="amChartResults" style="width: 100%; height: 420px;"></div>';
+    container.innerHTML = `<div id="${targetId}" style="width: 100%; height: ${isModal ? '500px' : '420px'};"></div>`;
 
     const data = computeResultData();
 
@@ -1106,8 +1166,13 @@ function renderRealResults() {
         return;
     }
 
-    const root = am5.Root.new("amChartResults");
-    QueryState.currentChartRoot = root;
+    const root = am5.Root.new(targetId);
+    if (isModal) {
+        if (!window.modalRoots) window.modalRoots = [];
+        window.modalRoots.push(root);
+    } else {
+        QueryState.currentChartRoot = root;
+    }
     root.setThemes([am5themes_Animated.new(root)]);
 
     const chart = root.container.children.push(am5xy.XYChart.new(root, {
@@ -1350,7 +1415,7 @@ function computeResultData() {
                 .filter(c => c.state_name === stateName && c[metricId] != null)
                 .sort((a, b) => b[metricId] - a[metricId])
                 .slice(0, countNum);
-            return counties.map(c => ({ name: c.name, value: +c[metricId]?.toFixed(2) }));
+            return counties.map(c => ({ name: c.name, value: +c[metricId]?.toFixed(2), state_abbr: c.state_abbr }));
         }
 
         case 'bottom': {
@@ -1359,7 +1424,7 @@ function computeResultData() {
                 .filter(c => c.state_name === stateName && c[metricId] != null)
                 .sort((a, b) => a[metricId] - b[metricId])
                 .slice(0, countNum);
-            return counties.map(c => ({ name: c.name, value: +c[metricId]?.toFixed(2) }));
+            return counties.map(c => ({ name: c.name, value: +c[metricId]?.toFixed(2), state_abbr: c.state_abbr }));
         }
 
         case 'top_states': {
@@ -1391,8 +1456,8 @@ function computeResultData() {
                 : 0;
 
             const result = [];
-            if (county1 && county1[metricId] != null) result.push({ name: c1Name, value: +county1[metricId].toFixed(2) });
-            if (county2 && county2[metricId] != null) result.push({ name: c2Name, value: +county2[metricId].toFixed(2) });
+            if (county1 && county1[metricId] != null) result.push({ name: c1Name, value: +county1[metricId].toFixed(2), state_abbr: county1.state_abbr });
+            if (county2 && county2[metricId] != null) result.push({ name: c2Name, value: +county2[metricId].toFixed(2), state_abbr: county2.state_abbr });
             result.push({ name: `${stateName} Avg`, value: +stateAvg.toFixed(2), highlight: true });
             return result;
         }
@@ -1409,7 +1474,7 @@ function computeResultData() {
                 ? allCounties.reduce((s, c) => s + c[metricId], 0) / allCounties.length : 0;
 
             const result = [];
-            if (county && county[metricId] != null) result.push({ name: cName, value: +county[metricId].toFixed(2) });
+            if (county && county[metricId] != null) result.push({ name: cName, value: +county[metricId].toFixed(2), state_abbr: county.state_abbr });
             result.push({ name: `${stateName} Avg`, value: +stateAvg.toFixed(2), highlight: true });
             result.push({ name: 'National Avg', value: +natAvg.toFixed(2), highlight: true });
             return result;
@@ -1421,7 +1486,7 @@ function computeResultData() {
                 .filter(c => c.state_name === stateName && c[metricId] != null)
                 .sort((a, b) => b[metricId] - a[metricId])
                 .slice(0, 20); // Limit to top 20 for readability
-            return counties.map(c => ({ name: c.name, value: +c[metricId]?.toFixed(2) }));
+            return counties.map(c => ({ name: c.name, value: +c[metricId]?.toFixed(2), state_abbr: c.state_abbr }));
         }
 
         case 'region_states': {
@@ -1586,7 +1651,7 @@ function computeResultData() {
                 .filter(c => c.state_name === stateName && c[metricId] != null
                     && c[metricId] >= rng.min && c[metricId] <= rng.max)
                 .sort((a, b) => b[metricId] - a[metricId]);
-            return inRange.map(c => ({ name: c.name, value: +c[metricId].toFixed(2) }));
+            return inRange.map(c => ({ name: c.name, value: +c[metricId].toFixed(2), state_abbr: c.state_abbr }));
         }
 
         case 'range_above_states': {
@@ -1604,7 +1669,7 @@ function computeResultData() {
                 .filter(c => c.state_name === stateName && c[metricId] != null
                     && c[metricId] <= thresh)
                 .sort((a, b) => a[metricId] - b[metricId]);
-            return below.map(c => ({ name: c.name, value: +c[metricId].toFixed(2) }));
+            return below.map(c => ({ name: c.name, value: +c[metricId].toFixed(2), state_abbr: c.state_abbr }));
         }
 
         default:
@@ -1643,8 +1708,326 @@ function resetQuery() {
         QueryState.currentChartRoot.dispose();
         QueryState.currentChartRoot = null;
     }
+    if (QueryState.currentMapRoot) {
+        QueryState.currentMapRoot.dispose();
+        QueryState.currentMapRoot = null;
+    }
 
     document.getElementById('queryEditor').style.display = 'none';
     document.getElementById('resultsSection').style.display = 'none';
     document.querySelectorAll('.template-card').forEach(c => c.classList.remove('active'));
+}
+
+function normalizeCountyName(name) {
+    if (!name) return "";
+    let n = name.toLowerCase()
+        .replace(/\s+county$/i, "")
+        .replace(/\s+parish$/i, "")
+        .replace(/\s+borough$/i, "")
+        .replace(/\s+census\s+area$/i, "")
+        .replace(/\s+municipality$/i, "")
+        .replace(/\bcity and borough of\s+/i, "")
+        .replace(/\bcity of\s+/i, "")
+        .replace(/\s+city$/i, "");
+    return n.replace(/[^a-z0-9]/g, "");
+}
+
+/* ── Map Results ───────────────────────────────────────────── */
+
+function renderMapResults(targetId = "amMapResults") {
+    const isModal = targetId === "modalAmRoot";
+    const container = isModal ? document.getElementById('modalVizContainer') : document.getElementById('mapContainer');
+    if (!isModal && container.style.display === 'none') return; 
+
+    if (!isModal && QueryState.currentMapRoot) {
+        QueryState.currentMapRoot.dispose();
+        QueryState.currentMapRoot = null;
+    }
+
+    const data = computeResultData();
+    if (!data || data.length === 0) return;
+
+    const resultType = QueryState.activeTemplate.resultType;
+    const isCountyRes = [
+        'top', 'bottom', 'county_compare', 'county_vs_avg', 'state_counties_sorted', 
+        'range_counties', 'range_below_counties', 'multi_county_snapshot'
+    ].includes(resultType);
+
+    const useGeoData = (isCountyRes && typeof am5geodata_region_usa_usaCountiesLow !== 'undefined')
+        ? am5geodata_region_usa_usaCountiesLow
+        : am5geodata_usaLow;
+
+    container.innerHTML = `<div id="${targetId}" style="width: 100%; height: 500px; background: #fff;"></div>`;
+
+    const root = am5.Root.new(targetId);
+    if (isModal) {
+        if (!window.modalRoots) window.modalRoots = [];
+        window.modalRoots.push(root);
+    } else {
+        QueryState.currentMapRoot = root;
+    }
+    root.setThemes([am5themes_Animated.new(root)]);
+
+    const chart = root.container.children.push(am5map.MapChart.new(root, {
+        panX: "translateX",
+        panY: "translateY",
+        projection: am5map.geoAlbersUsa(),
+        wheelY: "zoom",
+        paddingBottom: 20
+    }));
+
+    const polygonSeries = chart.series.push(am5map.MapPolygonSeries.new(root, {
+        geoJSON: useGeoData,
+        valueField: "value",
+        calculateAggregates: true
+    }));
+
+    // State abbreviation for filtering/matching
+    const stateName = QueryState.placeholders.state;
+    const stateObj = stateName ? QueryState.stateData.find(s => s.name === stateName) : null;
+    const stateAbbr = stateObj ? stateObj.state_abbr?.toUpperCase() : null;
+
+    if (isCountyRes && stateAbbr && useGeoData && useGeoData.features) {
+        const includeIds = useGeoData.features
+            .filter(f => f.properties && (f.properties.STATE === stateAbbr || f.id.startsWith("US-" + stateAbbr)))
+            .map(f => f.id);
+        if (includeIds.length > 0) {
+            polygonSeries.set("include", includeIds);
+        }
+    }
+
+    // Map Tooltip
+    const tooltip = am5.Tooltip.new(root, {
+        getFillFromSprite: false,
+        getStrokeFromSprite: false,
+        autoTextColor: false,
+        pointerOrientation: "horizontal",
+        labelText: "{name}: [bold]{value}[/]"
+    });
+
+    tooltip.get("background").setAll({
+        fill: am5.color(0xffffff),
+        fillOpacity: 0.95,
+        stroke: am5.color(0xe0e0e0),
+        strokeWidth: 1,
+        shadowColor: am5.color(0x000000),
+        shadowBlur: 10,
+        shadowOpacity: 0.1,
+        cornerRadius: 4
+    });
+
+    tooltip.label.setAll({
+        fill: am5.color(0x333333),
+        fontSize: "0.85rem"
+    });
+
+    polygonSeries.mapPolygons.template.setAll({
+        tooltip: tooltip,
+        tooltipText: "{name}: [bold]{value}[/]",
+        fill: am5.color(0xf5f5f5),
+        stroke: am5.color(0xffffff),
+        strokeWidth: isCountyRes ? 0.5 : 1,
+        interactive: true,
+        templateField: "polygonSettings"
+    });
+
+    polygonSeries.mapPolygons.template.states.create("hover", {
+        strokeWidth: 2,
+        stroke: am5.color(0x000000),
+        strokeOpacity: 1
+    });
+
+    // Heat rules
+    polygonSeries.set("heatRules", [{
+        target: polygonSeries.mapPolygons.template,
+        dataField: "value",
+        min: am5.color(0xfff1f0),
+        max: am5.color(0xc83830),
+        key: "fill"
+    }]);
+
+    const nameToId = {};
+    if (useGeoData && useGeoData.features) {
+        useGeoData.features.forEach(f => {
+            if (f.properties && f.properties.name) {
+                const norm = normalizeCountyName(f.properties.name);
+                const sAbbr = f.properties.STATE || (f.id ? f.id.split('-')[1] : null);
+                if (sAbbr) {
+                    nameToId[norm + "|" + sAbbr.toUpperCase()] = f.id;
+                }
+            }
+        });
+    }
+
+    const mapData = data.map(d => {
+        let id = null;
+        const norm = normalizeCountyName(d.name);
+        const dStateAbbr = (d.state_abbr || stateAbbr || "").toUpperCase();
+        
+        if (isCountyRes) {
+            id = nameToId[norm + "|" + dStateAbbr];
+        } else {
+            // State match
+            const sObj = QueryState.stateData.find(s => s.name === d.name);
+            id = sObj ? sObj.id.replace('.', '-') : d.id;
+        }
+
+        return {
+            id: id,
+            value: d.value,
+            name: d.name,
+            polygonSettings: {
+                stroke: am5.color(0xc83830),
+                strokeWidth: isCountyRes ? 1 : 1.5,
+                strokeOpacity: 1
+            }
+        };
+    }).filter(d => d.id);
+
+    polygonSeries.data.setAll(mapData);
+
+    // Zoom
+    polygonSeries.events.on("datavalidated", () => {
+        if (isCountyRes && stateAbbr) {
+            chart.zoomToSeries(polygonSeries);
+        } else if (!isCountyRes && data.length === 1) {
+            chart.zoomToDataItem(polygonSeries.dataItems[0]);
+        }
+    });
+}
+
+/* ── History Management ────────────────────────────────────── */
+
+function addToHistory(queryObj) {
+    // Avoid exact duplicates in a row
+    if (QueryState.history.length > 0 && 
+        QueryState.history[0].queryString === queryObj.queryString) {
+        return;
+    }
+
+    QueryState.history.unshift(queryObj);
+    if (QueryState.history.length > 20) {
+        QueryState.history.pop();
+    }
+
+    localStorage.setItem('query_history', JSON.stringify(QueryState.history));
+    renderHistory();
+}
+
+function loadHistory() {
+    const saved = localStorage.getItem('query_history');
+    if (saved) {
+        try {
+            QueryState.history = JSON.parse(saved);
+        } catch (e) {
+            QueryState.history = [];
+        }
+    }
+    renderHistory();
+}
+
+function renderHistory() {
+    const listEl = document.getElementById('historyList');
+    if (!listEl) return;
+
+    if (QueryState.history.length === 0) {
+        listEl.innerHTML = `
+            <div class="history-empty">
+                <p>No recent queries yet. Run an analysis to see history here.</p>
+            </div>
+        `;
+        return;
+    }
+
+    listEl.innerHTML = '';
+
+    if (QueryState.history.length === 20) {
+        const warning = document.createElement('div');
+        warning.className = 'history-warning';
+        warning.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+            Limit reached. Older history will be deleted.
+        `;
+        listEl.appendChild(warning);
+    }
+
+    QueryState.history.forEach((q, idx) => {
+        const item = document.createElement('div');
+        item.className = 'history-item';
+        
+        const template = TEMPLATES.find(t => t.id === q.templateId);
+        const meta = template ? (CATEGORY_META[template.category] || { label: template.category, color: '#64748b' }) : { label: 'Query', color: '#64748b' };
+        item.style.setProperty('--tag-color', meta.color);
+
+        item.innerHTML = `
+            <div class="history-item-tpl">${meta.label}</div>
+            <div class="history-item-summary">${q.queryString}</div>
+        `;
+
+        item.onclick = () => rerunQuery(idx);
+        listEl.appendChild(item);
+    });
+}
+
+function rerunQuery(index) {
+    const q = QueryState.history[index];
+    if (!q) return;
+
+    const template = TEMPLATES.find(t => t.id === q.templateId);
+    if (!template) return;
+
+    // 1. Prepare Modal UI
+    const modal = document.getElementById('analysisModal');
+    const modalTag = document.getElementById('modalTag');
+    const modalQuery = document.getElementById('modalQuery');
+    const modalViz = document.getElementById('modalVizContainer');
+
+    const meta = CATEGORY_META[template.category] || { label: template.category, color: '#c83830' };
+    modalTag.innerText = meta.label;
+    modalTag.style.setProperty('--tag-color', meta.color);
+    modalTag.style.background = meta.color;
+    modalQuery.innerText = q.queryString;
+    
+    modal.classList.add('active');
+    
+    // 2. Clear previous modal viz
+    if (window.modalRoots) {
+        window.modalRoots.forEach(r => r.dispose());
+        window.modalRoots = [];
+    }
+    modalViz.innerHTML = '';
+
+    // 3. Temporarily swap QueryState to re-run
+    const oldPlaceholders = { ...QueryState.placeholders };
+    const oldTemplate = QueryState.activeTemplate;
+    
+    QueryState.activeTemplate = template;
+    QueryState.placeholders = { ...q.placeholders };
+
+    // 4. Render to modal
+    modalViz.innerHTML = '<div id="modalAmRoot" style="width: 100%; height: 500px;"></div>';
+    
+    // Determine if we need to wait for DOM or if innerHTML is enough
+    setTimeout(() => {
+        renderRealResults("modalAmRoot");
+        
+        // 5. Restore QueryState
+        QueryState.activeTemplate = oldTemplate;
+        QueryState.placeholders = oldPlaceholders;
+    }, 50);
+}
+
+function closeModal() {
+    const modal = document.getElementById('analysisModal');
+    modal.classList.remove('active');
+    if (window.modalRoots) {
+        window.modalRoots.forEach(r => r.dispose());
+        window.modalRoots = [];
+    }
+}
+
+function clearHistory() {
+    QueryState.history = [];
+    localStorage.removeItem('query_history');
+    renderHistory();
 }
