@@ -1530,6 +1530,11 @@ function runCorrelation() {
         </div>
     `).join('');
 
+    let scatterHtml = '';
+    if (compareList.length === 2) {
+        scatterHtml = `<button class="hud-btn" onclick="toggleScatterPlot()" id="scatter-toggle-btn">Scatter Plot</button>`;
+    }
+
     overlay.innerHTML = `
         <div class="comparison-header">
             <div>
@@ -1540,16 +1545,109 @@ function runCorrelation() {
                 <div class="legend-items-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-right: 20px;">
                     ${legendItems}
                 </div>
+                ${scatterHtml}
                 <button class="close-comparison" onclick="clearComparison()">Close</button>
             </div>
         </div>
         <div id="corr-viz" style="width:100%; height:350px;"></div>
     `;
 
+    window.isScatterView = false;
     renderCorrelationPlot('corr-viz', compareList, colors);
 
     // Scroll to top
     window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+let scatterRoot = null;
+
+function toggleScatterPlot() {
+    window.isScatterView = !window.isScatterView;
+    const btn = document.getElementById('scatter-toggle-btn');
+    if (btn) btn.textContent = window.isScatterView ? 'Shape Overlap' : 'Scatter Plot';
+    
+    const container = document.getElementById('corr-viz');
+    if (!container) return;
+    
+    container.innerHTML = ''; // clear d3 or amcharts
+    
+    if (scatterRoot) {
+        scatterRoot.dispose();
+        scatterRoot = null;
+    }
+    
+    const colors = ["#c83830", "#3b82f6", "#10b981", "#f59e0b"];
+    if (window.isScatterView) {
+        renderScatterPlotWithAmCharts('corr-viz', compareList);
+    } else {
+        renderCorrelationPlot('corr-viz', compareList, colors);
+    }
+}
+
+function renderScatterPlotWithAmCharts(containerId, metrics) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    if (scatterRoot) {
+        scatterRoot.dispose();
+    }
+    
+    const root = am5.Root.new(containerId);
+    scatterRoot = root;
+    root.setThemes([am5themes_Animated.new(root)]);
+    
+    const chart = root.container.children.push(am5xy.XYChart.new(root, {
+        panX: true, panY: true, wheelX: "panX", wheelY: "zoomX", pinchZoomX:true,
+        layout: root.verticalLayout,
+        paddingBottom: 40
+    }));
+
+    chart.set("cursor", am5xy.XYCursor.new(root, { behavior: "zoomXY" }));
+
+    const filteredData = getFilteredData();
+    const data = filteredData
+        .filter(c => c[metrics[0]] != null && c[metrics[1]] != null)
+        .map(c => ({
+            name: (c.name || c.county || 'Unknown') + ', ' + c.state_abbr,
+            value1: c[metrics[0]],
+            value2: c[metrics[1]]
+        }));
+
+    const xAxis = chart.xAxes.push(am5xy.ValueAxis.new(root, {
+        renderer: am5xy.AxisRendererX.new(root, { minGridDistance: 50 }),
+        tooltip: am5.Tooltip.new(root, {})
+    }));
+    
+    const m1Label = metricLabels[metrics[0]] || metrics[0];
+    xAxis.children.push(am5.Label.new(root, {
+        text: m1Label,
+        x: am5.p50, centerX: am5.p50, y: am5.p100, paddingTop: 10, fontWeight: "bold", fill: am5.color(0x475569)
+    }));
+
+    const yAxis = chart.yAxes.push(am5xy.ValueAxis.new(root, {
+        renderer: am5xy.AxisRendererY.new(root, { minGridDistance: 40 }),
+        tooltip: am5.Tooltip.new(root, {})
+    }));
+    
+    const m2Label = metricLabels[metrics[1]] || metrics[1];
+    yAxis.children.unshift(am5.Label.new(root, {
+        text: m2Label,
+        rotation: -90, y: am5.p50, centerX: am5.p50, x: am5.p0, paddingBottom: 10, fontWeight: "bold", fill: am5.color(0x475569)
+    }));
+
+    const series = chart.series.push(am5xy.LineSeries.new(root, {
+        xAxis, yAxis, valueXField: "value1", valueYField: "value2",
+        tooltip: am5.Tooltip.new(root, { labelText: "{name}\n" + m1Label + ": {valueX}\n" + m2Label + ": {valueY}" })
+    }));
+    
+    series.strokes.template.set("strokeOpacity", 0);
+    series.bullets.push(() => am5.Bullet.new(root, {
+        sprite: am5.Circle.new(root, { radius: 5, fill: am5.color(0xc83830), fillOpacity: 0.6 })
+    }));
+
+    series.data.setAll(data);
+    series.appear(1000);
+    chart.appear(1000, 100);
 }
 
 function renderCorrelationPlot(containerId, metrics, colors) {

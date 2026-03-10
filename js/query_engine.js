@@ -16,6 +16,7 @@ const QueryState = {
     placeholders: {},
     currentChartRoot: null,
     currentMapRoot: null,
+    currentRadarRoot: null,
     // Real data
     countyData: [],
     stateData: [],
@@ -33,6 +34,17 @@ const REGION_STATES = {
     "South": ["Alabama", "Arkansas", "Delaware", "Florida", "Georgia", "Kentucky", "Louisiana", "Maryland", "Mississippi", "North Carolina", "Oklahoma", "South Carolina", "Tennessee", "Texas", "Virginia", "West Virginia", "District of Columbia"],
     "West": ["Alaska", "Arizona", "California", "Colorado", "Hawaii", "Idaho", "Montana", "Nevada", "New Mexico", "Oregon", "Utah", "Washington", "Wyoming"]
 };
+
+/* ── Constants ────────────────────────────────────────────── */
+
+const COMPOSITE_HEALTH_METRICS = [
+    'depression', 'obesity', 'diabetes', 'arthritis', 'asthma', 
+    'blood_pressure', 'cholesterol', 'coronary', 'stroke', 'cancer', 'copd'
+];
+
+const COMPOSITE_DISABILITY_METRICS = [
+    'disability', 'hearing', 'vision', 'cognitive', 'ambulatory', 'selfcare', 'independent'
+];
 
 /* ── Template Library ──────────────────────────────────────── */
 
@@ -151,6 +163,13 @@ const TEMPLATES = [
         placeholders: ['metric', 'metric2', 'count'],
         resultType: 'correlation_top_states'
     },
+    {
+        id: 'county_scatter_correlation',
+        category: 'correlation',
+        text: 'Show me the correlation between {metric} and {metric2} across all counties in {state}.',
+        placeholders: ['state', 'metric', 'metric2'],
+        resultType: 'correlation_scatter_county'
+    },
 
     // Multi-Metric
     {
@@ -210,19 +229,64 @@ const TEMPLATES = [
         text: 'Counties in {state} with {metric} below {threshold}.',
         placeholders: ['state', 'metric', 'threshold'],
         resultType: 'range_below_counties'
+    },
+
+    // Composite Index / Wellness
+    {
+        id: 'wellness_state_rank',
+        category: 'composite',
+        text: 'Rank states by a Wellness Index calculated from {metrics}.',
+        placeholders: ['metrics'],
+        resultType: 'composite_state_rank'
+    },
+    {
+        id: 'wellness_county_profile',
+        category: 'composite',
+        text: 'Detailed wellness breakdown for {county1} in {state} using {metrics}.',
+        placeholders: ['state', 'county1', 'metrics'],
+        resultType: 'composite_county_profile'
+    },
+    {
+        id: 'wellness_state_compare',
+        category: 'composite',
+        text: 'Compare the wellness profile of {state} and {state2} across {metrics}.',
+        placeholders: ['state', 'state2', 'metrics'],
+        resultType: 'composite_state_compare'
+    },
+    {
+        id: 'disability_state_rank',
+        category: 'composite',
+        text: 'Rank states by a Disability Index calculated from {metrics}.',
+        placeholders: ['metrics'],
+        resultType: 'composite_state_rank'
+    },
+    {
+        id: 'disability_county_profile',
+        category: 'composite',
+        text: 'Detailed disability breakdown for {county1} in {state} using {metrics}.',
+        placeholders: ['state', 'county1', 'metrics'],
+        resultType: 'composite_county_profile'
+    },
+    {
+        id: 'disability_state_compare',
+        category: 'composite',
+        text: 'Compare the disability profile of {state} and {state2} across {metrics}.',
+        placeholders: ['state', 'state2', 'metrics'],
+        resultType: 'composite_state_compare'
     }
 ];
 
 /* ── Placeholder metadata ──────────────────────────────────── */
 
 const PLACEHOLDER_LABELS = {
-    count: 'Count',
+    metric: 'Metric',
+    metric2: 'Metric 2',
+    metric3: 'Metric 3',
+    metrics: 'Metrics',
     state: 'State',
+    state2: 'State 2',
     county1: 'County',
     county2: 'County 2',
-    metric: 'Metric',
-    metric2: 'Second Metric',
-    metrics: 'Metrics',
     region: 'Region',
     range: 'Range',
     threshold: 'Threshold'
@@ -236,6 +300,7 @@ const CATEGORY_META = {
     national: { label: 'National Level', color: '#f59e0b' },
     correlation: { label: 'Correlations', color: '#8b5cf6' },
     multiMetric: { label: 'Multi-Metric', color: '#ec4899' },
+    composite: { label: 'Composite Index', color: '#e11d48' },
     range: { label: 'Range Queries', color: '#64748b' }
 };
 
@@ -263,6 +328,7 @@ async function initQueryEngine() {
     // Viz toggle bindings
     document.getElementById('showChartBtn').addEventListener('click', () => switchViz('chart'));
     document.getElementById('showMapBtn').addEventListener('click', () => switchViz('map'));
+    document.getElementById('showRadarBtn').addEventListener('click', () => switchViz('radar'));
 
     // History
     document.getElementById('clearHistoryBtn').addEventListener('click', clearHistory);
@@ -272,21 +338,36 @@ async function initQueryEngine() {
 function switchViz(type) {
     const chartBox = document.getElementById('chartContainer');
     const mapBox = document.getElementById('mapContainer');
+    const radarBox = document.getElementById('radarContainer');
     const chartBtn = document.getElementById('showChartBtn');
     const mapBtn = document.getElementById('showMapBtn');
+    const radarBtn = document.getElementById('showRadarBtn');
 
     if (type === 'map') {
         chartBox.style.display = 'none';
+        if (radarBox) radarBox.style.display = 'none';
         mapBox.style.display = 'block';
         chartBtn.classList.remove('active');
+        if (radarBtn) radarBtn.classList.remove('active');
         mapBtn.classList.add('active');
         // If map hasn't been rendered yet or needs update
         renderMapResults();
-    } else {
-        chartBox.style.display = 'block';
+    } else if (type === 'radar') {
+        chartBox.style.display = 'none';
         mapBox.style.display = 'none';
-        chartBtn.classList.add('active');
+        if (radarBox) radarBox.style.display = 'block';
+        chartBtn.classList.remove('active');
         mapBtn.classList.remove('active');
+        if (radarBtn) radarBtn.classList.add('active');
+        
+        renderRadarResults();
+    } else {
+        if (radarBox) radarBox.style.display = 'none';
+        mapBox.style.display = 'none';
+        chartBox.style.display = 'block';
+        mapBtn.classList.remove('active');
+        if (radarBtn) radarBtn.classList.remove('active');
+        chartBtn.classList.add('active');
     }
 }
 
@@ -425,10 +506,31 @@ function renderTemplates() {
         return;
     }
 
+    let currentSubGroup = null;
+
     filtered.forEach((tpl, i) => {
+        if (QueryState.activeCategory === 'composite' || QueryState.activeCategory === 'all') {
+            if (tpl.category === 'composite') {
+                const subGroup = tpl.id.startsWith('wellness') ? 'Wellness Index Options' : 'Disability Index Options';
+                if (subGroup !== currentSubGroup) {
+                    currentSubGroup = subGroup;
+                    const subHeader = document.createElement('div');
+                    subHeader.style.cssText = 'grid-column: 1 / -1; margin-top: 15px; margin-bottom: 5px; font-weight: 700; color: var(--q-primary); font-size: 1.05rem; border-bottom: 2px solid #e11d48; padding-bottom: 5px; display: inline-block; width: max-content;';
+                    if (subGroup === 'Disability Index Options') {
+                        subHeader.style.borderBottomColor = '#6366f1';
+                        subHeader.style.color = '#6366f1';
+                    }
+                    subHeader.textContent = subGroup;
+                    grid.appendChild(subHeader);
+                }
+            } else {
+                currentSubGroup = null; // reset if not composite
+            }
+        }
+
         const card = document.createElement('div');
         card.className = 'template-card';
-        card.style.animationDelay = `${i * 0.06}s`;
+        card.style.animationDelay = `${i * 0.04}s`;
 
         const meta = CATEGORY_META[tpl.category] || { label: tpl.category, color: '#64748b' };
         card.style.setProperty('--tag-color', meta.color);
@@ -472,6 +574,20 @@ function selectTemplate(tpl, cardEl) {
 
     renderActiveQuery();
     renderAllPlaceholderControls();
+
+    // Add Health Outcomes restriction notice for composite category
+    if (tpl.category === 'composite') {
+        const notice = document.createElement('div');
+        notice.className = 'composite-restriction-notice';
+        notice.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+            <span>
+                Note: This index is restricted to <strong>Health Outcomes</strong> for clinical relevance. 
+                <a href="#" class="calc-info-link" onclick="showIndexCalculationInfo(); return false;">How is this calculated?</a>
+            </span>
+        `;
+        document.getElementById('placeholderControls').prepend(notice);
+    }
 
     editor.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
@@ -601,11 +717,19 @@ function renderMultiMetricControl(container) {
     listWrap.className = 'multi-metric-list';
     listWrap.id = 'multiMetricList';
 
-    const allMetrics = QueryState.allMetrics.length > 0 ? QueryState.allMetrics : [
+    let allMetrics = QueryState.allMetrics.length > 0 ? QueryState.allMetrics : [
         { id: 'obesity_prevalence', label: 'Obesity' },
         { id: 'diabetes_prevalence', label: 'Diabetes' },
         { id: 'smoking_prevalence', label: 'Smoking' }
     ];
+
+    if (QueryState.activeTemplate?.category === 'composite') {
+        const isDis = QueryState.activeTemplate.id.startsWith('disability');
+        const allowed = isDis ? COMPOSITE_DISABILITY_METRICS : COMPOSITE_HEALTH_METRICS;
+        allMetrics = allMetrics.filter(m => 
+            allowed.some(term => m.id.includes(term))
+        );
+    }
 
     allMetrics.forEach((m, i) => {
         const item = document.createElement('label');
@@ -933,22 +1057,55 @@ function getOptionsForKey(key) {
             }
             return [];  // Empty — state must be selected first
         }
-        case 'metric':
-            return QueryState.allMetrics.length > 0 ? QueryState.allMetrics : [
+        case 'metric': {
+            const isComp = QueryState.activeTemplate?.category === 'composite';
+            let list = QueryState.allMetrics.length > 0 ? QueryState.allMetrics : [
                 { id: 'obesity_prevalence', label: 'Obesity' },
                 { id: 'diabetes_prevalence', label: 'Diabetes' },
                 { id: 'smoking_prevalence', label: 'Smoking' }
             ];
+            if (isComp) {
+                const isDis = QueryState.activeTemplate.id.startsWith('disability');
+                const allowed = isDis ? COMPOSITE_DISABILITY_METRICS : COMPOSITE_HEALTH_METRICS;
+                list = list.filter(m => allowed.some(term => m.id.includes(term)));
+            }
+            return list;
+        }
         case 'metric2': {
-            // Exclude selected metric1 to prevent comparing a metric with itself
+            const isComp = QueryState.activeTemplate?.category === 'composite';
             const m1 = QueryState.placeholders['metric'];
             const m1Id = m1 ? (typeof m1 === 'object' ? m1.id : m1) : null;
-            const allM = QueryState.allMetrics.length > 0 ? QueryState.allMetrics : [
+            let allM = QueryState.allMetrics.length > 0 ? QueryState.allMetrics : [
                 { id: 'obesity_prevalence', label: 'Obesity' },
                 { id: 'diabetes_prevalence', label: 'Diabetes' },
                 { id: 'smoking_prevalence', label: 'Smoking' }
             ];
+            if (isComp) {
+                const isDis = QueryState.activeTemplate.id.startsWith('disability');
+                const allowed = isDis ? COMPOSITE_DISABILITY_METRICS : COMPOSITE_HEALTH_METRICS;
+                allM = allM.filter(m => allowed.some(term => m.id.includes(term)));
+            }
             return m1Id ? allM.filter(m => m.id !== m1Id) : allM;
+        }
+        case 'metric3': {
+            const isComp = QueryState.activeTemplate?.category === 'composite';
+            const m1 = QueryState.placeholders['metric'];
+            const m1Id = m1 ? (typeof m1 === 'object' ? m1.id : m1) : null;
+            const m2 = QueryState.placeholders['metric2'];
+            const m2Id = m2 ? (typeof m2 === 'object' ? m2.id : m2) : null;
+            let allM = QueryState.allMetrics.length > 0 ? QueryState.allMetrics : [
+                { id: 'obesity_prevalence', label: 'Obesity' },
+                { id: 'diabetes_prevalence', label: 'Diabetes' },
+                { id: 'smoking_prevalence', label: 'Smoking' }
+            ];
+            if (isComp) {
+                allM = allM.filter(m => COMPOSITE_HEALTH_METRICS.some(term => m.id.includes(term)));
+            }
+            return allM.filter(m => m.id !== m1Id && m.id !== m2Id);
+        }
+        case 'state2': {
+            const s1 = QueryState.placeholders['state'];
+            return QueryState.allStates.filter(s => s !== s1);
         }
         case 'region':
             return ["Northeast", "Midwest", "South", "West"];
@@ -976,6 +1133,28 @@ function handleSelectionChange(key, value) {
             QueryState.placeholders['county2'] = null;
             const sel2 = document.getElementById('select-county2');
             if (sel2) populateSelectOptions(sel2, 'county2');
+        }
+        if (phs.includes('state2')) {
+            const selS2 = document.getElementById('select-state2');
+            if (selS2) populateSelectOptions(selS2, 'state2');
+        }
+    }
+
+    if (key === 'metric') {
+        if (phs.includes('metric2')) {
+            const selM2 = document.getElementById('select-metric2');
+            if (selM2) populateSelectOptions(selM2, 'metric2');
+        }
+        if (phs.includes('metric3')) {
+            const selM3 = document.getElementById('select-metric3');
+            if (selM3) populateSelectOptions(selM3, 'metric3');
+        }
+    }
+    
+    if (key === 'metric2') {
+        if (phs.includes('metric3')) {
+            const selM3 = document.getElementById('select-metric3');
+            if (selM3) populateSelectOptions(selM3, 'metric3');
         }
     }
 
@@ -1116,9 +1295,24 @@ function executeQuery() {
     const canShowMap = [
         'top_states', 'bottom_states', 'state_vs_national', 'range_states', 'range_above_states', 'national_extremes'
     ].includes(QueryState.activeTemplate.resultType);
+    
+    const canShowRadar = ['composite_state_compare', 'composite_county_profile'].includes(QueryState.activeTemplate.resultType);
+    
     const toggleGroup = document.getElementById('vizToggleGroup');
-    if (canShowMap) {
+    const mapBtn = document.getElementById('showMapBtn');
+    const radarBtn = document.getElementById('showRadarBtn');
+
+    if (canShowMap || canShowRadar) {
         toggleGroup.style.display = 'flex';
+        
+        if (canShowMap) {
+            mapBtn.style.display = 'flex';
+            if (radarBtn) radarBtn.style.display = 'none';
+        } else if (canShowRadar) {
+            mapBtn.style.display = 'none';
+            if (radarBtn) radarBtn.style.display = 'flex';
+        }
+
         // Reset to chart view by default
         switchViz('chart');
     } else {
@@ -1143,6 +1337,7 @@ function renderRealResults(targetId = "amChartResults") {
     container.innerHTML = `<div id="${targetId}" style="width: 100%; height: ${isModal ? '500px' : '420px'};"></div>`;
 
     const data = computeResultData();
+    const resultType = QueryState.activeTemplate.resultType;
 
     if (!data || data.length === 0) {
         // Descriptive error message
@@ -1175,6 +1370,8 @@ function renderRealResults(targetId = "amChartResults") {
     }
     root.setThemes([am5themes_Animated.new(root)]);
 
+    // Note: Radar charts reverted to standard bar charts per request
+
     const chart = root.container.children.push(am5xy.XYChart.new(root, {
         panX: true,
         panY: false,
@@ -1190,6 +1387,85 @@ function renderRealResults(targetId = "amChartResults") {
         behavior: "none"
     }));
 
+    const templateType = QueryState.activeTemplate.resultType;
+
+    // --- Special handling for Scatter Plot ---
+    if (templateType === 'correlation_scatter_county') {
+        chart.setAll({
+            paddingBottom: 40,
+            cursor: am5xy.XYCursor.new(root, { behavior: "zoomXY" })
+        });
+
+        const m1 = QueryState.placeholders['metric'];
+        const m1Label = m1 ? (typeof m1 === 'object' ? m1.label : m1) : 'Metric 1';
+        const m2 = QueryState.placeholders['metric2'];
+        const m2Label = m2 ? (typeof m2 === 'object' ? m2.label : m2) : 'Metric 2';
+
+        const xAxis = chart.xAxes.push(am5xy.ValueAxis.new(root, {
+            renderer: am5xy.AxisRendererX.new(root, { minGridDistance: 50 }),
+            tooltip: am5.Tooltip.new(root, {})
+        }));
+        
+        // Add X-Axis Title
+        xAxis.children.push(am5.Label.new(root, {
+            text: m1Label,
+            x: am5.p50,
+            centerX: am5.p50,
+            y: am5.p100,
+            paddingTop: 10,
+            fontWeight: "bold",
+            fill: am5.color(0x475569)
+        }));
+
+        const yAxis = chart.yAxes.push(am5xy.ValueAxis.new(root, {
+            renderer: am5xy.AxisRendererY.new(root, { minGridDistance: 40 }),
+            tooltip: am5.Tooltip.new(root, {})
+        }));
+
+        // Add Y-Axis Title
+        yAxis.children.unshift(am5.Label.new(root, {
+            text: m2Label,
+            rotation: -90,
+            y: am5.p50,
+            centerX: am5.p50,
+            x: am5.p0,
+            paddingBottom: 10,
+            fontWeight: "bold",
+            fill: am5.color(0x475569)
+        }));
+
+        const series = chart.series.push(am5xy.LineSeries.new(root, {
+            xAxis: xAxis,
+            yAxis: yAxis,
+            valueYField: "value2",
+            valueXField: "value1",
+            tooltip: am5.Tooltip.new(root, {
+                labelText: "{name}\n" + m1Label + ": {valueX}\n" + m2Label + ": {valueY}"
+            })
+        }));
+
+        series.strokes.template.set("strokeOpacity", 0);
+        series.bullets.push(function() {
+            return am5.Bullet.new(root, {
+                sprite: am5.Circle.new(root, {
+                    radius: 6,
+                    fill: am5.color(0xc83830),
+                    fillOpacity: 0.6,
+                    stroke: am5.color(0xc83830),
+                    strokeWidth: 1
+                })
+            });
+        });
+
+        series.data.setAll(data);
+        series.appear(1000);
+        chart.appear(1000, 100);
+
+        generateSmartInsight(data);
+        return;
+    }
+    // -----------------------------------------
+
     const xRenderer = am5xy.AxisRendererX.new(root, { minGridDistance: 30 });
     xRenderer.labels.template.setAll({
         rotation: data.length > 8 ? -45 : 0,
@@ -1201,11 +1477,10 @@ function renderRealResults(targetId = "amChartResults") {
         maxWidth: 140
     });
 
-    // Use 'category' field for multi-series charts to avoid amCharts {name} conflict in legends
-    const templateType = QueryState.activeTemplate.resultType;
     const isMultiSeries = templateType.startsWith('multi_region') || templateType.startsWith('multi_state_rank') ||
-        templateType === 'correlation_regions' || templateType === 'correlation_top_states';
-    const catField = isMultiSeries ? 'category' : 'name';
+        templateType === 'correlation_regions' || templateType === 'correlation_top_states' ||
+        templateType === 'composite_state_compare';
+    const catField = isMultiSeries || templateType === 'composite_county_profile' ? 'category' : 'name';
 
     const xAxis = chart.xAxes.push(am5xy.CategoryAxis.new(root, {
         categoryField: catField,
@@ -1225,7 +1500,6 @@ function renderRealResults(targetId = "amChartResults") {
     yAxis.get("renderer").labels.template.setAll({ fontSize: 11, fill: am5.color(0x64748b) });
 
     // Check if we need dual series (correlation templates)
-    const resultType = QueryState.activeTemplate.resultType;
     const isMultiMetric = resultType.startsWith('multi_');
 
     if (isMultiMetric) {
@@ -1300,13 +1574,21 @@ function renderRealResults(targetId = "amChartResults") {
             legend.data.setAll(chart.series.values);
         }
 
-    } else if (resultType === 'correlation_regions' || resultType === 'correlation_top_states') {
+    } else if (resultType === 'correlation_regions' || resultType === 'correlation_top_states' || resultType === 'composite_state_compare') {
         // Dual bar chart
-        const metric1 = QueryState.placeholders['metric'];
-        const metric2 = QueryState.placeholders['metric2'];
+        let name1, name2;
+        if (resultType === 'composite_state_compare') {
+            name1 = QueryState.placeholders['state'];
+            name2 = QueryState.placeholders['state2'];
+        } else {
+            const m1 = QueryState.placeholders['metric'];
+            const m2 = QueryState.placeholders['metric2'];
+            name1 = typeof m1 === 'object' ? m1.label : m1;
+            name2 = typeof m2 === 'object' ? m2.label : m2;
+        }
 
         const s1 = chart.series.push(am5xy.ColumnSeries.new(root, {
-            name: typeof metric1 === 'object' ? metric1.label : metric1,
+            name: name1,
             xAxis, yAxis,
             valueYField: "value1",
             categoryXField: "category",
@@ -1318,13 +1600,13 @@ function renderRealResults(targetId = "amChartResults") {
         s1.columns.template.setAll({
             cornerRadiusTL: 5, cornerRadiusTR: 5,
             strokeOpacity: 0, width: am5.percent(40),
-            tooltipText: "{categoryX}\n" + (typeof metric1 === 'object' ? metric1.label : metric1) + ": {valueY}"
+            tooltipText: "{categoryX}\n" + name1 + ": {valueY}"
         });
         s1.set("fill", am5.color(0xc83830));
         s1.set("stroke", am5.color(0xc83830));
 
         const s2 = chart.series.push(am5xy.ColumnSeries.new(root, {
-            name: typeof metric2 === 'object' ? metric2.label : metric2,
+            name: name2,
             xAxis, yAxis,
             valueYField: "value2",
             categoryXField: "category",
@@ -1336,7 +1618,7 @@ function renderRealResults(targetId = "amChartResults") {
         s2.columns.template.setAll({
             cornerRadiusTL: 5, cornerRadiusTR: 5,
             strokeOpacity: 0, width: am5.percent(40),
-            tooltipText: "{categoryX}\n" + (typeof metric2 === 'object' ? metric2.label : metric2) + ": {valueY}"
+            tooltipText: "{categoryX}\n" + name2 + ": {valueY}"
         });
         s2.set("fill", am5.color(0x6366f1));
         s2.set("stroke", am5.color(0x6366f1));
@@ -1355,15 +1637,19 @@ function renderRealResults(targetId = "amChartResults") {
         s2.appear(800);
     } else {
         // Single series
-        const metricLabel = QueryState.placeholders['metric']
+        let metricLabel = QueryState.placeholders['metric']
             ? (typeof QueryState.placeholders['metric'] === 'object' ? QueryState.placeholders['metric'].label : QueryState.placeholders['metric'])
             : 'Value';
+        
+        if (resultType === 'composite_county_profile') {
+            metricLabel = 'Wellness Score';
+        }
 
         const series = chart.series.push(am5xy.ColumnSeries.new(root, {
             name: metricLabel,
             xAxis, yAxis,
             valueYField: "value",
-            categoryXField: "name",
+            categoryXField: catField,
             tooltip: am5.Tooltip.new(root, {
                 pointerOrientation: "horizontal",
                 labelText: "{categoryX}: {valueY}"
@@ -1382,12 +1668,12 @@ function renderRealResults(targetId = "amChartResults") {
         series.columns.template.adapters.add("fill", (fill, target) => {
             const d = target.dataItem?.dataContext;
             if (d && d.highlight) return am5.Color.fromString("#6366f1");
-            return am5.Color.fromString("#c83830");
+            return am5.Color.fromString(resultType.startsWith('composite') ? "#e11d48" : "#c83830");
         });
         series.columns.template.adapters.add("stroke", (stroke, target) => {
             const d = target.dataItem?.dataContext;
             if (d && d.highlight) return am5.Color.fromString("#6366f1");
-            return am5.Color.fromString("#c83830");
+            return am5.Color.fromString(resultType.startsWith('composite') ? "#e11d48" : "#c83830");
         });
 
         xAxis.data.setAll(data);
@@ -1403,10 +1689,34 @@ function renderRealResults(targetId = "amChartResults") {
     }
 }
 
+/**
+ * Normalizes a value between 0 and 1 based on dataset bounds
+ * and whether the metric is "positive" or "negative".
+ */
+function normalizeMetric(value, min, max, isNegative) {
+    if (max === min) return 0.5;
+    let normalized = (value - min) / (max - min);
+    return isNegative ? (1 - normalized) : normalized;
+}
+
+const NEGATIVE_METRICS = [
+    'unemployment', 'prevalence', 'insecurity', 'isolation', 'barrier', 'english', 'lack'
+];
+
+function isMetricNegative(id) {
+    id = id.toLowerCase();
+    return NEGATIVE_METRICS.some(term => id.includes(term));
+}
+
 function generateSmartInsight(data) {
     const container = document.getElementById('smartInsightContainer');
     const textEl = document.getElementById('insightText');
     if (!container || !textEl || !data || data.length === 0) {
+        if (container) container.style.display = 'none';
+        return;
+    }
+
+    if (data[0].value === undefined && data[0].value1 === undefined && data[0].m0 === undefined) {
         if (container) container.style.display = 'none';
         return;
     }
@@ -1416,28 +1726,37 @@ function generateSmartInsight(data) {
     const template = QueryState.activeTemplate;
     
     // Sort logic to find true top/bottom if not already sorted
-    const sorted = [...data].sort((a,b) => b.value - a.value);
+    const sorted = [...data].sort((a,b) => (b.value ?? b.value1 ?? b.m0 ?? 0) - (a.value ?? a.value1 ?? a.m0 ?? 0));
     const top = sorted[0];
     const bottom = sorted[sorted.length - 1];
     const metricLabel = p.metric ? (typeof p.metric === 'object' ? p.metric.label : p.metric) : 'this metric';
 
+    const getVal = (d) => d.value ?? d.value1 ?? d.m0 ?? 0;
+    const topVal = getVal(top);
+    const bottomVal = getVal(bottom);
+
     // Different insight strategies based on query type
     if (template.resultType.includes('top')) {
-        insight = `<strong>${top.name || top.state}</strong> ranks at the top with a value of <strong>${top.value.toFixed(1)}</strong>. This is significantly higher than the rest of the group.`;
+        insight = `<strong>${top.name || top.state || top.category}</strong> ranks at the top with a value of <strong>${topVal.toFixed(1)}</strong>. This is significantly higher than the rest of the group.`;
     } else if (template.resultType.includes('bottom')) {
-        insight = `<strong>${bottom.name || bottom.state}</strong> has the lowest recorded value of <strong>${bottom.value.toFixed(1)}</strong> for ${metricLabel}.`;
+        insight = `<strong>${bottom.name || bottom.state || bottom.category}</strong> has the lowest recorded value of <strong>${bottomVal.toFixed(1)}</strong> for ${metricLabel}.`;
     } else if (template.resultType.includes('national')) {
         const nat = data.find(d => d.name === 'National Average' || d.category === 'National');
         const state = data.find(d => d.name !== 'National Average' && d.category !== 'National');
         if (nat && state) {
-            const diff = ((state.value - nat.value) / nat.value * 100).toFixed(1);
-            const relative = state.value > nat.value ? "above" : "below";
-            insight = `Compared to the national average of <strong>${nat.value.toFixed(1)}</strong>, this location is <strong>${Math.abs(diff)}% ${relative}</strong> the benchmark.`;
+            const diff = ((getVal(state) - getVal(nat)) / (getVal(nat) || 1) * 100).toFixed(1);
+            const relative = getVal(state) > getVal(nat) ? "above" : "below";
+            insight = `Compared to the national average of <strong>${getVal(nat).toFixed(1)}</strong>, this location is <strong>${Math.abs(diff)}% ${relative}</strong> the benchmark.`;
         }
     } else {
         // Generic spread insight
-        const spread = (top.value - bottom.value).toFixed(1);
-        insight = `The analysis shows a spread of <strong>${spread}</strong> between the highest and lowest points, with ${top.name || top.state} leading the group.`;
+        const spread = (topVal - bottomVal).toFixed(1);
+        insight = `The analysis shows a spread of <strong>${spread}</strong> between the highest and lowest points, with ${top.name || top.state || top.category} leading the group.`;
+    }
+
+    if (!insight) {
+        if (container) container.style.display = 'none';
+        return;
     }
 
     textEl.innerHTML = insight;
@@ -1613,6 +1932,22 @@ function computeResultData() {
             }));
         }
 
+        case 'correlation_scatter_county': {
+            const stateName = p.state;
+            const metric2Id = p.metric2 ? (typeof p.metric2 === 'object' ? p.metric2.id : p.metric2) : null;
+            if (!stateName || !metricId || !metric2Id) return [];
+
+            const counties = QueryState.countyData.filter(c => 
+                c.state_name === stateName && c[metricId] != null && c[metric2Id] != null
+            );
+
+            return counties.map(c => ({
+                name: c.name,
+                value1: +(c[metricId]).toFixed(2),
+                value2: +(c[metric2Id]).toFixed(2)
+            }));
+        }
+
         // ── Multi-Metric Templates ──
 
         case 'multi_state_profile': {
@@ -1719,6 +2054,73 @@ function computeResultData() {
             return below.map(c => ({ name: c.name, value: +c[metricId].toFixed(2), state_abbr: c.state_abbr }));
         }
 
+        case 'composite_state_rank': {
+            const metrics = (p.metrics || []).map(m => m.id || m).filter(Boolean);
+            
+            // Pre-calculate min/max for normalization
+            const bounds = {};
+            metrics.forEach(mId => {
+                const vals = QueryState.stateData.map(s => s[mId]).filter(v => v != null);
+                bounds[mId] = { min: Math.min(...vals), max: Math.max(...vals) };
+            });
+
+            return QueryState.stateData.map(s => {
+                let totalScore = 0;
+                let count = 0;
+                metrics.forEach(mId => {
+                    if (s[mId] != null) {
+                        const score = normalizeMetric(s[mId], bounds[mId].min, bounds[mId].max, isMetricNegative(mId));
+                        totalScore += score;
+                        count++;
+                    }
+                });
+                return { name: s.name, value: count > 0 ? +((totalScore / count) * 100).toFixed(1) : 0 };
+            }).sort((a,b) => b.value - a.value).slice(0, 15);
+        }
+
+        case 'composite_county_profile': {
+            const stateName = p.state;
+            const cName = p.county1;
+            const selected = p.metrics || [];
+            const county = QueryState.countyData.find(c => c.name === cName && c.state_name === stateName);
+            if (!county) return [];
+
+            // Radar format: { category: "Metric Name", value: 0-100 }
+            return selected.map(m => {
+                const mId = m.id || m;
+                const mLabel = m.label || m;
+                // Normalize against ALL counties in the same state for context
+                const stateVals = QueryState.countyData.filter(c => c.state_name === stateName && c[mId] != null).map(c => c[mId]);
+                const min = Math.min(...stateVals);
+                const max = Math.max(...stateVals);
+                const score = normalizeMetric(county[mId] || 0, min, max, isMetricNegative(mId));
+                return { category: mLabel, value: +(score * 100).toFixed(1) };
+            });
+        }
+
+        case 'composite_state_compare': {
+            const s1Name = p.state;
+            const s2Name = p.state2;
+            const selectedMetrics = p.metrics || [];
+            const s1 = QueryState.stateData.find(s => s.name === s1Name);
+            const s2 = QueryState.stateData.find(s => s.name === s2Name);
+            if (!s1 || !s2) return [];
+
+            return selectedMetrics.map(m => {
+                const mId = m.id;
+                const allVals = QueryState.stateData.map(s => s[mId]).filter(v => v != null);
+                const min = Math.min(...allVals);
+                const max = Math.max(...allVals);
+                const score1 = normalizeMetric(s1[mId] || 0, min, max, isMetricNegative(mId));
+                const score2 = normalizeMetric(s2[mId] || 0, min, max, isMetricNegative(mId));
+                return { 
+                    category: m.label, 
+                    value1: +(score1 * 100).toFixed(1), 
+                    value2: +(score2 * 100).toFixed(1) 
+                };
+            });
+        }
+
         default:
             return [];
     }
@@ -1758,6 +2160,10 @@ function resetQuery() {
     if (QueryState.currentMapRoot) {
         QueryState.currentMapRoot.dispose();
         QueryState.currentMapRoot = null;
+    }
+    if (QueryState.currentRadarRoot) {
+        QueryState.currentRadarRoot.dispose();
+        QueryState.currentRadarRoot = null;
     }
 
     document.getElementById('queryEditor').style.display = 'none';
@@ -1943,6 +2349,147 @@ function renderMapResults(targetId = "amMapResults") {
     });
 }
 
+/* ── Radar Results ───────────────────────────────────────────── */
+
+function renderRadarResults(targetId = "amRadarResults") {
+    const isModal = targetId === "modalAmRoot";
+    const container = isModal ? document.getElementById('modalVizContainer') : document.getElementById('radarContainer');
+    if (!isModal && container.style.display === 'none') return; 
+
+    if (!isModal && QueryState.currentRadarRoot) {
+        QueryState.currentRadarRoot.dispose();
+        QueryState.currentRadarRoot = null;
+    }
+
+    const data = computeResultData();
+    if (!data || data.length === 0) return;
+
+    container.innerHTML = `<div id="${targetId}" style="width: 100%; height: 500px; background: #fff;"></div>`;
+
+    const root = am5.Root.new(targetId);
+    if (isModal) {
+        if (!window.modalRoots) window.modalRoots = [];
+        window.modalRoots.push(root);
+    } else {
+        QueryState.currentRadarRoot = root;
+    }
+    root.setThemes([am5themes_Animated.new(root)]);
+
+    const chart = root.container.children.push(am5radar.RadarChart.new(root, {
+        panX: false,
+        panY: false,
+        wheelX: "none",
+        wheelY: "none"
+    }));
+
+    chart.set("cursor", am5radar.RadarCursor.new(root, {
+        behavior: "zoomX"
+    }));
+
+    const xAxis = chart.xAxes.push(am5xy.CategoryAxis.new(root, {
+        maxDeviation: 0,
+        categoryField: "category",
+        renderer: am5radar.AxisRendererCircular.new(root, {})
+    }));
+    xAxis.get("renderer").labels.template.setAll({
+        fontSize: 12,
+        fill: am5.color(0x475569)
+    });
+
+    const yAxis = chart.yAxes.push(am5xy.ValueAxis.new(root, {
+        min: 0,
+        max: 100,
+        renderer: am5radar.AxisRendererRadial.new(root, {
+            minGridDistance: 20
+        })
+    }));
+
+    // Series Config
+    const p = QueryState.placeholders;
+    const resultType = QueryState.activeTemplate.resultType;
+    const isSingle = resultType === 'composite_county_profile';
+
+    if (isSingle) {
+        const name1 = p.county1 || "County";
+        const series1 = chart.series.push(am5radar.RadarLineSeries.new(root, {
+            name: name1,
+            xAxis: xAxis,
+            yAxis: yAxis,
+            valueYField: "value",
+            categoryXField: "category",
+            tooltip: am5.Tooltip.new(root, {
+                labelText: "{name}: {valueY}"
+            })
+        }));
+        series1.set("fill", am5.color(0xc83830));
+        series1.set("stroke", am5.color(0xc83830));
+        series1.strokes.template.setAll({ strokeWidth: 3 });
+        series1.fills.template.setAll({ fillOpacity: 0.2, visible: true });
+        series1.bullets.push(() => am5.Bullet.new(root, {
+            sprite: am5.Circle.new(root, { radius: 5, fill: am5.color(0xc83830) })
+        }));
+
+        xAxis.data.setAll(data);
+        series1.data.setAll(data);
+        series1.appear(1000);
+    } else {
+        const name1 = p.state || "State 1";
+        const name2 = p.state2 || "State 2";
+
+        const series1 = chart.series.push(am5radar.RadarLineSeries.new(root, {
+            name: name1,
+            xAxis: xAxis,
+            yAxis: yAxis,
+            valueYField: "value1",
+            categoryXField: "category",
+            tooltip: am5.Tooltip.new(root, {
+                labelText: "{name}: {valueY}"
+            })
+        }));
+        series1.set("fill", am5.color(0xc83830));
+        series1.set("stroke", am5.color(0xc83830));
+        series1.strokes.template.setAll({ strokeWidth: 3 });
+        series1.fills.template.setAll({ fillOpacity: 0.2, visible: true });
+        series1.bullets.push(() => am5.Bullet.new(root, {
+            sprite: am5.Circle.new(root, { radius: 5, fill: am5.color(0xc83830) })
+        }));
+
+        const series2 = chart.series.push(am5radar.RadarLineSeries.new(root, {
+            name: name2,
+            xAxis: xAxis,
+            yAxis: yAxis,
+            valueYField: "value2",
+            categoryXField: "category",
+            tooltip: am5.Tooltip.new(root, {
+                labelText: "{name}: {valueY}"
+            })
+        }));
+        series2.set("fill", am5.color(0x6366f1));
+        series2.set("stroke", am5.color(0x6366f1));
+        series2.strokes.template.setAll({ strokeWidth: 3 });
+        series2.fills.template.setAll({ fillOpacity: 0.2, visible: true });
+        series2.bullets.push(() => am5.Bullet.new(root, {
+            sprite: am5.Circle.new(root, { radius: 5, fill: am5.color(0x6366f1) })
+        }));
+
+        xAxis.data.setAll(data);
+        series1.data.setAll(data);
+        series2.data.setAll(data);
+        series1.appear(1000);
+        series2.appear(1000);
+    }
+
+    // Legend
+    const legend = chart.children.push(am5.Legend.new(root, {
+        centerX: am5.p50,
+        x: am5.p50,
+        marginTop: 15
+    }));
+    legend.data.setAll(chart.series.values);
+
+    chart.appear(1000, 100);
+}
+
 /* ── History Management ────────────────────────────────────── */
 
 function addToHistory(queryObj) {
@@ -2098,4 +2645,55 @@ function clearHistory() {
     QueryState.history = [];
     localStorage.removeItem('query_history');
     renderHistory();
+}
+
+function showIndexCalculationInfo() {
+    // Check if an info box already exists
+    if (document.getElementById('calcInfoBox')) return;
+
+    const overlay = document.createElement('div');
+    overlay.id = 'calcInfoOverlay';
+    overlay.className = 'calc-info-overlay';
+    
+    const infoBox = document.createElement('div');
+    infoBox.id = 'calcInfoBox';
+    infoBox.className = 'calc-info-box';
+    
+    infoBox.innerHTML = `
+        <div class="info-box-header">
+            <h3>Wellness Index Calculation</h3>
+            <button onclick="closeCalcInfo()" class="info-close-btn">&times;</button>
+        </div>
+        <div class="info-box-body">
+            <p>The Wellness Index (0-100) is a weighted score that allows fair comparison across different health outcomes. It is calculated in 4 steps:</p>
+            <div class="info-step">
+                <div class="step-num">1</div>
+                <div><strong>Normalization:</strong> Each value is scaled between 0.0 and 1.0 based on the min/max of the selected dataset.</div>
+            </div>
+            <div class="info-step">
+                <div class="step-num">2</div>
+                <div><strong>Directional Adjustment:</strong> For metrics where lower is better (like Obesity), the score is inverted so a lower raw value yields a higher index.</div>
+            </div>
+            <div class="info-step">
+                <div class="step-num">3</div>
+                <div><strong>Aggregation:</strong> We take the average of the normalized scores for all selected metrics to create a single "Unified Grade".</div>
+            </div>
+            <div class="info-step">
+                <div class="step-num">4</div>
+                <div><strong>Scaling:</strong> The final average is multiplied by 100. A score of <strong>100</strong> represents the best performer in the current group.</div>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+    document.body.appendChild(infoBox);
+
+    overlay.onclick = closeCalcInfo;
+}
+
+function closeCalcInfo() {
+    const overlay = document.getElementById('calcInfoOverlay');
+    const infoBox = document.getElementById('calcInfoBox');
+    if (overlay) overlay.remove();
+    if (infoBox) infoBox.remove();
 }
