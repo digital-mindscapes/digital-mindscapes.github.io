@@ -246,9 +246,18 @@ function calculateAndRenderMatrix() {
                 });
             }
         }
-
-        document.getElementById('loadingStatus').style.display = 'none';
-        renderD3Heatmap(matrixData, xMetrics, yMetrics, matrixStyle);
+        
+        // Allow UI to update loading state and then render D3
+        setTimeout(() => {
+            renderD3Heatmap(matrixData, xMetrics, yMetrics, matrixStyle);
+            
+            // Enable and setup CSV export
+            const btn = document.getElementById('exportCsvBtn');
+            btn.style.display = 'flex';
+            btn.onclick = () => exportMatrixCSV(matrixData, xMetrics, yMetrics);
+            
+            document.getElementById('loadingStatus').style.display = 'none';
+        }, 100);
         
         // Clear Scatter
         document.getElementById('scatterEmpty').style.display = 'flex';
@@ -451,6 +460,13 @@ function renderD3Heatmap(data, xMetrics, yMetrics, style = 'heatmap') {
             .style("stroke", "none")
             .style("stroke-width", 2);
     });
+
+    // Add Staggered Intro Animation
+    cellGroups.attr("opacity", 0)
+        .transition()
+        .duration(600)
+        .delay(function(d) { return (d.i + d.j) * 20; }) // Stagger diagonally
+        .attr("opacity", 1);
 }
 
 function renderScatterplot(xId, xLabel, yId, yLabel, rValue, count) {
@@ -544,18 +560,26 @@ function renderScatterplot(xId, xLabel, yId, yLabel, rValue, count) {
 
     const tooltip = document.getElementById('customTooltip');
 
-    // Add dots
+    // Add dots with animation
     svg.append('g')
         .selectAll("circle")
         .data(scatterData)
         .join("circle")
         .attr("cx", d => x(d.x))
         .attr("cy", d => y(d.y))
-        .attr("r", 4)
+        .attr("r", 0) // Start at r=0 for pop-in animation
         .style("fill", color)
-        .style("opacity", 0.6)
+        .style("opacity", 0)
         .style("stroke", "#fff")
         .style("stroke-width", 0.5)
+        .transition()
+        .duration(400)
+        .delay((d, i) => i * (500 / Math.max(1, scatterData.length))) // Calculate safe stagger speed
+        .attr("r", 4)
+        .style("opacity", 0.6);
+        
+    // Needs to attach mouse events post-transition without disrupting it, or attach to the join before the transition:
+    svg.selectAll("circle")
         .on("mouseover", function(event, d) {
             d3.select(this)
               .style("opacity", 1)
@@ -611,4 +635,33 @@ function renderScatterplot(xId, xLabel, yId, yLabel, rValue, count) {
             console.log("Covariance failed, skipping trendline");
         }
     }
+}
+
+function exportMatrixCSV(data, xMetrics, yMetrics) {
+    // Generate Column Headers
+    let csv = "Variable," + xMetrics.map(x => `"${x.label}"`).join(",") + "\n";
+    
+    // Generate Rows
+    yMetrics.forEach(y => {
+        let row = [`"${y.label}"`];
+        xMetrics.forEach(x => {
+            let cell = data.find(d => d.xId === x.id && d.yId === y.id);
+            if(cell && cell.value !== undefined && cell.value !== null) {
+                row.push(cell.value.toFixed(4));
+            } else {
+                row.push(""); // Empty box for null correlation
+            }
+        });
+        csv += row.join(",") + "\n";
+    });
+    
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.setAttribute('hidden', '');
+    a.setAttribute('href', url);
+    a.setAttribute('download', 'Digital_Mindscapes_Correlation_Matrix.csv');
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
 }
