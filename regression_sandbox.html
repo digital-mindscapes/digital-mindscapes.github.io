@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multivariate Regression Sandbox - Digital Mindscapes</title>
+    <link rel="stylesheet" href="css/style.css?v=6">
+    <link rel="stylesheet" href="css/responsive.css">
+    <link rel="stylesheet" href="css/correlation_matrix.css">
+    <link rel="stylesheet" href="css/regression_sandbox.css">
+    
+    <!-- D3.js -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <!-- Simple-statistics -->
+    <script src="https://unpkg.com/simple-statistics@7.8.0/dist/simple-statistics.min.js"></script>
+    <!-- Math.js for Matrix inversion -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/12.0.0/math.js"></script>
+    <!-- jStat for p-values -->
+    <script src="https://cdn.jsdelivr.net/npm/jstat@latest/dist/jstat.min.js"></script>
+</head>
+
+<body>
+    <div class="header">
+        <div class="header-content">
+            <div class="app-logo-container">
+                <a href="index.html">
+                    <img src="assets/app_logo.png" alt="App Logo" class="app-logo">
+                </a>
+            </div>
+            <div class="header-text-container">
+                <h1>Digital Mindscapes: An Interactive Public Health & Socioeconomic Data Visualization Platform</h1>
+                <p class="authors">
+                    <strong>Arpita Datta</strong><sup>*</sup>,
+                    <strong>Dr. Sabirat Rubiya</strong><sup>*</sup>,
+                    <strong>Dr. Avik Chakrabarti</strong><sup>†</sup>,
+                    <strong>Dr. Anjishnu Banerjee</strong><sup>‡</sup>
+                </p>
+                <p class="affiliations">
+                    <sup>*</sup>Marquette University &nbsp;|&nbsp; <sup>†</sup>University of Wisconsin-Milwaukee (UWM)
+                    &nbsp;|&nbsp; <sup>‡</sup>Medical College of Wisconsin (MCW)
+                </p>
+            </div>
+            <div class="banner-logos-row">
+                <div class="banner-logos-top">
+                    <img src="assets/marquette_logo.png" id="marquetteLogo" alt="Marquette University Logo"
+                        class="banner-logo">
+                    <img src="assets/mcw_logo.png" id="mcwLogo" alt="MCW Logo" class="banner-logo">
+                </div>
+                <div class="banner-logos-bottom">
+                    <img src="assets/uwm_logo.png" id="uwmLogo" alt="UWM Logo" class="banner-logo">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="navigation-bar">
+        <a href="index.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+            </svg>
+            Main Dashboard
+        </a>
+        <a href="comparison.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="20" x2="18" y2="10"></line>
+                <line x1="12" y1="20" x2="12" y2="4"></line>
+                <line x1="6" y1="20" x2="6" y2="14"></line>
+            </svg>
+            States Comparison
+        </a>
+        <a href="county_comparison.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="7" height="7"></rect>
+                <rect x="14" y="3" width="7" height="7"></rect>
+                <rect x="14" y="14" width="7" height="7"></rect>
+                <rect x="3" y="14" width="7" height="7"></rect>
+            </svg>
+            Counties Comparison
+        </a>
+        <a href="urban_rural_comparison.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 4h16v16H4z"></path>
+                <path d="M4 12h16"></path>
+                <path d="M12 4v16"></path>
+            </svg>
+            Urban-Rural Comparison
+        </a>
+        <a href="county_distribution.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3" />
+                <circle cx="6" cy="16" r="3" />
+                <circle cx="18" cy="16" r="3" />
+                <circle cx="9" cy="8" r="3" />
+                <circle cx="15" cy="8" r="3" />
+            </svg>
+            County Distribution
+        </a>
+        <a href="multi_metric.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path>
+                <path d="M22 12A10 10 0 0 0 12 2v10z"></path>
+            </svg>
+            State Multi-Metric Comparison
+        </a>
+        <a href="metric_visualization.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 20v-6M6 20V10M18 20V4" />
+            </svg>
+            Metric Insights
+        </a>
+        <a href="bivariate_analysis.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="3" y1="9" x2="21" y2="9"></line>
+                <line x1="3" y1="15" x2="21" y2="15"></line>
+                <line x1="9" y1="3" x2="9" y2="21"></line>
+                <line x1="15" y1="3" x2="15" y2="21"></line>
+            </svg>
+            Bivariate Analysis
+        </a>
+        <a href="query.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                <path d="M11 8v6"></path>
+                <path d="M8 11h6"></path>
+            </svg>
+            Semi-Structured Query
+        </a>
+        <a href="correlation_matrix.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                <path d="M3 9h18"></path>
+                <path d="M9 21V9"></path>
+            </svg>
+            Correlation Matrix
+        </a>
+        <a href="regression_sandbox.html" class="comparison-pill active-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+            </svg>
+            OLS Regression
+        </a>
+        <a href="about.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+            About
+        </a>
+    </div>
+
+    <main class="correlation-layout">
+        <aside class="left-controls" style="min-width: 320px;">
+            <div class="sidebar-header">
+                <div class="header-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                    </svg>
+                </div>
+                <div>
+                    <h3 style="margin: 0; font-size: 1.1rem; line-height:1.2;">Model Builder</h3>
+                    <p style="margin: 4px 0 0 0; font-size: 0.8rem; opacity: 0.85;">Formulate multiple linear regression</p>
+                </div>
+                <button id="infoBtn" aria-label="Methodology Info" style="background: transparent; border: none; color: white; cursor: pointer; margin-left: auto; display: flex; align-items: center; justify-content: center; opacity: 0.8; transition: opacity 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.8">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="sidebar-content">
+                <div class="sidebar-section" style="margin-top: 5px;">
+                    <h4>Variables</h4>
+                    <p style="margin:0; font-size:0.8rem; color:var(--text-muted);">Define the dependent (Y) and independent (X) factors.</p>
+                </div>
+                
+                <div class="control-group">
+                    <label for="yVar">Dependent Variable (Y):</label>
+                    <select id="yVar" class="modern-select">
+                    </select>
+                </div>
+                
+                <div class="control-group">
+                    <label>Independent Predictors (X):</label>
+                    <div id="xVarList" class="checkbox-group">
+                       <!-- Checkboxes JS injected -->
+                    </div>
+                </div>
+
+                <div class="sidebar-section" style="margin-top: 15px;">
+                    <h4>Filtering</h4>
+                    <p style="margin:0; font-size:0.8rem; color:var(--text-muted);">Subset data for regional analysis.</p>
+                </div>
+                
+                <div class="control-group">
+                    <label for="regionFilter">Region:</label>
+                    <select id="regionFilter" class="modern-select">
+                        <option value="All">All U.S. Regions</option>
+                        <option value="Northeast">Northeast</option>
+                        <option value="Midwest">Midwest</option>
+                        <option value="South">South</option>
+                        <option value="West">West</option>
+                    </select>
+                </div>
+                
+                <div class="control-group">
+                    <label for="stateFilter">State:</label>
+                    <select id="stateFilter" class="modern-select">
+                        <option value="All">All States</option>
+                    </select>
+                </div>
+
+                <button id="runModelBtn" class="primary-btn calculate-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M5 12h14"></path>
+                        <path d="m12 5 7 7-7 7"></path>
+                    </svg>
+                    Run OLS Regression
+                </button>
+
+                <div class="loading-status" id="initLoader" style="display:none;">
+                    <div class="loader-small"></div>
+                    <span>Computing Math Arrays...</span>
+                </div>
+            </div>
+        </aside>
+        
+        <div class="results-container-wrapper" id="resultsDisplay" style="display: none;">
+             
+             <!-- Model Summary Headline -->
+             <div class="model-header" style="padding-bottom:10px;">
+                 <h2>
+                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#c83830" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                         <path d="M2 12h4l3-9 5 18 3-9h5"></path>
+                     </svg>
+                     Regression Model Summary
+                 </h2>
+                 <div class="summary-stats-grid">
+                     <div class="stat-box">
+                         <span class="stat-label">R-Squared</span>
+                         <span class="stat-value" id="m_r2">-</span>
+                     </div>
+                     <div class="stat-box">
+                         <span class="stat-label">Adj. R-Squared</span>
+                         <span class="stat-value" id="m_adj_r2">-</span>
+                     </div>
+                     <div class="stat-box">
+                         <span class="stat-label">F-Statistic</span>
+                         <span class="stat-value" id="m_f_stat">-</span>
+                     </div>
+                     <div class="stat-box">
+                         <span class="stat-label">Model p-value</span>
+                         <span class="stat-value" id="m_p_val">-</span>
+                     </div>
+                     <div class="stat-box">
+                         <span class="stat-label">Observations (N)</span>
+                         <span class="stat-value" id="m_obs">-</span>
+                     </div>
+                 </div>
+             </div>
+
+             <!-- Coefficient Table -->
+             <div class="coef-table-card">
+                 <h3 style="margin:0 0 10px 0; color:#0f172a; font-size:1.15rem;">Estimated Coefficients</h3>
+                 <p style="margin:0; font-size:0.85rem; color:#64748b; margin-bottom: 15px;">
+                     Significance codes:  ***(p < 0.001)  **(p < 0.01)  *(p < 0.05)  .(p < 0.1)
+                 </p>
+                 <table class="coef-table">
+                     <thead>
+                         <tr>
+                             <th>Variable</th>
+                             <th>Estimate</th>
+                             <th>Std. Error</th>
+                             <th>t value</th>
+                             <th>Pr(>|t|)</th>
+                             <th>Sig.</th>
+                         </tr>
+                     </thead>
+                     <tbody id="coefTableBody">
+                         <!-- Filled by JS -->
+                     </tbody>
+                 </table>
+             </div>
+
+             <!-- Plots -->
+             <div class="plots-grid">
+                 <div class="plot-card">
+                     <div class="plot-card-header">Residuals vs Fitted Values</div>
+                     <div class="plot-area" id="residualPlotContainer"></div>
+                 </div>
+             </div>
+
+        </div>
+        
+    </main>
+
+    <!-- Methodology Modal -->
+    <div id="infoModal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 650px;">
+            <button class="close-modal" id="closeModalBtn" style="position: absolute; top: 20px; right: 20px; background: transparent; border: none; font-size: 28px; cursor: pointer; color: #64748b; line-height: 1; transition: color 0.2s;" onmouseover="this.style.color='#0f172a'" onmouseout="this.style.color='#64748b'">&times;</button>
+            <h2 style="margin-top: 0; color: var(--text-dark, #333); font-size: 1.5rem; margin-bottom: 20px;">Statistical Methodology</h2>
+            
+            <div style="color: var(--text-dark, #333); font-size: 0.95rem; line-height: 1.6;">
+                <p>The <strong>Ordinary Least Squares (OLS)</strong> regression estimates the relationship between a dependent variable and one or more independent predictors by minimizing the sum of the squares of the differences between the observed and predicted values.</p>
+                
+                <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; margin: 15px 0; font-family: 'Courier New', Courier, monospace; text-align: center; font-size: 1.1rem; color: #0f172A; font-weight: 600;">
+                    Y = &beta;<sub>0</sub> + &beta;<sub>1</sub>X<sub>1</sub> + &beta;<sub>2</sub>X<sub>2</sub> + ... + &beta;<sub>k</sub>X<sub>k</sub> + &epsilon;
+                </div>
+                
+                <h4 style="margin: 24px 0 10px 0; color: var(--main-color, #c83830); font-size: 1.05rem;">Model Evaluation</h4>
+                <ul style="padding-left: 20px; margin-bottom: 20px;">
+                    <li><strong>R-Squared:</strong> The proportion of the variance in the dependent variable that is predictable from the independent variable(s).</li>
+                    <li><strong>p-value (Pr(>|t|)):</strong> The probability of finding the observed, or more extreme, results when the null hypothesis (that the coefficient is 0) is true.</li>
+                    <li><strong>Coefficients:</strong> The estimated change in the dependent variable for every unit increase in the predictor, holding other variables constant.</li>
+                </ul>
+
+                <h4 style="margin: 24px 0 10px 0; color: var(--main-color, #c83830); font-size: 1.05rem;">Technical Notes</h4>
+                <ul style="padding-left: 20px; margin-bottom: 0;">
+                    <li>Computations are handled entirely on the client-side via the <strong>Math.js</strong> matrix algebra and <strong>jStat</strong> probability libraries.</li>
+                    <li>Standard errors and p-values are derived from the variance-covariance matrix (X<sup>T</sup>X)<sup>-1</sup> &sigma;<sup>2</sup>.</li>
+                    <li>Missing or null records for any selected variable drop that record entirely (Listwise Deletion).</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div id="regTooltip" class="regression-tooltip"></div>
+
+    <script src="js/regression_sandbox.js"></script>
+</body>
+</html>
