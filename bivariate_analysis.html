@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spatial Bivariate Analysis - Digital Mindscapes</title>
+    <link rel="stylesheet" href="css/style.css?v=5">
+    <link rel="stylesheet" href="css/responsive.css">
+    <link rel="stylesheet" href="css/bivariate.css">
+    <!-- amCharts 5 -->
+    <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/map.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/geodata/region/usa/usaCountiesLow.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/hierarchy.js"></script>
+</head>
+
+<body>
+    <div class="header">
+        <div class="header-content">
+            <div class="app-logo-container">
+                <a href="index.html">
+                    <img src="assets/app_logo.png" alt="App Logo" class="app-logo">
+                </a>
+            </div>
+            <div class="header-text-container">
+                <h1>Digital Mindscapes: An Interactive Public Health & Socioeconomic Data Visualization Platform</h1>
+                <p class="authors">
+                    <strong>Arpita Datta</strong><sup>*</sup>,
+                    <strong>Dr. Sabirat Rubiya</strong><sup>*</sup>,
+                    <strong>Dr. Avik Chakrabarti</strong><sup>†</sup>,
+                    <strong>Dr. Anjishnu Banerjee</strong><sup>‡</sup>
+                </p>
+                <p class="affiliations">
+                    <sup>*</sup>Marquette University &nbsp;|&nbsp; <sup>†</sup>University of Wisconsin-Milwaukee (UWM)
+                    &nbsp;|&nbsp; <sup>‡</sup>Medical College of Wisconsin (MCW)
+                </p>
+            </div>
+            <div class="banner-logos-row">
+                <div class="banner-logos-top">
+                    <img src="assets/marquette_logo.png" id="marquetteLogo" alt="Marquette University Logo"
+                        class="banner-logo">
+                    <img src="assets/mcw_logo.png" id="mcwLogo" alt="MCW Logo" class="banner-logo">
+                </div>
+                <div class="banner-logos-bottom">
+                    <img src="assets/uwm_logo.png" id="uwmLogo" alt="UWM Logo" class="banner-logo">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="navigation-bar">
+        <a href="index.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+            </svg>
+            Main Dashboard
+        </a>
+        <a href="comparison.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="20" x2="18" y2="10"></line>
+                <line x1="12" y1="20" x2="12" y2="4"></line>
+                <line x1="6" y1="20" x2="6" y2="14"></line>
+            </svg>
+            States Comparison
+        </a>
+        <a href="county_comparison.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="7" height="7"></rect>
+                <rect x="14" y="3" width="7" height="7"></rect>
+                <rect x="14" y="14" width="7" height="7"></rect>
+                <rect x="3" y="14" width="7" height="7"></rect>
+            </svg>
+            Counties Comparison
+        </a>
+        <a href="urban_rural_comparison.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 4h16v16H4z"></path>
+                <path d="M4 12h16"></path>
+                <path d="M12 4v16"></path>
+            </svg>
+            Urban-Rural Comparison
+        </a>
+        <a href="county_distribution.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3" />
+                <circle cx="6" cy="16" r="3" />
+                <circle cx="18" cy="16" r="3" />
+                <circle cx="9" cy="8" r="3" />
+                <circle cx="15" cy="8" r="3" />
+            </svg>
+            County Distribution
+        </a>
+        <a href="multi_metric.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path>
+                <path d="M22 12A10 10 0 0 0 12 2v10z"></path>
+            </svg>
+            State Multi-Metric Comparison
+        </a>
+        <a href="metric_visualization.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 20v-6M6 20V10M18 20V4" />
+            </svg>
+            Metric Insights
+        </a>
+        <a href="bivariate_analysis.html" class="comparison-pill active-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="3" y1="9" x2="21" y2="9"></line>
+                <line x1="3" y1="15" x2="21" y2="15"></line>
+                <line x1="9" y1="3" x2="9" y2="21"></line>
+                <line x1="15" y1="3" x2="15" y2="21"></line>
+            </svg>
+            Bivariate Analysis
+        </a>
+        <a href="query.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                <path d="M11 8v6"></path>
+                <path d="M8 11h6"></path>
+            </svg>
+            Semi-Structured Query
+        </a>
+        <a href="about.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+            About
+        </a>
+    </div>
+
+    <div class="bivariate-container">
+        <div class="bivariate-sidebar">
+            <div class="selection-header">
+                <div class="header-with-btn">
+                    <h2>Bivariate Analysis</h2>
+                    <button id="infoBtn" class="info-btn" title="How to interpret this map?">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="16" x2="12" y2="12"></line>
+                            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                        </svg>
+                    </button>
+                </div>
+                <p>Compare two metrics spatially</p>
+            </div>
+
+            <div class="selector-group">
+                <div class="metric-selector">
+                    <label for="metricX">Metric X (Horizontal Axis)</label>
+                    <select id="metricX" class="styled-select"></select>
+                </div>
+
+                <div class="metric-selector">
+                    <label for="metricY">Metric Y (Vertical Axis)</label>
+                    <select id="metricY" class="styled-select"></select>
+                </div>
+            </div>
+
+            <div class="legend-container">
+                <div class="legend-header">
+                    <h3>Bivariate Legend</h3>
+                </div>
+                <div class="legend-box">
+                    <div id="bivariateLegend" class="bivariate-legend">
+                        <!-- 3x3 Grid will be injected here -->
+                    </div>
+                    <div class="legend-labels">
+                        <span id="labelX" class="label-x">Metric X</span>
+                        <span id="labelY" class="label-y">Metric Y</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="analysis-description">
+                <p>This map uses a 3x3 bivariate color scale to show the intersection of two variables. Darker, more
+                    saturated colors indicate high values for both metrics.</p>
+            </div>
+        </div>
+
+        <div class="bivariate-main">
+            <div id="chartdiv" class="bivariate-map"></div>
+            <div id="loadingOverlay" class="loading-overlay">
+                <div class="spinner"></div>
+                <p>Analyzing County Data...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Info Modal -->
+    <div id="infoModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>How to Read a Bivariate Map</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="bivariate-explainer">
+                    <div class="explainer-section">
+                        <h3><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="3" y1="9" x2="21" y2="9"></line>
+                                <line x1="3" y1="15" x2="21" y2="15"></line>
+                                <line x1="9" y1="3" x2="9" y2="21"></line>
+                                <line x1="15" y1="3" x2="15" y2="21"></line>
+                            </svg> The 3x3 Grid</h3>
+                        <p>A bivariate map shows two different variables simultaneously on one map. We use a 3x3 color
+                            grid to represent the combination of values:</p>
+                        <ul>
+                            <li><strong>Horizontal Axis:</strong> Represented by Metric X. Moving from left to right
+                                shows increasing values for Metric X.</li>
+                            <li><strong>Vertical Axis:</strong> Represented by Metric Y. Moving from bottom to top shows
+                                increasing values for Metric Y.</li>
+                        </ul>
+                    </div>
+                    <div class="explainer-section">
+                        <h3><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path
+                                    d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z">
+                                </path>
+                            </svg> Interpreting Colors</h3>
+                        <ul>
+                            <li><strong>Light Grey (Bottom-Left):</strong> Low values for both metrics.</li>
+                            <li><strong>Deep Blue (Top-Left):</strong> High Y metric, Low X metric.</li>
+                            <li><strong>Deep Pink (Bottom-Right):</strong> Low Y metric, High X metric.</li>
+                            <li><strong>Dark Purple (Top-Right):</strong> High values for both metrics (High-High).</li>
+                        </ul>
+                    </div>
+                    <div class="explainer-section">
+                        <h3><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="12" x2="12" y2="16"></line>
+                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                            </svg> Why use this?</h3>
+                        <p>It helps identify spatial correlations. For example, if you see many <strong>dark
+                                purple</strong> counties, it means those areas struggle with both issues (e.g., high
+                            unemployment <em>and</em> high obesity).</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="js/bivariate_analysis.js"></script>
+</body>
+
+</html>

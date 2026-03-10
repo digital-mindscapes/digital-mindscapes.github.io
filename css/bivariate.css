@@ -1,0 +1,339 @@
+/* Bivariate Analysis Container */
+.bivariate-container {
+    display: flex;
+    min-height: calc(100vh - 250px);
+    background-color: #f8f9fa;
+}
+
+/* Sidebar Styling */
+.bivariate-sidebar {
+    width: 380px;
+    padding: 30px;
+    background: white;
+    box-shadow: 2px 0 15px rgba(0,0,0,0.05);
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+.selection-header h2 {
+    color: #c83830;
+    margin: 0;
+    font-size: 1.8rem;
+}
+
+.selection-header p {
+    color: #6c757d;
+    margin: 5px 0 0 0;
+}
+
+.header-with-btn {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.info-btn {
+    background: none;
+    border: none;
+    color: #c83830;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 50%;
+    transition: background 0.2s, transform 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.info-btn:hover {
+    background: #fff0f0;
+    transform: scale(1.1);
+}
+
+/* Selectors */
+.selector-group {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.metric-selector label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #495057;
+}
+
+.styled-select {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    transition: border-color 0.2s;
+    cursor: pointer;
+}
+
+.styled-select:focus {
+    outline: none;
+    border-color: #c83830;
+}
+
+/* Bivariate Legend Grid */
+.legend-container {
+    padding: 24px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.legend-header h3 {
+    margin: 0 0 30px 0;
+    font-size: 1.1rem;
+    color: #333;
+    text-align: center;
+    width: 100%;
+}
+
+.legend-box {
+    position: relative;
+    width: 250px;
+    height: 250px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.bivariate-legend {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    width: 160px;
+    height: 160px;
+    transform: rotate(-45deg);
+    z-index: 2;
+}
+
+.legend-cell {
+    width: 100%;
+    height: 100%;
+    border: 1px solid rgba(255,255,255,0.3);
+}
+
+.legend-labels {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.label-x, .label-y {
+    position: absolute;
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: #444;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    white-space: nowrap;
+}
+
+.label-x {
+    bottom: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    width: 180px;
+}
+
+.label-y {
+    left: -85px;
+    top: 50%;
+    transform: rotate(-90deg) translateY(-50%);
+    transform-origin: center;
+    text-align: center;
+    width: 180px;
+}
+
+/* Map Main Area */
+.bivariate-main {
+    flex-grow: 1;
+    position: relative;
+    background: #f1f3f5;
+    padding: 20px;
+}
+
+.bivariate-map {
+    width: 100%;
+    height: 100%;
+    border-radius: 15px;
+    overflow: hidden;
+    background: white;
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.02);
+}
+
+/* Loading Overlay */
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255,255,255,0.9);
+    display: none; /* Dynamic */
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    gap: 15px;
+    border-radius: 15px;
+}
+
+.loading-overlay.active {
+    display: flex;
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid #f3f3f3;
+    border-top: 5px solid #c83830;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Mobile Responsive */
+@media (max-width: 1024px) {
+    .bivariate-container {
+        flex-direction: column;
+    }
+    .bivariate-sidebar {
+        width: 100%;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    }
+    .bivariate-main {
+        height: 600px;
+    }
+}
+
+/* Modal Styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(4px);
+    display: none; /* Dynamic */
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    padding: 20px;
+}
+
+.modal-overlay.active {
+    display: flex;
+}
+
+.modal-content {
+    background: white;
+    width: 100%;
+    max-width: 600px;
+    border-radius: 16px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+    display: flex;
+    flex-direction: column;
+    max-height: 90vh;
+    animation: modalPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes modalPop {
+    from { opacity: 0; transform: scale(0.9) translateY(20px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.modal-header {
+    padding: 20px 25px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 1.4rem;
+    color: #c83830;
+}
+
+.close-modal {
+    background: none;
+    border: none;
+    font-size: 1.8rem;
+    line-height: 1;
+    cursor: pointer;
+    color: #888;
+    padding: 0;
+}
+
+.close-modal:hover {
+    color: #333;
+}
+
+.modal-body {
+    padding: 25px;
+    overflow-y: auto;
+}
+
+.explainer-section {
+    margin-bottom: 25px;
+}
+
+.explainer-section h3 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.1rem;
+    color: #333;
+    margin: 0 0 12px 0;
+}
+
+.explainer-section p, .explainer-section li {
+    color: #555;
+    line-height: 1.6;
+}
+
+.explainer-section ul {
+    padding-left: 20px;
+}
+
+.modal-footer {
+    padding: 15px 25px;
+    border-top: 1px solid #eee;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.close-btn {
+    background: #c83830;
+    color: white;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.close-btn:hover {
+    background: #a02d26;
+}
