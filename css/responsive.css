@@ -274,12 +274,12 @@
 
     /* ── Navigation: stacked wrap layout ── */
     .navigation-bar {
+        display: flex !important;
         flex-wrap: wrap !important;
-        overflow-x: visible !important;
-        gap: 10px !important;
-        padding: 12px 15px !important;
+        flex-direction: row !important;
         justify-content: center !important;
-        scrollbar-width: auto;
+        gap: 12px !important;
+        padding: 15px !important;
     }
 
     .navigation-bar::-webkit-scrollbar {
@@ -287,14 +287,12 @@
     }
 
     .comparison-pill {
-        padding: 10px 15px !important;
-        font-size: 0.8rem !important;
-        white-space: normal !important;
-        /* Allow internal wrap if name is long */
+        padding: 10px 18px !important;
+        font-size: 0.85rem !important;
+        white-space: nowrap !important;
         text-align: center !important;
-        min-width: calc(50% - 10px) !important;
-        /* Force 2 per row */
-        flex-grow: 1 !important;
+        flex: 1 1 calc(33.333% - 20px) !important;
+        min-width: 180px !important;
         max-width: 100% !important;
         border-radius: 30px !important;
         justify-content: center !important;
