@@ -152,6 +152,9 @@ function runPCAAnalysis() {
     // Clear previous
     document.getElementById('errorDisplay').style.display = 'none';
     document.getElementById('resultsDisplay').style.display = 'none';
+    if(document.getElementById('pcaEmptyState')) {
+        document.getElementById('pcaEmptyState').style.display = 'none';
+    }
 
     setTimeout(() => {
         try {
@@ -179,7 +182,7 @@ function runPCAAnalysis() {
                 });
                 if(valid) {
                     matrix_rows.push(row);
-                    validMeta.push({ name: d.name, state: d.state_abbr });
+                    validMeta.push({ name: d.name, state: d.state_abbr, id: d.id });
                 }
             });
 
@@ -232,13 +235,32 @@ function runPCAAnalysis() {
                 varianceExplained: e.value / totalVariance
             }));
 
-            // 4. Project Data onto PC1 and PC2
-            // Projections = Z^T * EigenVectors (n x p * p x 2)
-            const topTwoVectors = math.transpose(math.matrix([eigenData[0].vector, eigenData[1].vector]));
-            const projections = math.multiply(Zt, topTwoVectors).toArray();
+            // 4. Project Data onto Top PCs (max 5)
+            const numComponentsToProject = Math.min(5, p);
+            const topVectors = math.transpose(math.matrix(eigenData.slice(0, numComponentsToProject).map(e => e.vector)));
+            const projections = math.multiply(Zt, topVectors).toArray();
+
+            // Prepare Global Map Data
+            window.pcaVariables = xLabels;
+            window.pcaEigenData = eigenData;
+            
+            window.pcaMapData = projections.map((proj, idx) => {
+                const mapObj = {
+                    id: validMeta[idx].id,
+                    name: validMeta[idx].name,
+                    state: validMeta[idx].state,
+                    standardizedValues: standardizedRows.map(row => row[idx])
+                };
+                proj.forEach((val, i) => {
+                    mapObj[`PC${i+1}`] = val;
+                });
+                return mapObj;
+            });
+            window.pcaMapAvailableComponents = numComponentsToProject;
 
             // --- VISUALIZATION ---
             document.getElementById('resultsDisplay').style.display = 'block';
+            document.getElementById('visualizeMapBtn').style.display = 'flex';
             
             renderScreePlot(eigenData);
             renderCumulativePlot(eigenData);
@@ -525,4 +547,381 @@ function showModelError(msg) {
         errContainer.style.display = 'block';
         errContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
+}
+
+// =========================================
+// MAP VISUALIZATION (amCharts)
+// =========================================
+
+let amMapRoot = null;
+let mapPolygonSeries = null;
+let currentSelectedPC = "PC1";
+let lastProcessedMapState = null;
+
+document.getElementById('visualizeMapBtn').addEventListener('click', () => {
+    document.getElementById('mapModal').style.display = 'flex';
+    document.getElementById('pcaCountyBreakdownContainer').style.display = 'none'; // reset table on open
+    if(mapPolygonSeries) {
+        mapPolygonSeries.mapPolygons.each(p => p.set("active", false)); // remove any clicks
+    }
+    initPCAMapModal();
+});
+
+document.getElementById('closeMapModalBtn').addEventListener('click', () => {
+    document.getElementById('mapModal').style.display = 'none';
+});
+
+document.getElementById('pcaToggle').addEventListener('change', (e) => {
+    currentSelectedPC = e.target.value;
+    updatePCAMapData();
+});
+
+function initPCAMapModal() {
+    const toggle = document.getElementById('pcaToggle');
+    toggle.innerHTML = '';
+    
+    // Populate dropdown based on available components
+    for(let i=1; i<=window.pcaMapAvailableComponents; i++) {
+        const option = document.createElement('option');
+        option.value = `PC${i}`;
+        option.textContent = `Principal Component ${i}`;
+        toggle.appendChild(option);
+    }
+    
+    currentSelectedPC = "PC1";
+    toggle.value = currentSelectedPC;
+
+    const currentStateFilter = document.getElementById('stateFilter').value;
+
+    if (amMapRoot && lastProcessedMapState !== currentStateFilter) {
+        amMapRoot.dispose();
+        amMapRoot = null;
+    }
+    lastProcessedMapState = currentStateFilter;
+
+    // Initialize amCharts if not already done
+    if(!amMapRoot) {
+        if (currentStateFilter !== "All") {
+            const match = dataset.find(d => d.state_name === currentStateFilter);
+            if (match && match.state_abbr) {
+                const targetAbbr = match.state_abbr.toLowerCase(); // must be lowercase for amCharts
+                const geoKey = "am5geodata_region_usa_" + targetAbbr + "Low";
+
+                if (window[geoKey]) {
+                    renderPCAMapCore(window[geoKey], am5map.geoMercator());
+                } else {
+                    const script = document.createElement("script");
+                    script.src = `https://cdn.amcharts.com/lib/5/geodata/region/usa/${targetAbbr}Low.js`;
+                    script.onload = () => {
+                        if (window[geoKey]) {
+                            renderPCAMapCore(window[geoKey], am5map.geoMercator());
+                        } else {
+                            console.warn("Geodata not found for " + targetAbbr + ", showing US map");
+                            renderPCAMapCore(am5geodata_region_usa_usaCountiesLow, am5map.geoAlbersUsa());
+                        }
+                    };
+                    script.onerror = () => {
+                        console.warn("Could not load county geodata for " + targetAbbr + ", showing US map");
+                        renderPCAMapCore(am5geodata_region_usa_usaCountiesLow, am5map.geoAlbersUsa());
+                    };
+                    document.head.appendChild(script);
+                }
+                return; // Exit here, renderPCAMapCore handles the rest asynchronously
+            }
+        }
+        
+        // Default to all US
+        renderPCAMapCore(am5geodata_region_usa_usaCountiesLow, am5map.geoAlbersUsa());
+    } else {
+        updatePCAMapData();
+    }
+}
+
+function renderPCAMapCore(activeGeoJSON, projectionAlg) {
+    amMapRoot = am5.Root.new("pcaMapChartDiv");
+    amMapRoot.setThemes([am5themes_Animated.new(amMapRoot)]);
+
+    const mapChart = amMapRoot.container.children.push(am5map.MapChart.new(amMapRoot, {
+        panX: "translateX",
+        panY: "translateY",
+        wheelY: "zoom",
+        projection: projectionAlg,
+        paddingTop: 40,
+        paddingBottom: 100 // Increased padding to force the map polygons upward
+    }));
+
+    mapPolygonSeries = mapChart.series.push(am5map.MapPolygonSeries.new(amMapRoot, {
+        geoJSON: activeGeoJSON,
+        valueField: "value",
+        calculateAggregates: true
+    }));
+
+    // Dynamic heat rules setup when data updates
+    mapPolygonSeries.mapPolygons.template.setAll({
+        tooltipText: "{name}: [bold]{value}[/] (Score)",
+        stroke: am5.color(0xffffff),
+        strokeWidth: 0.5,
+        interactive: true,
+        cursorOverStyle: "pointer"
+    });
+
+    mapPolygonSeries.mapPolygons.template.adapters.add("fill", function(fill, target) {
+        if (target.dataItem && (target.dataItem.get("value") === null || target.dataItem.get("value") === undefined)) {
+            return am5.color(0xe2e8f0); // Ash grey for missing data
+        }
+        return fill;
+    });
+
+    mapPolygonSeries.mapPolygons.template.adapters.add("tooltipText", function (text, target) {
+        const dataItem = target.dataItem;
+        if (dataItem) {
+            const val = dataItem.get("value");
+            if (val === null || val === undefined) return "{name}: N/A";
+            return "{name}: [bold]{value}[/] (" + currentSelectedPC + ")";
+        }
+        return text;
+    });
+
+    // Click handler for county breakdown
+    mapPolygonSeries.mapPolygons.template.events.on("click", function(ev) {
+        const dataItem = ev.target.dataItem;
+        if(!dataItem) return;
+
+        // Manage active state
+        mapPolygonSeries.mapPolygons.each(p => p.set("active", false));
+        ev.target.set("active", true);
+
+        const pId = dataItem.get("id");
+        const cName = dataItem.dataContext ? dataItem.dataContext.name : dataItem.get("name");
+        renderCountyPCABreakdown(pId, cName);
+    });
+
+    mapPolygonSeries.mapPolygons.template.states.create("active", {
+        stroke: am5.color(0x000000),
+        strokeWidth: 2
+    });
+
+    const heatLegend = amMapRoot.container.children.push(am5.HeatLegend.new(amMapRoot, {
+        orientation: "horizontal",
+        startColor: am5.color(0x3b82f6), // Blue 
+        endColor: am5.color(0xef4444),   // Red
+        startText: "Negative Component Score",
+        endText: "Positive Component Score",
+        stepCount: 5,
+        paddingTop: 10,
+        paddingBottom: 15
+    }));
+
+    heatLegend.setAll({
+        y: am5.percent(100),
+        centerY: am5.percent(100),
+        x: am5.percent(50),
+        centerX: am5.percent(50),
+        width: am5.percent(70),
+        layer: 30
+    });
+
+    if(window.innerWidth <= 768) {
+        heatLegend.set("forceHidden", true);
+    } else {
+        // Hover logic to show value on legend
+        mapPolygonSeries.mapPolygons.template.events.on("pointerover", function(ev) {
+            const val = ev.target.dataItem.get("value");
+            if (val !== null && val !== undefined) {
+                heatLegend.showValue(val);
+            }
+        });
+        mapPolygonSeries.mapPolygons.template.events.on("pointerout", function(ev) {
+            heatLegend.hideTooltip();
+        });
+    }
+
+    mapPolygonSeries.events.on("datavalidated", function () {
+        heatLegend.set("startValue", mapPolygonSeries.getPrivate("valueLow"));
+        heatLegend.set("endValue", mapPolygonSeries.getPrivate("valueHigh"));
+    });
+
+    // Store globally to manipulate easily later if needed
+    window.pcaHeatLegend = heatLegend;
+
+    mapChart.appear(1000, 100);
+    
+    updatePCAMapData();
+}
+
+function normalizeCountyNameMap(name) {
+    if (!name) return "";
+    let n = name.toLowerCase()
+        .replace(/\s+county$/i, "")
+        .replace(/\s+parish$/i, "")
+        .replace(/\s+borough$/i, "")
+        .replace(/\s+census\s+area$/i, "")
+        .replace(/\s+municipality$/i, "")
+        .replace(/\bcity and borough of\s+/i, "")
+        .replace(/\bcity of\s+/i, "")
+        .replace(/\s+city$/i, "");
+    return n.replace(/[^a-z0-9]/g, "");
+}
+
+function updatePCAMapData() {
+    if(!amMapRoot || !mapPolygonSeries || !window.pcaMapData) return;
+
+    const mapData = [];
+    const geoJSON = mapPolygonSeries.get("geoJSON");
+    const geoFeatures = geoJSON ? geoJSON.features : [];
+    
+    // Create quick lookup from mapData
+    const lookup = {};
+    window.pcaMapData.forEach(d => {
+        if(d.name && d.state) {
+            lookup[d.state.toUpperCase() + "_" + normalizeCountyNameMap(d.name)] = d;
+        }
+    });
+
+    let minVal = Infinity;
+    let maxVal = -Infinity;
+
+    geoFeatures.forEach(feature => {
+        const pId = feature.id; // e.g., US-AL-001
+        if (!pId) return;
+
+        let stateAbbr = "";
+        if (feature.properties && feature.properties.STATE) {
+            stateAbbr = feature.properties.STATE;
+        } else {
+            const parts = pId.split("-");
+            if (parts.length >= 3) stateAbbr = parts[1];
+        }
+
+        const name = feature.properties.name || "";
+        const dataObj = lookup[stateAbbr + "_" + normalizeCountyNameMap(name)];
+        
+        let val = null;
+        if(dataObj && dataObj[currentSelectedPC] !== undefined && dataObj[currentSelectedPC] !== null) {
+            val = Number(dataObj[currentSelectedPC].toFixed(3));
+            if(val < minVal) minVal = val;
+            if(val > maxVal) maxVal = val;
+        }
+
+        mapData.push({
+            id: pId,
+            value: val,
+            name: name || dataObj?.name,
+            countyData: dataObj
+        });
+    });
+
+    mapPolygonSeries.data.setAll(mapData);
+
+    // Update Heat Rules based on current min/max to differentiate positive/negative scores
+    mapPolygonSeries.set("heatRules", [{
+        target: mapPolygonSeries.mapPolygons.template,
+        dataField: "value",
+        min: am5.color(0x3b82f6), // Blue for negative PC scores
+        max: am5.color(0xef4444), // Red for positive PC scores
+        key: "fill"
+    }]);
+
+    // Update table if it's open
+    const activeCounty = mapPolygonSeries.mapPolygons.values.find(p => p.get("active"));
+    if(activeCounty && activeCounty.dataItem) {
+        const cName = activeCounty.dataItem.dataContext ? activeCounty.dataItem.dataContext.name : activeCounty.dataItem.get("name");
+        renderCountyPCABreakdown(activeCounty.dataItem.get("id"), cName);
+    }
+}
+
+function renderCountyPCABreakdown(geoId, printName) {
+    const container = document.getElementById('pcaCountyBreakdownContainer');
+    const tableBody = document.getElementById('pcaCountyBreakdownBody');
+    const titleEl = document.getElementById('pcaCountyBreakdownTitle');
+    
+    if(!container || !tableBody || !titleEl) return;
+    
+    // Find the specific item directly from map series data to easily get countyData attached
+    let dataItemObj = null;
+    mapPolygonSeries.data.each(d => {
+        if(d.id === geoId) dataItemObj = d;
+    });
+
+    if(!dataItemObj || !dataItemObj.countyData) {
+        container.style.display = 'none';
+        return;
+    }
+
+    const cData = dataItemObj.countyData;
+    
+    // Get the index of the selected component (e.g. "PC1" -> 0)
+    const pcIndex = parseInt(currentSelectedPC.replace("PC", "")) - 1;
+    const pcEigen = window.pcaEigenData[pcIndex];
+    if(!pcEigen) return;
+    let pNameStr = printName || (dataItemObj.name) || "Selected Area";
+    titleEl.textContent = `Variable Contributions for ${pNameStr} (${currentSelectedPC})`;
+    tableBody.innerHTML = '';
+
+    const vars = window.pcaVariables;
+    const stdVals = cData.standardizedValues; // Length is same as vars
+    const weights = pcEigen.vector;
+
+    // Build contributions array for sorting
+    let contributions = [];
+    for(let i=0; i<vars.length; i++) {
+        let weight = weights[i];
+        let stdVal = stdVals[i];
+        let contrib = weight * stdVal;
+
+        contributions.push({
+            variable: vars[i],
+            weight: weight,
+            standardized: stdVal,
+            contribution: contrib
+        });
+    }
+
+    // Sort by absolute contribution descending to show biggest drivers
+    contributions.sort((a,b) => Math.abs(b.contribution) - Math.abs(a.contribution));
+
+    let totalScore = 0;
+    contributions.forEach((item, index) => {
+        totalScore += item.contribution;
+        const row = document.createElement('tr');
+        
+        // Add alternating row colors for better visibility
+        row.style.backgroundColor = index % 2 === 0 ? '#ffffff' : '#f8fafc';
+        row.style.borderBottom = '1px solid #e2e8f0';
+        
+        const isPosC = item.contribution > 0;
+        
+        row.innerHTML = `
+            <td style="padding: 12px; font-weight:600; color: #334155;">${item.variable}</td>
+            <td style="padding: 12px; color: #64748b;">${item.weight.toFixed(3)}</td>
+            <td style="padding: 12px; color: #64748b;">${item.standardized.toFixed(3)}</td>
+            <td style="padding: 12px; color:${isPosC ? '#15803d' : '#b91c1c'}; font-weight:700;">
+                ${isPosC ? '+' : ''}${item.contribution.toFixed(3)}
+            </td>
+        `;
+
+        // Slight hover effect on table rows
+        row.addEventListener('mouseenter', () => row.style.backgroundColor = '#f1f5f9');
+        row.addEventListener('mouseleave', () => row.style.backgroundColor = index % 2 === 0 ? '#ffffff' : '#f8fafc');
+
+        tableBody.appendChild(row);
+    });
+
+    // Append total row
+    const totRow = document.createElement('tr');
+    totRow.style.background = "#e2e8f0";
+    totRow.style.borderTop = "2px solid #cbd5e1";
+    const isPosT = totalScore > 0;
+    totRow.innerHTML = `
+        <td colspan="3" style="text-align:right; font-weight:800; color: #1e293b; padding:16px 12px; font-size: 1.05rem;">Total Calculated Component Score:</td>
+        <td style="color:${isPosT ? '#15803d' : '#b91c1c'}; font-weight:800; padding:16px 12px; font-size: 1.1rem;">
+            ${isPosT ? '+' : ''}${totalScore.toFixed(3)}
+        </td>
+    `;
+    tableBody.appendChild(totRow);
+
+    container.style.display = 'block';
+    
+    // Scroll container into view securely within the modal
+    container.scrollIntoView({ behavior: 'smooth', block: 'end' });
 }

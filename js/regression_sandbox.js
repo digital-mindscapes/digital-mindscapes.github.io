@@ -196,6 +196,9 @@ function runRegressionModel() {
             // Hide previous errors before and show loader
             document.getElementById('errorDisplay').style.display = 'none';
             document.getElementById('resultsDisplay').style.display = 'none';
+            if(document.getElementById('regressionEmptyState')) {
+                document.getElementById('regressionEmptyState').style.display = 'none';
+            }
 
             const rawData = getFilteredData();
             
@@ -334,12 +337,41 @@ function runRegressionModel() {
             const Y_hat_arr = Y_hat.valueOf().map(y => y[0]);
             for(let i=0; i<n; i++) {
                 plotData.push({
+                    actual: Y_vec[i][0],
                     pred: Y_hat_arr[i],
                     res: residualsArr[i],
                     name: metaData[i].name,
-                    state: metaData[i].state
+                    state: metaData[i].state,
+                    id: metaData[i].id
                 });
             }
+            
+            // global map cache
+            window.regMapData = plotData;
+            document.getElementById('visualizeMapBtn').style.display = 'flex';
+            
+            // Populate County Side Table
+            document.getElementById('countyResultsSidebar').style.display = 'block';
+            const countyTbody = document.getElementById('countyResultsTableBody');
+            countyTbody.innerHTML = '';
+            
+            // Sort county data by residual magnitude descending to surface most anomalous counties
+            const sortedCountyData = [...plotData].sort((a,b) => Math.abs(b.res) - Math.abs(a.res));
+            
+            sortedCountyData.forEach(d => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="padding: 8px 6px; border-bottom: 1px solid #e2e8f0; text-align: left;">
+                        <div style="font-weight: 600; color: #1e293b; max-width: 130px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${d.name}, ${d.state}">${d.name}</div>
+                        <div style="font-size: 0.75rem; color: #64748b;">${d.state}</div>
+                    </td>
+                    <td style="padding: 8px 6px; border-bottom: 1px solid #e2e8f0; color: #475569;">${d.actual.toFixed(2)}</td>
+                    <td style="padding: 8px 6px; border-bottom: 1px solid #e2e8f0; color: #475569;">${d.pred.toFixed(2)}</td>
+                    <td style="padding: 8px 6px; border-bottom: 1px solid #e2e8f0; font-weight: 700; color: ${d.res > 0 ? '#c83830' : '#10b981'};">${d.res > 0 ? '+' : ''}${d.res.toFixed(2)}</td>
+                `;
+                countyTbody.appendChild(tr);
+            });
+
             
             renderResidualPlot(plotData, yLabel);
 
@@ -536,4 +568,266 @@ function toggleRegPenalty(val) {
     if (container) {
         container.style.display = (val === 'ridge') ? 'block' : 'none';
     }
+}
+
+// MAP VISUALIZATION (amCharts)
+// =========================================
+
+let amMapRoot = null;
+let mapPolygonSeries = null;
+let currentSelectedMapVal = "actual";
+let lastProcessedMapState = null;
+
+document.getElementById('visualizeMapBtn').addEventListener('click', () => {
+    document.getElementById('mapModal').style.display = 'flex';
+    initRegMapModal();
+});
+
+document.getElementById('closeMapModalBtn').addEventListener('click', () => {
+    document.getElementById('mapModal').style.display = 'none';
+});
+
+function handleMapToggle(val, btnEl) {
+    currentSelectedMapVal = val;
+    if (btnEl) {
+        document.querySelectorAll('#mapModal .view-toggle-btn').forEach(b => b.classList.remove('active'));
+        btnEl.classList.add('active');
+    }
+    updateRegMapData();
+}
+
+function initRegMapModal() {
+    // Current value is maintained via currentSelectedMapVal variable
+
+    const currentStateFilter = document.getElementById('stateFilter').value;
+
+    if (amMapRoot && lastProcessedMapState !== currentStateFilter) {
+        amMapRoot.dispose();
+        amMapRoot = null;
+    }
+    lastProcessedMapState = currentStateFilter;
+
+    // Initialize amCharts if not already done
+    if(!amMapRoot) {
+        if (currentStateFilter !== "All") {
+            const match = dataset.find(d => d.state_name === currentStateFilter);
+            if (match && match.state_abbr) {
+                const targetAbbr = match.state_abbr.toLowerCase(); // must be lowercase for amCharts
+                const geoKey = "am5geodata_region_usa_" + targetAbbr + "Low";
+
+                if (window[geoKey]) {
+                    renderRegMapCore(window[geoKey], am5map.geoMercator());
+                } else {
+                    const script = document.createElement("script");
+                    script.src = `https://cdn.amcharts.com/lib/5/geodata/region/usa/${targetAbbr}Low.js`;
+                    script.onload = () => {
+                        if (window[geoKey]) {
+                            renderRegMapCore(window[geoKey], am5map.geoMercator());
+                        } else {
+                            renderRegMapCore(am5geodata_region_usa_usaCountiesLow, am5map.geoAlbersUsa());
+                        }
+                    };
+                    script.onerror = () => {
+                        renderRegMapCore(am5geodata_region_usa_usaCountiesLow, am5map.geoAlbersUsa());
+                    };
+                    document.head.appendChild(script);
+                }
+                return; 
+            }
+        }
+        renderRegMapCore(am5geodata_region_usa_usaCountiesLow, am5map.geoAlbersUsa());
+    } else {
+        updateRegMapData();
+    }
+}
+
+function renderRegMapCore(activeGeoJSON, projectionAlg) {
+    amMapRoot = am5.Root.new("regMapChartDiv");
+    amMapRoot.setThemes([am5themes_Animated.new(amMapRoot)]);
+
+    const mapChart = amMapRoot.container.children.push(am5map.MapChart.new(amMapRoot, {
+        panX: "translateX",
+        panY: "translateY",
+        wheelY: "zoom",
+        projection: projectionAlg,
+        paddingTop: 40,
+        paddingBottom: 100 
+    }));
+
+    mapPolygonSeries = mapChart.series.push(am5map.MapPolygonSeries.new(amMapRoot, {
+        geoJSON: activeGeoJSON,
+        valueField: "value",
+        calculateAggregates: true
+    }));
+
+    mapPolygonSeries.mapPolygons.template.setAll({
+        tooltipText: "{name}: [bold]{value}[/] ({customLabel})",
+        stroke: am5.color(0xffffff),
+        strokeWidth: 0.5,
+        interactive: true,
+        cursorOverStyle: "pointer"
+    });
+
+    mapPolygonSeries.mapPolygons.template.adapters.add("fill", function(fill, target) {
+        if (target.dataItem && (target.dataItem.get("value") === null || target.dataItem.get("value") === undefined)) {
+            return am5.color(0xe2e8f0); 
+        }
+        return fill;
+    });
+
+    mapPolygonSeries.mapPolygons.template.adapters.add("tooltipText", function (text, target) {
+        const dataItem = target.dataItem;
+        if (dataItem) {
+            const val = dataItem.get("value");
+            let label = "Actual Value";
+            if (currentSelectedMapVal === "predicted") label = "Predicted Value";
+            if (currentSelectedMapVal === "residual") label = "Residual Error";
+            dataItem.set("customLabel", label);
+            
+            if (val === null || val === undefined) return "{name}: N/A";
+            return "{name}: [bold]{value}[/] (" + label + ")";
+        }
+        return text;
+    });
+
+    const heatLegend = amMapRoot.container.children.push(am5.HeatLegend.new(amMapRoot, {
+        orientation: "horizontal",
+        startColor: am5.color(0x3b82f6), 
+        endColor: am5.color(0xef4444),   
+        startText: "Low",
+        endText: "High",
+        stepCount: 5,
+        paddingTop: 10,
+        paddingBottom: 15
+    }));
+
+    heatLegend.setAll({
+        y: am5.percent(100),
+        centerY: am5.percent(100),
+        x: am5.percent(50),
+        centerX: am5.percent(50),
+        width: am5.percent(70),
+        layer: 30
+    });
+
+    if(window.innerWidth <= 768) {
+        heatLegend.set("forceHidden", true);
+    } else {
+        mapPolygonSeries.mapPolygons.template.events.on("pointerover", function(ev) {
+            const val = ev.target.dataItem.get("value");
+            if (val !== null && val !== undefined) {
+                heatLegend.showValue(val);
+            }
+        });
+        mapPolygonSeries.mapPolygons.template.events.on("pointerout", function(ev) {
+            heatLegend.hideTooltip();
+        });
+    }
+
+    mapPolygonSeries.events.on("datavalidated", function () {
+        heatLegend.set("startValue", mapPolygonSeries.getPrivate("valueLow"));
+        heatLegend.set("endValue", mapPolygonSeries.getPrivate("valueHigh"));
+        
+        // Dynamic labels for legend based on map mode
+        if(currentSelectedMapVal === "residual") {
+            heatLegend.set("startText", "Negative Error");
+            heatLegend.set("endText", "Positive Error");
+        } else if (currentSelectedMapVal === "predicted") {
+            heatLegend.set("startText", "Low Prediction");
+            heatLegend.set("endText", "High Prediction");
+        } else {
+            heatLegend.set("startText", "Low Target");
+            heatLegend.set("endText", "High Target");
+        }
+    });
+
+    window.regHeatLegend = heatLegend;
+
+    mapChart.appear(1000, 100);
+    
+    updateRegMapData();
+}
+
+function normalizeCountyNameMap(name) {
+    if (!name) return "";
+    let n = name.toLowerCase()
+        .replace(/\s+county$/i, "")
+        .replace(/\s+parish$/i, "")
+        .replace(/\s+borough$/i, "")
+        .replace(/\s+census\s+area$/i, "")
+        .replace(/\s+municipality$/i, "")
+        .replace(/\bcity and borough of\s+/i, "")
+        .replace(/\bcity of\s+/i, "")
+        .replace(/\s+city$/i, "");
+    return n.replace(/[^a-z0-9]/g, "");
+}
+
+function updateRegMapData() {
+    if(!amMapRoot || !mapPolygonSeries || !window.regMapData) return;
+
+    const mapData = [];
+    const geoJSON = mapPolygonSeries.get("geoJSON");
+    const geoFeatures = geoJSON ? geoJSON.features : [];
+    
+    // Create lookup
+    const lookup = {};
+    window.regMapData.forEach(d => {
+        if(d.name && d.state) {
+            lookup[d.state.toUpperCase() + "_" + normalizeCountyNameMap(d.name)] = d;
+        }
+    });
+
+    let minVal = Infinity;
+    let maxVal = -Infinity;
+
+    geoFeatures.forEach(feature => {
+        const pId = feature.id; 
+        if (!pId) return;
+
+        let stateAbbr = "";
+        if (feature.properties && feature.properties.STATE) {
+            stateAbbr = feature.properties.STATE;
+        } else {
+            const parts = pId.split("-");
+            if (parts.length >= 3) stateAbbr = parts[1];
+        }
+
+        const name = feature.properties.name || "";
+        const lookupKey = stateAbbr.toUpperCase() + "_" + normalizeCountyNameMap(name);
+        const dataObj = lookup[lookupKey];
+
+        let val = null;
+        if(dataObj) {
+            if(currentSelectedMapVal === "actual") val = dataObj.actual;
+            else if(currentSelectedMapVal === "predicted") val = dataObj.pred;
+            else if(currentSelectedMapVal === "residual") val = dataObj.res;
+        }
+
+        if (val !== null) {
+            val = Number(val.toFixed(3));
+            if(val < minVal) minVal = val;
+            if(val > maxVal) maxVal = val;
+        }
+
+        mapData.push({
+            id: pId,
+            value: val,
+            name: name || dataObj?.name,
+            countyData: dataObj
+        });
+    });
+
+    mapPolygonSeries.data.setAll(mapData);
+
+    let startCol = am5.color(0x3b82f6);
+    let endCol = am5.color(0xef4444);
+    
+    // diverging blue to red for residuals
+    mapPolygonSeries.set("heatRules", [{
+        target: mapPolygonSeries.mapPolygons.template,
+        dataField: "value",
+        min: startCol, 
+        max: endCol, 
+        key: "fill"
+    }]);
 }

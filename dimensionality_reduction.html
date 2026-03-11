@@ -16,7 +16,14 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/12.0.0/math.js"></script>
     <!-- jStat for distributions if needed -->
     <script src="https://cdn.jsdelivr.net/npm/jstat@latest/dist/jstat.min.js"></script>
+
+    <!-- amCharts 5 for Map Visualization -->
+    <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/map.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/geodata/region/usa/usaCountiesLow.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
     
+
     <style>
         .pca-grid {
             display: grid;
@@ -312,6 +319,14 @@
                     Run PCA Decomposition
                 </button>
 
+                <!-- Map Visualization Button -->
+                <button id="visualizeMapBtn" class="primary-btn calculate-btn" style="margin-top: 10px; background: #64748b; display: none;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M15 10l-4 4l6 6l4 -16l-18 7l4 2l2 6l3 -4"></path>
+                    </svg>
+                    Visualize on Map
+                </button>
+
                 <div class="loading-status" id="initLoader" style="display:none;">
                     <div class="loader-small"></div>
                     <span>Computing Eigenvectors...</span>
@@ -334,6 +349,26 @@
                         <p id="errorMessageText" class="error-message"></p>
                     </div>
                     <button class="close-error-btn" onclick="document.getElementById('errorDisplay').style.display='none'">&times;</button>
+                </div>
+            </div>
+
+            <div id="pcaEmptyState" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 60vh; text-align: center; color: #64748b; padding: 40px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 20px;">
+                    <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                    <polyline points="2 17 12 22 22 17"></polyline>
+                    <polyline points="2 12 12 17 22 12"></polyline>
+                </svg>
+                <h2 style="color: #334155; font-size: 1.5rem; margin-bottom: 12px; font-weight: 600;">Ready for Dimensionality Reduction</h2>
+                <p style="font-size: 1.05rem; max-width: 500px; line-height: 1.6; margin-bottom: 20px;">
+                    Select your health and economic predictors from the left panel and click <strong>Run PCA Decomposition</strong> to identify hidden geographical patterns.
+                </p>
+                <div style="background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 6px; padding: 15px 25px; text-align: left; width: 100%; max-width: 450px;">
+                    <strong style="display: block; color: #475569; margin-bottom: 8px; font-size: 0.95rem;">Quick Guide:</strong>
+                    <ul style="margin: 0; padding-left: 20px; font-size: 0.9rem; color: #64748b; line-height: 1.5;">
+                        <li><strong>Choose Variables:</strong> Pick multiple related metrics (e.g. all chronic diseases).</li>
+                        <li><strong>Filter Geography:</strong> Analyze the entire US or zoom into specific Regions/States.</li>
+                        <li><strong>Visualize:</strong> Once calculated, click <em>Visualize on Map</em> to see how the mathematical components cluster geographically.</li>
+                    </ul>
                 </div>
             </div>
 
@@ -467,6 +502,70 @@
                        </ul>
                     </p>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Map Modal -->
+    <div id="mapModal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 900px; height: 80vh; display: flex; flex-direction: column; overflow-y: auto;">
+            <button class="close-modal" id="closeMapModalBtn" style="position: absolute; top: 20px; right: 20px; background: transparent; border: none; font-size: 28px; cursor: pointer; color: #64748b; line-height: 1; transition: color 0.2s;" onmouseover="this.style.color='#0f172a'" onmouseout="this.style.color='#64748b'">&times;</button>
+            <h2 style="margin-top: 0; color: #c83830; font-size: 1.5rem; margin-bottom: 20px;">Geographic Distribution of Principal Components</h2>
+            
+            <div style="display: flex; gap: 10px; margin-bottom: 15px; align-items: center;">
+                <label for="pcaToggle" style="font-weight: 600; color: #0f172a;">Select Component to Visualize:</label>
+                <select id="pcaToggle" class="modern-select" style="min-width: 250px;">
+                    <!-- Injected via JS -->
+                </select>
+            </div>
+
+            <div id="pcaMapChartDiv" style="height: 500px; flex-shrink: 0; width: 100%; border: 1px solid #e2e8f0; border-radius: 8px; background: #ffffff; margin-bottom: 20px;"></div>
+
+            <!-- County Breakdown Table Container -->
+            <div id="pcaCountyBreakdownContainer" style="display: none; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); margin-bottom: 20px; flex-shrink: 0;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #cbd5e1; padding-bottom: 10px; margin-bottom: 15px;">
+                    <div>
+                        <h3 id="pcaCountyBreakdownTitle" style="margin: 0; color: #0f172a; font-size: 1.25rem; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+                            Variable Contributions
+                        </h3>
+                    </div>
+                    <button onclick="document.getElementById('pcaCountyBreakdownContainer').style.display='none'; if(typeof mapPolygonSeries !== 'undefined' && mapPolygonSeries) { mapPolygonSeries.mapPolygons.each(p => p.set('active', false)); }" style="background: transparent; border: none; font-size: 24px; cursor: pointer; color: #94a3b8; line-height: 1; padding: 0;" onmouseover="this.style.color='#0f172a'" onmouseout="this.style.color='#94a3b8'">&times;</button>
+                </div>
+
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.95rem;">
+                        <thead>
+                            <tr style="background-color: #f1f5f9; color: #475569; border-bottom: 2px solid #cbd5e1;">
+                                <th style="padding: 12px; font-weight: 700;">Variable</th>
+                                <th style="padding: 12px; font-weight: 700;">Component Weight (Loading)</th>
+                                <th style="padding: 12px; font-weight: 700;">Standardized Value</th>
+                                <th style="padding: 12px; font-weight: 700;">Score Contribution</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pcaCountyBreakdownBody">
+                            <!-- Injected via JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Callout Instructions at Bottom -->
+                <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-left: 4px solid #c83830; padding: 18px; margin-top: 25px; font-size: 0.95rem; color: #334155; border-radius: 4px; line-height: 1.6;">
+                    <strong style="color: #c83830; display: block; margin-bottom: 12px; font-size: 1.1rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;">&#9432; How to interpret these results</strong>
+                    
+                    <p style="margin-top: 0; margin-bottom: 12px;">This table breaks down exactly how the Principal Component score for this specific county is mathematically derived. PCA abstracts your data into independent underlying dimensions by systematically weighting every variable you chose.</p>
+
+                    <ul style="margin: 0; padding-left: 20px; list-style-type: square; margin-bottom: 16px;">
+                        <li style="margin-bottom: 6px;"><strong>Component Weight (Loading):</strong> This represents how strongly this specific variable influences the selected Component (e.g. PC1). This weight is universal for the entire dataset—it does not change from county to county.</li>
+                        <li style="margin-bottom: 6px;"><strong>Standardized Value:</strong> Because health metrics run on completely different scales (e.g. raw populations vs. percentages), every single data point is converted into a <em>Z-score</em>. A Standardized Value of <code>1.5</code> literally means this specific county is exactly 1.5 standard deviations <em>above</em> the national average for that metric.</li>
+                        <li><strong>Score Contribution:</strong> This is the most important column! It is simply the (<code>Weight</code> &times; <code>Standardized Value</code>). It calculates the exact amount this variable mathematically shifted the county's final Component score. If you scan down this column, the variables with the largest absolute numbers (magnitudes furthest from zero) are the dominant driving reasons why this county is colored dark red or dark blue on the map!</li>
+                    </ul>
+
+                    <div style="background: #ffffff; border: 1px dashed #cbd5e1; padding: 12px 16px; border-radius: 4px; box-shadow: inset 0 2px 4px 0 rgba(0,0,0,0.02);">
+                        <strong style="display: block; color: #0f172a; margin-bottom: 4px;">Example:</strong>
+                        If the Component Weight for <em>High Blood Pressure</em> is <code>0.423</code>, and a county has a shockingly high Standardized Value of <code>1.500</code> for High BP (1.5 standard deviations above the mean), its Score Contribution from High BP alone would be <code>(0.423 &times; 1.500) = +0.635</code>. That massive positive jump aggressively pulls the county's color toward Red on the map.
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
