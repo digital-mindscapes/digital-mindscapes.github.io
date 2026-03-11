@@ -132,7 +132,40 @@ function populateFilters() {
     });
     
     const xContainer = document.getElementById('xVarList');
-    ALL_METRICS.forEach(m => {
+    
+    // Health Metrics Category
+    const healthHeader = document.createElement('div');
+    healthHeader.innerHTML = '<strong>Health Status & Outcomes</strong>';
+    healthHeader.style.marginTop = '4px';
+    healthHeader.style.marginBottom = '6px';
+    healthHeader.style.fontSize = '0.85rem';
+    healthHeader.style.color = '#c83830';
+    healthHeader.style.textTransform = 'uppercase';
+    healthHeader.style.letterSpacing = '0.5px';
+    xContainer.appendChild(healthHeader);
+
+    HEALTH_METRICS.forEach(m => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'checkbox-row';
+        wrapper.innerHTML = `
+            <input type="checkbox" id="chk_${m.id}" value="${m.id}">
+            <label for="chk_${m.id}">${m.label}</label>
+        `;
+        xContainer.appendChild(wrapper);
+    });
+
+    // Socioeconomic Metrics Category
+    const econHeader = document.createElement('div');
+    econHeader.innerHTML = '<strong>Socioeconomic Factors</strong>';
+    econHeader.style.marginTop = '16px';
+    econHeader.style.marginBottom = '6px';
+    econHeader.style.fontSize = '0.85rem';
+    econHeader.style.color = '#0f172a';
+    econHeader.style.textTransform = 'uppercase';
+    econHeader.style.letterSpacing = '0.5px';
+    xContainer.appendChild(econHeader);
+
+    ECON_METRICS.forEach(m => {
         const wrapper = document.createElement('div');
         wrapper.className = 'checkbox-row';
         wrapper.innerHTML = `
