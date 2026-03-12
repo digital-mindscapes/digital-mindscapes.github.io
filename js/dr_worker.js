@@ -21,14 +21,21 @@ try {
 
 self.onmessage = function(e) {
     const { method, data, params } = e.data;
+    console.log(`[DR Worker] Starting ${method.toUpperCase()} analysis...`);
+    console.log(`[DR Worker] Data points: ${data.length}, Dimensions: ${data[0].length}`);
 
     try {
         if (method === 'tsne') {
+            const tsneLib = self.tsnejs || self.tsne;
+            if (!tsneLib) throw new Error("t-SNE library not found in worker. Check importScripts.");
             runTSNE(data, params);
         } else if (method === 'umap') {
+            const umapLib = self.UMAP?.UMAP || self.UMAP || self.umap?.UMAP || self.umap;
+            if (!umapLib) throw new Error("UMAP library not found in worker. Check importScripts.");
             runUMAP(data, params);
         }
     } catch (err) {
+        console.error(`[DR Worker] ${method} failed:`, err);
         self.postMessage({ type: 'error', message: err.message });
     }
 };
@@ -37,9 +44,8 @@ function runTSNE(data, params) {
     const iterations = params.iterations || 500;
     const perplexity = params.perplexity || 30;
     
-    // Check for different global names
+    // Use identified library
     const tsneLib = self.tsnejs || self.tsne;
-    if (!tsneLib) throw new Error("t-SNE library not found in worker scope.");
 
     const tsne = new tsneLib.tSNE({
         epsilon: 10,
@@ -61,6 +67,7 @@ function runTSNE(data, params) {
     }
 
     const solution = tsne.getSolution();
+    console.log(`[DR Worker] t-SNE complete. First point:`, solution[0]);
     self.postMessage({ 
         type: 'complete', 
         projections: solution 
@@ -69,7 +76,6 @@ function runTSNE(data, params) {
 
 function runUMAP(data, params) {
     const umapLib = self.UMAP?.UMAP || self.UMAP || self.umap?.UMAP || self.umap;
-    if (!umapLib) throw new Error("UMAP library not found in worker scope.");
 
     const umap = new umapLib({
         nNeighbors: params.nNeighbors || 15,
@@ -78,6 +84,7 @@ function runUMAP(data, params) {
     });
 
     const solution = umap.fit(data);
+    console.log(`[DR Worker] UMAP complete. First point:`, solution[0]);
     self.postMessage({ 
         type: 'complete', 
         projections: solution 

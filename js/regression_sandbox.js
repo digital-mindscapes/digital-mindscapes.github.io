@@ -428,6 +428,7 @@ function runRegressionModel() {
                         const d = data[index];
                         const tr = document.createElement('tr');
                         tr.style.cursor = 'pointer';
+                        tr.dataset.fips = d.id; // Unique ID
                         tr.onclick = () => selectCountyForSummary(d);
                         tr.innerHTML = `
                             <td style="padding: 8px 6px; border-bottom: 1px solid #e2e8f0; text-align: left;">
@@ -620,11 +621,10 @@ function selectCountyForSummary(d) {
     // Clear previous row highlights
     document.querySelectorAll('#countyResultsTableBody tr').forEach(r => r.style.background = 'transparent');
     
-    // Highlight the selected row (using a small delay to handle chunked render if needed)
+    // Highlight the selected row (using FIPS code for unique identification)
     const allRows = document.querySelectorAll('#countyResultsTableBody tr');
     allRows.forEach(row => {
-        const nameDiv = row.querySelector('div[title]');
-        if (nameDiv && nameDiv.textContent === d.name) {
+        if (row.dataset.fips === String(d.id)) {
             row.style.background = '#f1f5f9';
         }
     });

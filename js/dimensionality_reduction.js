@@ -1079,6 +1079,7 @@ function renderCountySidebarTable(projections, method, meta) {
                 const d = data[index];
                 const tr = document.createElement('tr');
                 tr.style.cursor = 'pointer';
+                tr.dataset.fips = d.id; // Unique ID
                 tr.onclick = () => selectCountyForSummary(d, method, projections);
                 tr.innerHTML = `
                     <td style="padding: 8px 6px; border-bottom: 1px solid #e2e8f0; text-align: left;">
@@ -1108,18 +1109,31 @@ function renderCountySidebarTable(projections, method, meta) {
 
     // Setup Search Listener if not already done
     const searchInput = document.getElementById('sidebarCountySearch');
-    if (searchInput && !searchInput.dataset.hasListener) {
-        searchInput.dataset.hasListener = "true";
-        searchInput.addEventListener('input', (e) => {
+    if (searchInput) {
+        // Clear any previous listener to ensure we use current projections/method
+        const newSearchHandler = (e) => {
             const term = e.target.value.toLowerCase();
-            const filtered = tableData.filter(item => 
+            const { meta } = window.lastSidebarData;
+            const filtered = meta.filter(item => 
                 item.name.toLowerCase().includes(term) || 
                 item.state.toLowerCase().includes(term)
             );
             populateBody(filtered);
-        });
-    } else if (searchInput) {
-        searchInput.value = ''; // Reset on new analysis
+        };
+
+        // If we have an old listener, we need to replace it. 
+        // Best practice here is to replace the element or use a named function we can remove.
+        // For simplicity and to ensure no memory leaks, we'll clone and replace if it was already initialized.
+        if (searchInput.dataset.hasListener === "true") {
+            const newSearchInput = searchInput.cloneNode(true);
+            searchInput.parentNode.replaceChild(newSearchInput, searchInput);
+            newSearchInput.addEventListener('input', newSearchHandler);
+            newSearchInput.dataset.hasListener = "true";
+            newSearchInput.value = ''; // Reset on new analysis
+        } else {
+            searchInput.addEventListener('input', newSearchHandler);
+            searchInput.dataset.hasListener = "true";
+        }
     }
 
     // Auto-select first one after a short delay
@@ -1132,11 +1146,10 @@ function selectCountyForSummary(d, method, projections) {
     // Clear previous row highlights
     document.querySelectorAll('#countyResultsTableBody tr').forEach(r => r.style.background = 'transparent');
     
-    // Find and highlight current row
+    // Find and highlight current row using FIPS for unique match
     const allRows = document.querySelectorAll('#countyResultsTableBody tr');
     allRows.forEach(row => {
-        const nameDiv = row.querySelector('div[title]');
-        if (nameDiv && nameDiv.textContent === d.name) {
+        if (row.dataset.fips === String(d.id)) {
             row.style.background = '#f1f5f9';
         }
     });
@@ -1151,42 +1164,36 @@ function selectCountyForSummary(d, method, projections) {
     // Grid values
     const grid = document.getElementById('componentValuesGrid');
     const isPCA = method === 'pca';
+    const mLabel = method === 'tsne' ? 't-SNE' : (method === 'umap' ? 'UMAP' : 'PC');
     
     let gridHTML = '';
     const getScoreColor = (val) => val > 0 ? '#ef4444' : '#3b82f6'; // Diverging Red/Blue
 
-    if (isPCA) {
-        gridHTML = `
-            <div style="background: white; padding: 12px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
-                <span style="display: block; font-size: 0.65rem; color: #94a3b8; text-transform: uppercase; font-weight: 800; letter-spacing: 0.05em;">PC1 Score</span>
-                <span style="font-size: 1.25rem; font-weight: 800; color: ${getScoreColor(d.p[0])};">${d.p[0] > 0 ? '+' : ''}${d.p[0].toFixed(2)}</span>
-            </div>
-            <div style="background: white; padding: 12px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
-                <span style="display: block; font-size: 0.65rem; color: #94a3b8; text-transform: uppercase; font-weight: 800; letter-spacing: 0.05em;">PC2 Score</span>
-                <span style="font-size: 1.25rem; font-weight: 800; color: ${getScoreColor(d.p[1])};">${d.p[1] > 0 ? '+' : ''}${d.p[1].toFixed(2)}</span>
-            </div>
-        `;
-        if (d.p[2] !== undefined) {
-            gridHTML += `
-                <div style="background: white; padding: 12px; border-radius: 12px; border: 1px solid #e2e8f0; grid-column: span 2; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
-                    <span style="display: block; font-size: 0.65rem; color: #94a3b8; text-transform: uppercase; font-weight: 800; letter-spacing: 0.05em;">PC3 Score</span>
-                    <span style="font-size: 1.25rem; font-weight: 800; color: ${getScoreColor(d.p[2])};">${d.p[2] > 0 ? '+' : ''}${d.p[2].toFixed(2)}</span>
-                </div>
-            `;
-        }
-    } else {
-         const mLabel = method === 'tsne' ? 't-SNE' : 'UMAP';
-         gridHTML = `
-            <div style="background: white; padding: 12px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
-                <span style="display: block; font-size: 0.65rem; color: #94a3b8; text-transform: uppercase; font-weight: 800; letter-spacing: 0.05em;">${mLabel} Dim 1</span>
-                <span style="font-size: 1.25rem; font-weight: 800; color: ${getScoreColor(d.p[0])};">${d.p[0].toFixed(2)}</span>
-            </div>
-            <div style="background: white; padding: 12px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
-                <span style="display: block; font-size: 0.65rem; color: #94a3b8; text-transform: uppercase; font-weight: 800; letter-spacing: 0.05em;">${mLabel} Dim 2</span>
-                <span style="font-size: 1.25rem; font-weight: 800; color: ${getScoreColor(d.p[1])};">${d.p[1].toFixed(2)}</span>
+    // Standard Grid for Dim 1 & Dim 2
+    const scoreVal1 = d.p[0] !== undefined ? d.p[0] : 0;
+    const scoreVal2 = d.p[1] !== undefined ? d.p[1] : 0;
+
+    gridHTML = `
+        <div style="background: white; padding: 12px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+            <span style="display: block; font-size: 0.65rem; color: #94a3b8; text-transform: uppercase; font-weight: 800; letter-spacing: 0.05em;">${mLabel} 1</span>
+            <span style="font-size: 1.25rem; font-weight: 800; color: ${getScoreColor(scoreVal1)};">${scoreVal1 > 0 ? '+' : ''}${scoreVal1.toFixed(2)}</span>
+        </div>
+        <div style="background: white; padding: 12px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+            <span style="display: block; font-size: 0.65rem; color: #94a3b8; text-transform: uppercase; font-weight: 800; letter-spacing: 0.05em;">${mLabel} 2</span>
+            <span style="font-size: 1.25rem; font-weight: 800; color: ${getScoreColor(scoreVal2)};">${scoreVal2 > 0 ? '+' : ''}${scoreVal2.toFixed(2)}</span>
+        </div>
+    `;
+
+    // Only show 3rd component if in PCA mode AND it's available
+    if (isPCA && d.p[2] !== undefined) {
+        gridHTML += `
+            <div style="background: white; padding: 12px; border-radius: 12px; border: 1px solid #e2e8f0; grid-column: span 2; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+                <span style="display: block; font-size: 0.65rem; color: #94a3b8; text-transform: uppercase; font-weight: 800; letter-spacing: 0.05em;">PC 3 Score</span>
+                <span style="font-size: 1.25rem; font-weight: 800; color: ${getScoreColor(d.p[2])};">${d.p[2] > 0 ? '+' : ''}${d.p[2].toFixed(2)}</span>
             </div>
         `;
     }
+    
     grid.innerHTML = gridHTML;
 
     // Contribution/Metric Profile Section
@@ -1732,17 +1739,42 @@ function toggleCountyHelp() {
         const isPCA = method === 'pca';
         const mLabel = method === 'tsne' ? 't-SNE' : (method === 'umap' ? 'UMAP' : 'PCA');
         
+        // Define Library Links
+        const libLinks = {
+            'pca': '<a href="https://mathjs.org/" target="_blank" style="color: #c83830; text-decoration: underline;">Math.js</a> (Linear Algebra)',
+            'tsne': '<a href="https://github.com/karpathy/tsnejs" target="_blank" style="color: #c83830; text-decoration: underline;">t-SNE-JS</a> (Manifold Learning)',
+            'umap': '<a href="https://github.com/scienceai/umap-js" target="_blank" style="color: #c83830; text-decoration: underline;">UMAP-JS</a> (Topological Data Analysis)'
+        };
+
         panel.innerHTML = `
-            <strong style="color: #0f172a; display: block; margin-bottom: 4px;">Interpretation Guide (${mLabel}):</strong>
-            <ul style="padding-left: 18px; margin: 0;">
-                <li><strong style="color: #ef4444;">Score (+):</strong> Higher value in the specified dimension.</li>
-                <li><strong style="color: #3b82f6;">Score (-):</strong> Lower value in the specified dimension.</li>
-                ${isPCA ? 
-                    '<li><strong>Top Drivers:</strong> Shows which metrics contributed most to the PC1 score (e.g., if +3.2 Obesity, it heavily pushes this county into a high-obesity quadrant).</li>' : 
-                    '<li><strong>Deviations:</strong> Shows how this county compares to the US Average (0). Red = High, Blue = Low.</li>'
-                }
-                <li><strong>Proximity:</strong> Counties closer together on the plot share similar profiles across all input features.</li>
-            </ul>
+            <div style="margin-bottom: 12px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px;">
+                <strong style="color: #0f172a; font-size: 0.9rem;">Analysis Workflow (${mLabel})</strong>
+            </div>
+
+            <div style="margin-bottom: 12px;">
+                <strong style="color: #c83830; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">Steps:</strong>
+                <ol style="padding-left: 20px; margin: 5px 0; font-weight: 500;">
+                    <li><strong>Standardization:</strong> Scale variables to Z-scores (Mean=0, SD=1).</li>
+                    <li><strong>Reduction:</strong> Compress high-dimensional patterns into 2D space using ${mLabel}.</li>
+                    <li><strong>Clustering:</strong> Apply K-Means to identify counties with similar profiles.</li>
+                </ol>
+            </div>
+
+            <div style="margin-bottom: 12px;">
+                <strong style="color: #c83830; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">Interpretation:</strong>
+                <ul style="padding-left: 18px; margin: 5px 0;">
+                    <li><strong style="color: #ef4444;">Score (+):</strong> Higher relative value in the projected dimension.</li>
+                    <li><strong style="color: #3b82f6;">Score (-):</strong> Lower relative value in the projected dimension.</li>
+                    ${isPCA ? 
+                        '<li><strong>Top Drivers:</strong> Percentage loadings showing which metrics (e.g., Obesity, Income) have the strongest mathematical pull on this county\'s position.</li>' : 
+                        '<li><strong>Clusters:</strong> Geometric proximity indicates that these counties have nearly identical health/economic characteristics across all selected features.</li>'
+                    }
+                </ul>
+            </div>
+
+            <div style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed #cbd5e1; font-size: 0.75rem;">
+                <strong>Engine:</strong> ${libLinks[method]}
+            </div>
         `;
         panel.style.display = 'block';
     } else {
