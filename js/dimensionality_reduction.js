@@ -1631,8 +1631,14 @@ function renderCountyPCABreakdown(geoId, printName) {
     const cData = dataItemObj.countyData;
     const method = document.getElementById('drMethod').value;
 
-    // Get the index of the selected component (e.g. "PC1" -> 0, "UMAP-1" -> 0)
-    const pcIndex = parseInt(currentSelectedPC.split('-').pop().replace("PC", "")) - 1;
+    // Only show this breakdown for PCA - non-linear methods don't have direct contributions
+    if (method !== 'pca') {
+        container.style.display = 'none';
+        return;
+    }
+
+    // Get the index of the selected component (e.g. "PC1" -> 0)
+    const pcIndex = parseInt(currentSelectedPC.replace("PC", "")) - 1;
     const pcEigen = window.pcaEigenData ? window.pcaEigenData[pcIndex] : null;
 
     const labelPrefix = method === 'pca' ? 'Principal Component' : 'Dimension';
@@ -1643,86 +1649,56 @@ function renderCountyPCABreakdown(geoId, printName) {
     const vars = window.pcaVariables;
     const stdVals = cData.standardizedValues;
 
-    if (method === 'pca' && pcEigen) {
-        const weights = pcEigen.vector;
-        // Build contributions array for sorting
-        let contributions = [];
-        for (let i = 0; i < vars.length; i++) {
-            let weight = weights[i];
-            let stdVal = stdVals[i];
-            let contrib = weight * stdVal;
+    const weights = pcEigen.vector;
+    // Build contributions array for sorting
+    let contributions = [];
+    for (let i = 0; i < vars.length; i++) {
+        let weight = weights[i];
+        let stdVal = stdVals[i];
+        let contrib = weight * stdVal;
 
-            contributions.push({
-                variable: vars[i],
-                weight: weight,
-                standardized: stdVal,
-                contribution: contrib
-            });
-        }
-
-        // Sort by absolute contribution descending to show biggest drivers
-        contributions.sort((a, b) => Math.abs(b.contribution) - Math.abs(a.contribution));
-
-        let totalScore = 0;
-        contributions.forEach((item, index) => {
-            totalScore += item.contribution;
-            const row = document.createElement('tr');
-            row.style.backgroundColor = index % 2 === 0 ? '#ffffff' : '#f8fafc';
-            row.style.borderBottom = '1px solid #e2e8f0';
-            const isPosC = item.contribution > 0;
-
-            row.innerHTML = `
-                <td style="padding: 12px; font-weight:600; color: #334155;">${item.variable}</td>
-                <td style="padding: 12px; color: #64748b;">${item.weight.toFixed(3)}</td>
-                <td style="padding: 12px; color: #64748b;">${item.standardized.toFixed(3)}</td>
-                <td style="padding: 12px; color:${isPosC ? '#15803d' : '#b91c1c'}; font-weight:700;">
-                    ${isPosC ? '+' : ''}${item.contribution.toFixed(3)}
-                </td>
-            `;
-            tableBody.appendChild(row);
+        contributions.push({
+            variable: vars[i],
+            weight: weight,
+            standardized: stdVal,
+            contribution: contrib
         });
-
-        // Append total row
-        const totRow = document.createElement('tr');
-        totRow.style.background = "#e2e8f0";
-        totRow.style.borderTop = "2px solid #cbd5e1";
-        const isPosT = totalScore > 0;
-        totRow.innerHTML = `
-            <td colspan="3" style="text-align:right; font-weight:800; color: #1e293b; padding:16px 12px; font-size: 1.05rem;">Total Calculated Component Score:</td>
-            <td style="color:${isPosT ? '#15803d' : '#b91c1c'}; font-weight:800; padding:16px 12px; font-size: 1.1rem;">
-                ${isPosT ? '+' : ''}${totalScore.toFixed(3)}
-            </td>
-        `;
-        tableBody.appendChild(totRow);
-    } else {
-        // Simple Variable View for t-SNE/UMAP
-        vars.forEach((v, i) => {
-            const row = document.createElement('tr');
-            row.style.backgroundColor = i % 2 === 0 ? '#ffffff' : '#f8fafc';
-            row.style.borderBottom = '1px solid #e2e8f0';
-            const stdVal = stdVals[i];
-
-            row.innerHTML = `
-                <td style="padding: 12px; font-weight:600; color: #334155;">${v}</td>
-                <td style="padding: 12px; color: #64748b;">N/A (Non-linear)</td>
-                <td style="padding: 12px; color: #64748b;">${stdVal.toFixed(3)}</td>
-                <td style="padding: 12px; color: #64748b;">-</td>
-            `;
-            tableBody.appendChild(row);
-        });
-
-        const totRow = document.createElement('tr');
-        totRow.style.background = "#e2e8f0";
-        totRow.style.borderTop = "2px solid #cbd5e1";
-        const score = cData[currentSelectedPC];
-        totRow.innerHTML = `
-            <td colspan="3" style="text-align:right; font-weight:800; color: #1e293b; padding:16px 12px; font-size: 1.05rem;">Map Value (${currentSelectedPC}):</td>
-            <td style="color: #0f172a; font-weight:800; padding:16px 12px; font-size: 1.1rem;">
-                ${score.toFixed(3)}
-            </td>
-        `;
-        tableBody.appendChild(totRow);
     }
+
+    // Sort by absolute contribution descending to show biggest drivers
+    contributions.sort((a, b) => Math.abs(b.contribution) - Math.abs(a.contribution));
+
+    let totalScore = 0;
+    contributions.forEach((item, index) => {
+        totalScore += item.contribution;
+        const row = document.createElement('tr');
+        row.style.backgroundColor = index % 2 === 0 ? '#ffffff' : '#f8fafc';
+        row.style.borderBottom = '1px solid #e2e8f0';
+        const isPosC = item.contribution > 0;
+
+        row.innerHTML = `
+            <td style="padding: 12px; font-weight:600; color: #334155;">${item.variable}</td>
+            <td style="padding: 12px; color: #64748b;">${item.weight.toFixed(3)}</td>
+            <td style="padding: 12px; color: #64748b;">${item.standardized.toFixed(3)}</td>
+            <td style="padding: 12px; color:${isPosC ? '#15803d' : '#b91c1c'}; font-weight:700;">
+                ${isPosC ? '+' : ''}${item.contribution.toFixed(3)}
+            </td>
+        `;
+        tableBody.appendChild(row);
+    });
+
+    // Append total row
+    const totRow = document.createElement('tr');
+    totRow.style.background = "#e2e8f0";
+    totRow.style.borderTop = "2px solid #cbd5e1";
+    const isPosT = totalScore > 0;
+    totRow.innerHTML = `
+        <td colspan="3" style="text-align:right; font-weight:800; color: #1e293b; padding:16px 12px; font-size: 1.05rem;">Total Calculated Component Score:</td>
+        <td style="color:${isPosT ? '#15803d' : '#b91c1c'}; font-weight:800; padding:16px 12px; font-size: 1.1rem;">
+            ${isPosT ? '+' : ''}${totalScore.toFixed(3)}
+        </td>
+    `;
+    tableBody.appendChild(totRow);
 
     container.style.display = 'block';
 
