@@ -23,6 +23,12 @@
     <script src="https://cdn.amcharts.com/lib/5/map.js"></script>
     <script src="https://cdn.amcharts.com/lib/5/geodata/region/usa/usaCountiesLow.js"></script>
     <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+    <style>
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
 </head>
 
 <body>
@@ -181,7 +187,7 @@
     </div>
 
     <main class="regression-layout">
-        <aside class="left-controls" style="min-width: 320px;">
+        <aside class="left-controls" style="min-width: 320px; background: #fff; border-radius: 20px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05); border: 1px solid #e2e8f0; overflow: hidden; display: flex; flex-direction: column;">
             <div class="sidebar-header">
                 <div class="header-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
@@ -202,7 +208,7 @@
                 </button>
             </div>
             
-            <div class="sidebar-content">
+            <div class="sidebar-content" style="flex: 1; overflow-y: auto; padding: 0 20px 20px 20px;">
                 <div class="sidebar-section" style="margin-top: 5px;">
                     <h4>Variables</h4>
                     <p style="margin:0; font-size:0.8rem; color:var(--text-muted);">Define the dependent (Y) and independent (X) factors.</p>
@@ -404,21 +410,92 @@
         
 
         <!-- Right Sidebar for County Results Table -->
-        <aside class="right-sidebar" id="countyResultsSidebar" style="display: none; width: 380px; flex-shrink: 0; background: #fff; border-left: 1px solid #e2e8f0; padding: 0 20px 20px 20px; overflow-y: auto; height: calc(100vh - 130px);">
-             <div style="position: sticky; top: 0; background: #fff; z-index: 10; padding: 25px 0 15px 0; border-bottom: 1px solid #e2e8f0; margin-bottom: 10px;">
+        <aside class="right-sidebar" id="countyResultsSidebar" style="display: none; width: 380px; flex-shrink: 0; background: #fff; border-radius: 20px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05); border: 1px solid #e2e8f0; padding: 0; overflow: hidden; height: 100%; display: flex; flex-direction: column;">
+             <div style="background: #fff; z-index: 10; padding: 25px; border-bottom: 1px solid #e2e8f0;">
                  <h3 style="margin: 0; font-size: 1.15rem; color: #0f172a; display: flex; align-items: center; gap: 8px;">
                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c83830" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                         <line x1="3" y1="12" x2="21" y2="12"></line>
-                         <line x1="3" y1="6" x2="21" y2="6"></line>
-                         <line x1="3" y1="18" x2="21" y2="18"></line>
+                         <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                         <circle cx="12" cy="10" r="3"></circle>
                      </svg>
-                     County Estimates Table
+                     County Profile Summary
+                     <button onclick="toggleCountyHelp()" style="background: none; border: none; padding: 4px; cursor: pointer; color: #64748b; display: flex; align-items: center; justify-content: center; transition: color 0.2s; margin-left: auto;" title="How to interpret results">
+                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                             <circle cx="12" cy="12" r="10"></circle>
+                             <line x1="12" y1="16" x2="12" y2="12"></line>
+                             <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                         </svg>
+                     </button>
                  </h3>
-                 <p style="margin: 6px 0 0 0; font-size: 0.85rem; color: #64748b; line-height: 1.4;">Actual (Y), Predicted (&Hat;Y), and Residual (&epsilon;) values across analyzed counties.</p>
+                 <div id="countyHelpPanel" style="display: none; margin-top: 15px; padding: 12px; background: #f1f5f9; border-radius: 10px; border: 1px solid #e2e8f0; font-size: 0.8rem; color: #475569; line-height: 1.5; animation: slideDown 0.3s ease-out;">
+                     <strong style="color: #0f172a; display: block; margin-bottom: 4px;">Interpretation Guide:</strong>
+                     <ul style="padding-left: 18px; margin: 0;">
+                         <li><strong style="color: #ef4444;">Residual (+):</strong> County performs <strong>higher</strong> than predicted (e.g., if predicting obesity, a +2.0 means it has 2% more obesity than expected).</li>
+                         <li><strong style="color: #3b82f6;">Residual (-):</strong> County performs <strong>lower</strong> than predicted.</li>
+                         <li><strong>Breakdown:</strong> Shows how each input variable increased (+) or decreased (-) the predicted value relative to the baseline.</li>
+                     </ul>
+                 </div>
+                 <p style="margin: 6px 0 0 0; font-size: 0.85rem; color: #64748b; line-height: 1.4;">Select a point on the residual plot to view specific data for that area.</p>
              </div>
              
-             <table style="width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.85rem; text-align: right;">
-                 <thead style="position: sticky; top: 92px; background: #f8fafc; z-index: 9;">
+             <div class="sidebar-content" style="padding: 25px; flex: 1; overflow-y: auto;">
+                 <div id="countySelectionSummary" style="margin-bottom: 25px; padding: 15px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; display: none;">
+                 <div id="summaryCountyName" style="font-weight: 800; font-size: 1.1rem; color: #0f172a; margin-bottom: 4px;">County Name</div>
+                 <div id="summaryStateName" style="font-size: 0.85rem; color: #64748b; margin-bottom: 15px; display: flex; align-items: center; gap: 6px;">
+                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                     <span>State Name</span>
+                 </div>
+                 
+                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px;">
+                     <div style="background: white; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                        <span style="display: block; font-size: 0.7rem; color: #94a3b8; text-transform: uppercase; font-weight: 700;">Actual Y</span>
+                        <span id="summaryActual" style="font-size: 1.1rem; font-weight: 700; color: #0f172a;">-</span>
+                     </div>
+                     <div style="background: white; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                        <span style="display: block; font-size: 0.7rem; color: #94a3b8; text-transform: uppercase; font-weight: 700;">Predicted &Hat;Y</span>
+                        <span id="summaryPredicted" style="font-size: 1.1rem; font-weight: 700; color: #0f172a;">-</span>
+                     </div>
+                 </div>
+
+                 <div style="background: #fff; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0; border-left: 4px solid #c83830;">
+                    <span style="display: block; font-size: 0.7rem; color: #94a3b8; text-transform: uppercase; font-weight: 700; margin-bottom: 4px;">Model Residual (&epsilon;)</span>
+                    <div style="display: flex; align-items: baseline; gap: 8px;">
+                        <span id="summaryResidual" style="font-size: 1.4rem; font-weight: 800; color: #c83830;">-</span>
+                        <span id="summaryResidualPct" style="font-size: 0.85rem; color: #64748b;">(-%)</span>
+                    </div>
+                    <p id="summaryInterpretation" style="margin: 8px 0 0 0; font-size: 0.75rem; color: #475569; font-style: italic; line-height: 1.4;">Higher than predicted.</p>
+                 </div>
+                 
+                 <div style="margin-top: 20px;">
+                    <div style="font-size: 0.7rem; color: #64748b; text-transform: uppercase; font-weight: 700; margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">Top Predictor Contributions</div>
+                    <div id="predictorBreakdown" style="display: flex; flex-direction: column; gap: 6px;">
+                        <!-- JS Injected -->
+                    </div>
+                 </div>
+             </div>
+             
+             <div style="margin-bottom: 10px; padding-top: 10px; border-top: 1px solid #e2e8f0;">
+                 <h4 style="margin: 0; font-size: 0.9rem; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;">All County Estimates</h4>
+             </div>
+
+             <!-- Sidebar Search Bar -->
+             <div style="position: relative; margin-bottom: 15px;">
+                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%);">
+                     <circle cx="11" cy="11" r="8"></circle>
+                     <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                 </svg>
+                 <input type="text" id="sidebarCountySearch" placeholder="Search counties..." 
+                     style="width: 100%; padding: 10px 15px 10px 38px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 0.85rem; outline: none; transition: all 0.2s;"
+                     onfocus="this.style.borderColor='#c83830'; this.style.boxShadow='0 0 0 3px rgba(200, 56, 48, 0.1)';"
+                     onblur="this.style.borderColor='#e2e8f0'; this.style.boxShadow='none';">
+             </div>
+
+             <div id="sidebarTableLoading" style="display: none; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; color: #64748b;">
+                 <div class="table-spinner" style="width: 30px; height: 30px; border: 3px solid #f3f3f3; border-top: 3px solid #c83830; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 12px;"></div>
+                 <span style="font-size: 0.85rem; font-weight: 500;">Rendering results...</span>
+             </div>
+             
+             <table id="countyResultsTable" style="width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.85rem; text-align: right;">
+                 <thead style="position: sticky; top: 0; background: #f8fafc; z-index: 9;">
                      <tr>
                          <th style="padding: 10px 6px; text-align: left; font-weight: 600; color: #475569; border-bottom: 2px solid #cbd5e1; border-top-left-radius: 6px;">County</th>
                          <th style="padding: 10px 6px; font-weight: 600; color: #475569; border-bottom: 2px solid #cbd5e1;">Actual</th>
@@ -430,7 +507,8 @@
                      <!-- Filled by JS -->
                  </tbody>
              </table>
-        </aside>
+        </div><!-- End sidebar-content -->
+    </aside>
 
     </main>
     <!-- Methodology Modal -->

@@ -3,8 +3,68 @@
     display: flex;
     flex-direction: row;
     flex-wrap: nowrap;
-    min-height: calc(100vh - 130px);
+    height: calc(100vh - 120px);
     background: #f8fafc;
+    padding: 20px 40px;
+    gap: 20px;
+}
+
+@media (max-width: 1200px) {
+    .regression-layout {
+        padding: 20px;
+        gap: 15px;
+    }
+}
+
+@media (max-width: 1024px) {
+    .regression-layout {
+        flex-direction: column;
+        height: auto;
+        overflow-y: visible;
+    }
+    
+    .regression-layout aside.left-controls,
+    .regression-layout aside.right-sidebar {
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: none !important;
+        height: auto !important;
+        max-height: 600px;
+    }
+
+    .results-container-wrapper {
+        min-height: 600px;
+    }
+}
+
+@media (max-width: 768px) {
+    .regression-layout {
+        padding: 15px;
+        gap: 15px;
+    }
+    
+    .summary-stats-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+    
+    .model-header h2 {
+        font-size: 1.25rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .summary-stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .regression-layout {
+        padding: 10px;
+    }
+    
+    .results-container-wrapper {
+        padding: 15px;
+        border-radius: 12px;
+    }
 }
 
 .results-container-wrapper {
@@ -12,9 +72,12 @@
     min-width: 0;
     display: flex;
     flex-direction: column;
-    padding: 30px;
+    padding: 20px;
     overflow-y: auto;
-    background: #f8fafc;
+    background: #ffffff;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e2e8f0;
     gap: 25px;
 }
 
@@ -123,6 +186,13 @@
     height: 450px;
     display: flex;
     flex-direction: column;
+}
+
+@media (max-width: 768px) {
+    .plot-card {
+        height: 350px;
+        padding: 15px;
+    }
 }
 
 .plot-card-header {

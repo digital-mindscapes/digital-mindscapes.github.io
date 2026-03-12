@@ -255,7 +255,13 @@ function runRegressionModel() {
                 if(valid) {
                     Y_vec.push([yVal]);
                     X_mat_arr.push([1, ...xVals]); // 1 for intercept
-                    metaData.push({ name: d.name, state: d.state_abbr, y: yVal });
+                    metaData.push({ 
+                        name: d.name, 
+                        state: d.state_abbr, 
+                        y: yVal, 
+                        id: d.id,
+                        xValues: xVals // Store raw X values for contribution breakdown
+                    });
                 }
             });
             
@@ -375,7 +381,10 @@ function runRegressionModel() {
                     res: residualsArr[i],
                     name: metaData[i].name,
                     state: metaData[i].state,
-                    id: metaData[i].id
+                    id: metaData[i].id,
+                    xValues: metaData[i].xValues,
+                    coefficients: coefficients, // Keep track of coefficients for the breakdown
+                    xLabels: xIds.map(id => ALL_METRICS.find(m => m.id === id).label)
                 });
             }
             
@@ -384,26 +393,83 @@ function runRegressionModel() {
             document.getElementById('visualizeMapBtn').style.display = 'flex';
             
             // Populate County Side Table
-            document.getElementById('countyResultsSidebar').style.display = 'block';
+            const sidebar = document.getElementById('countyResultsSidebar');
+            const searchInput = document.getElementById('sidebarCountySearch');
+            const tableLoader = document.getElementById('sidebarTableLoading');
+            const countyTable = document.getElementById('countyResultsTable');
             const countyTbody = document.getElementById('countyResultsTableBody');
+            
+            sidebar.style.display = 'flex';
+            if (tableLoader) tableLoader.style.display = 'flex';
+            if (countyTable) countyTable.style.display = 'none';
+            if (searchInput) searchInput.value = '';
+
             countyTbody.innerHTML = '';
             
             // Sort county data by residual magnitude descending to surface most anomalous counties
-            const sortedCountyData = [...plotData].sort((a,b) => Math.abs(b.res) - Math.abs(a.res));
+            const sortedData = [...plotData].sort((a,b) => Math.abs(b.res) - Math.abs(a.res));
             
-            sortedCountyData.forEach(d => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td style="padding: 8px 6px; border-bottom: 1px solid #e2e8f0; text-align: left;">
-                        <div style="font-weight: 600; color: #1e293b; max-width: 130px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${d.name}, ${d.state}">${d.name}</div>
-                        <div style="font-size: 0.75rem; color: #64748b;">${d.state}</div>
-                    </td>
-                    <td style="padding: 8px 6px; border-bottom: 1px solid #e2e8f0; color: #475569;">${d.actual.toFixed(2)}</td>
-                    <td style="padding: 8px 6px; border-bottom: 1px solid #e2e8f0; color: #475569;">${d.pred.toFixed(2)}</td>
-                    <td style="padding: 8px 6px; border-bottom: 1px solid #e2e8f0; font-weight: 700; color: ${d.res > 0 ? '#c83830' : '#10b981'};">${d.res > 0 ? '+' : ''}${d.res.toFixed(2)}</td>
-                `;
-                countyTbody.appendChild(tr);
-            });
+            const populateTable = (data) => {
+                countyTbody.innerHTML = '';
+                if (data.length === 0) {
+                    if (tableLoader) tableLoader.style.display = 'none';
+                    if (countyTable) countyTable.style.display = 'table';
+                    return;
+                }
+
+                const chunkSize = 100;
+                let index = 0;
+
+                const renderChunk = () => {
+                    const fragment = document.createDocumentFragment();
+                    const end = Math.min(index + chunkSize, data.length);
+
+                    for (; index < end; index++) {
+                        const d = data[index];
+                        const tr = document.createElement('tr');
+                        tr.style.cursor = 'pointer';
+                        tr.onclick = () => selectCountyForSummary(d);
+                        tr.innerHTML = `
+                            <td style="padding: 8px 6px; border-bottom: 1px solid #e2e8f0; text-align: left;">
+                                <div style="font-weight: 600; color: #1e293b; max-width: 130px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${d.name}, ${d.state}">${d.name}</div>
+                                <div style="font-size: 0.75rem; color: #64748b;">${d.state}</div>
+                            </td>
+                            <td style="padding: 8px 6px; border-bottom: 1px solid #e2e8f0; color: #475569;">${d.actual.toFixed(2)}</td>
+                            <td style="padding: 8px 6px; border-bottom: 1px solid #e2e8f0; color: #475569;">${d.pred.toFixed(2)}</td>
+                            <td style="padding: 8px 6px; border-bottom: 1px solid #e2e8f0; font-weight: 700; color: ${d.res > 0 ? '#ef4444' : '#3b82f6'};">${d.res > 0 ? '+' : ''}${d.res.toFixed(2)}</td>
+                        `;
+                        fragment.appendChild(tr);
+                    }
+
+                    countyTbody.appendChild(fragment);
+
+                    if (index < data.length) {
+                        requestAnimationFrame(renderChunk);
+                    } else {
+                        if (tableLoader) tableLoader.style.display = 'none';
+                        if (countyTable) countyTable.style.display = 'table';
+                    }
+                };
+                requestAnimationFrame(renderChunk);
+            };
+
+            populateTable(sortedData);
+
+            // Search Listener
+            if (searchInput && !searchInput.dataset.hasListener) {
+                searchInput.dataset.hasListener = "true";
+                searchInput.addEventListener('input', (e) => {
+                    const term = e.target.value.toLowerCase();
+                    const filtered = sortedData.filter(item => 
+                        item.name.toLowerCase().includes(term) || 
+                        item.state.toLowerCase().includes(term)
+                    );
+                    populateTable(filtered);
+                });
+            }
+
+            // Auto-select the top one initially
+            if (sortedData.length > 0) selectCountyForSummary(sortedData[0]);
 
             
             renderResidualPlot(plotData, yLabel);
@@ -500,7 +566,7 @@ function renderResidualPlot(data, yLabel) {
         .attr("cx", d => x(d.pred))
         .attr("cy", d => y(d.res))
         .attr("r", 0)
-        .style("fill", "#c83830")
+        .style("fill", d => d.res > 0 ? '#ef4444' : '#3b82f6')
         .style("opacity", 0)
         .style("stroke", "#fff")
         .style("stroke-width", 0.5)
@@ -544,7 +610,117 @@ function renderResidualPlot(data, yLabel) {
               .style("stroke", "#fff")
               .style("stroke-width", 0.5);
             tooltip.style.opacity = 0;
+        })
+        .on("click", function(event, d) {
+            selectCountyForSummary(d);
         });
+}
+
+function selectCountyForSummary(d) {
+    // Clear previous row highlights
+    document.querySelectorAll('#countyResultsTableBody tr').forEach(r => r.style.background = 'transparent');
+    
+    // Highlight the selected row (using a small delay to handle chunked render if needed)
+    const allRows = document.querySelectorAll('#countyResultsTableBody tr');
+    allRows.forEach(row => {
+        const nameDiv = row.querySelector('div[title]');
+        if (nameDiv && nameDiv.textContent === d.name) {
+            row.style.background = '#f1f5f9';
+        }
+    });
+
+    const summaryCard = document.getElementById('countySelectionSummary');
+    if (!summaryCard) return;
+
+    // Update accent color for the summary container - it's the 4th child (the residual box)
+    const residualBox = summaryCard.querySelector('div[style*="border-left"]');
+    if (residualBox) residualBox.style.borderLeftColor = d.res > 0 ? '#ef4444' : '#3b82f6';
+
+    summaryCard.style.display = 'block';
+    document.getElementById('summaryCountyName').textContent = d.name;
+    document.getElementById('summaryStateName').querySelector('span').textContent = d.state;
+    document.getElementById('summaryActual').textContent = d.actual.toFixed(2);
+    document.getElementById('summaryPredicted').textContent = d.pred.toFixed(2);
+    const residualEl = document.getElementById('summaryResidual');
+    residualEl.textContent = (d.res > 0 ? '+' : '') + d.res.toFixed(4);
+    residualEl.style.color = d.res > 0 ? '#ef4444' : '#3b82f6';
+    
+    // Percentage difference
+    const pctDiff = (d.res / d.pred) * 100;
+    document.getElementById('summaryResidualPct').textContent = `(${pctDiff > 0 ? '+' : ''}${pctDiff.toFixed(1)}%)`;
+    
+    // Interpretation
+    const interp = document.getElementById('summaryInterpretation');
+    if (Math.abs(d.res) < 0.5) {
+        interp.textContent = "The model predicted this county very accurately.";
+        interp.style.color = "#475569";
+    } else if (d.res > 0) {
+        interp.textContent = `This county has a higher outcome than the model predicted based on its predictors.`;
+        interp.style.color = "#ef4444";
+    } else {
+        interp.textContent = `This county has a lower outcome than the model predicted based on its predictors.`;
+        interp.style.color = "#3b82f6";
+    }
+
+    // Predictor Breakdown
+    const breakdownContainer = document.getElementById('predictorBreakdown');
+    if (breakdownContainer && d.xValues && d.coefficients) {
+        breakdownContainer.innerHTML = '';
+        
+        // Intercept contribution
+        const contributions = [
+            { label: 'Baseline (Intercept)', val: d.coefficients[0], sortVal: Math.abs(d.coefficients[0]) }
+        ];
+        
+        // Each X contribution: x_i * beta_i
+        for (let i = 0; i < d.xValues.length; i++) {
+            const contrib = d.xValues[i] * d.coefficients[i+1];
+            contributions.push({
+                label: d.xLabels[i],
+                val: contrib,
+                sortVal: Math.abs(contrib)
+            });
+        }
+        
+        // Sort by magnitude
+        contributions.sort((a,b) => b.sortVal - a.sortVal);
+        
+        contributions.forEach(c => {
+            const row = document.createElement('div');
+            row.style.display = 'flex';
+            row.style.justifyContent = 'space-between';
+            row.style.fontSize = '0.75rem';
+            row.style.alignItems = 'center';
+            
+            const labelSpan = document.createElement('span');
+            labelSpan.style.color = '#475569';
+            labelSpan.textContent = c.label;
+            
+            const valSpan = document.createElement('span');
+            valSpan.style.fontWeight = '700';
+            valSpan.style.color = c.val > 0 ? '#1e293b' : '#64748b';
+            valSpan.textContent = (c.val > 0 ? '+' : '') + c.val.toFixed(2);
+            
+            row.appendChild(labelSpan);
+            row.appendChild(valSpan);
+            breakdownContainer.appendChild(row);
+        });
+    }
+
+    // Move scroll in sidebar to top if selection summary is expanded
+    document.getElementById('countyResultsSidebar').scrollTo({ top: 0, behavior: 'smooth' });
+
+    // Highlight dot in D3
+    d3.selectAll('.plot-area circle')
+        .style('stroke', '#fff')
+        .style('stroke-width', 0.5)
+        .attr('r', 4);
+        
+    d3.selectAll('.plot-area circle')
+        .filter(dot => dot.name === d.name && dot.state === d.state)
+        .style('stroke', '#000')
+        .style('stroke-width', 2)
+        .attr('r', 8);
 }
 
 // ─── Model Summary Info Modal ───────────────────────────────────────────────
@@ -863,4 +1039,9 @@ function updateRegMapData() {
         max: endCol, 
         key: "fill"
     }]);
+}
+
+function toggleCountyHelp() {
+    const panel = document.getElementById('countyHelpPanel');
+    if (panel) panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
 }

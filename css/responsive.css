@@ -147,13 +147,17 @@
         gap: 15px !important;
     }
 
-    .left-controls {
+    .left-controls, .right-sidebar {
         width: 100% !important;
         min-width: 100% !important;
+        max-width: none !important;
         border-right: none !important;
+        border-left: none !important;
         border-bottom: 1px solid #e2e8f0 !important;
         padding-left: 15px !important;
         padding-right: 15px !important;
+        height: auto !important;
+        max-height: 600px !important;
     }
 
     .pca-grid {
