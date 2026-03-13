@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Predictive Analysis - Digital Mindscapes</title>
+    <link rel="stylesheet" href="css/style.css?v=6">
+    <link rel="stylesheet" href="css/responsive.css">
+    <link rel="stylesheet" href="css/predictive_analysis.css">
+
+    <!-- Modern Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+
+    <!-- Libraries -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://www.lactame.com/lib/ml/6.0.0/ml.min.js"></script>
+    
+    <!-- amCharts 5 for Geographical Mapping -->
+    <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/map.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/geodata/region/usa/usaCountiesLow.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+</head>
+
+
+<body>
+    <!-- Standard Header (Do not modify layout) -->
+    <div class="header">
+        <div class="header-content">
+            <div class="app-logo-container">
+                <a href="index.html">
+                    <img src="assets/app_logo.png" alt="App Logo" class="app-logo">
+                </a>
+            </div>
+            <div class="header-text-container">
+                <h1>Digital Mindscapes: An Interactive Public Health & Socioeconomic Data Visualization Platform</h1>
+                <p class="authors">
+                    <strong>Arpita Datta</strong><sup>*</sup>,
+                    <strong>Dr. Sabirat Rubiya</strong><sup>*</sup>,
+                    <strong>Dr. Avik Chakrabarti</strong><sup>†</sup>,
+                    <strong>Dr. Anjishnu Banerjee</strong><sup>‡</sup>
+                </p>
+                <p class="affiliations">
+                    <sup>*</sup>Marquette University &nbsp;|&nbsp; <sup>†</sup>University of Wisconsin-Milwaukee (UWM)
+                    &nbsp;|&nbsp; <sup>‡</sup>Medical College of Wisconsin (MCW)
+                </p>
+            </div>
+            <div class="banner-logos-row">
+                <div class="banner-logos-top">
+                    <img src="assets/marquette_logo.png" id="marquetteLogo" alt="Marquette University Logo"
+                        class="banner-logo">
+                    <img src="assets/mcw_logo.png" id="mcwLogo" alt="MCW Logo" class="banner-logo">
+                </div>
+                <div class="banner-logos-bottom">
+                    <img src="assets/uwm_logo.png" id="uwmLogo" alt="UWM Logo" class="banner-logo">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Standard Navigation -->
+    <div class="navigation-bar">
+        <a href="index.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+            </svg> Main Dashboard
+        </a>
+        <a href="comparison.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="20" x2="18" y2="10"></line>
+                <line x1="12" y1="20" x2="12" y2="4"></line>
+                <line x1="6" y1="20" x2="6" y2="14"></line>
+            </svg> States Comparison
+        </a>
+        <a href="county_comparison.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="7" height="7"></rect>
+                <rect x="14" y="3" width="7" height="7"></rect>
+                <rect x="14" y="14" width="7" height="7"></rect>
+                <rect x="3" y="14" width="7" height="7"></rect>
+            </svg> Counties Comparison
+        </a>
+        <a href="urban_rural_comparison.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 4h16v16H4z"></path>
+                <path d="M4 12h16"></path>
+                <path d="M12 4v16"></path>
+            </svg> Urban-Rural Comparison
+        </a>
+        <a href="county_distribution.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3" />
+                <circle cx="6" cy="16" r="3" />
+                <circle cx="18" cy="16" r="3" />
+                <circle cx="9" cy="8" r="3" />
+                <circle cx="15" cy="8" r="3" />
+            </svg> County Distribution
+        </a>
+        <a href="multi_metric.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path>
+                <path d="M22 12A10 10 0 0 0 12 2v10z"></path>
+            </svg> State Multi-Metric Comparison
+        </a>
+        <a href="metric_visualization.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 20V10M12 20V4M6 20v-6" />
+            </svg> Metric Insights
+        </a>
+        <a href="bivariate_analysis.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="12" y1="3" x2="12" y2="21"></line>
+            </svg> Bivariate Analysis
+        </a>
+        <a href="query.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg> Semi-Structured Query
+        </a>
+        <a href="correlation_matrix.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                <path d="M3 9h18"></path>
+                <path d="M9 21V9"></path>
+            </svg> Correlation Analysis
+        </a>
+        <a href="regression_sandbox.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+            </svg> Regression Analysis
+        </a>
+        <a href="dimensionality_reduction.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+                <path d="M2 17l10 5 10-5"></path>
+                <path d="M2 12l10 5 10-5"></path>
+            </svg> Dimensionality Reduction
+        </a>
+        <a href="predictive_analysis.html" class="comparison-pill active-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2a5 5 0 0 1 5 5c0 2.22-1.44 4.11-3.41 4.79C12.43 12.31 11 14 11 16v1" />
+                <path d="M11 22h2" />
+                <path d="M12 2A5 5 0 0 0 7 7c0 2.22 1.44 4.11 3.41 4.79C11.57 12.31 13 14 13 16v1" />
+            </svg> Predictive Analysis
+        </a>
+        <a href="about.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg> About
+        </a>
+    </div>
+
+    <!-- NEW PREMIUM LAYOUT -->
+    <main class="pr-layout">
+
+        <!-- Left Sidebar: Stepper -->
+        <aside class="pr-sidebar">
+            <div class="pr-sidebar-header">
+                <h2>ML Pipeline</h2>
+                <p>Configure and evaluate models.</p>
+            </div>
+
+            <div class="pr-stepper">
+                <div class="pr-step active" data-step="1">
+                    <div class="pr-step-icon">
+                        <span class="pr-step-num">1</span>
+                    </div>
+                    <div class="pr-step-content">
+                        <span class="pr-step-title">Variables</span>
+                        <span class="pr-step-desc">Target & Features</span>
+                    </div>
+                </div>
+                <div class="pr-step" data-step="2">
+                    <div class="pr-step-icon">
+                        <span class="pr-step-num">2</span>
+                    </div>
+                    <div class="pr-step-content">
+                        <span class="pr-step-title">Engineering</span>
+                        <span class="pr-step-desc">Scale & Impute</span>
+                    </div>
+                </div>
+                <div class="pr-step" data-step="3">
+                    <div class="pr-step-icon">
+                        <span class="pr-step-num">3</span>
+                    </div>
+                    <div class="pr-step-content">
+                        <span class="pr-step-title">Splitting</span>
+                        <span class="pr-step-desc">Train vs Test</span>
+                    </div>
+                </div>
+                <div class="pr-step" data-step="4">
+                    <div class="pr-step-icon">
+                        <span class="pr-step-num">4</span>
+                    </div>
+                    <div class="pr-step-content">
+                        <span class="pr-step-title">Algorithms</span>
+                        <span class="pr-step-desc">Model Selection</span>
+                    </div>
+                </div>
+                <div class="pr-step" data-step="5">
+                    <div class="pr-step-icon">
+                        <span class="pr-step-num">5</span>
+                    </div>
+                    <div class="pr-step-content">
+                        <span class="pr-step-title">Execution</span>
+                        <span class="pr-step-desc">Run & Review</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Right Content: Workspaces -->
+        <section class="pr-main">
+
+            <!-- Step 1 Workspace -->
+            <div id="step-1-content" class="pr-card active">
+                <div class="pr-card-header">
+                    <h2>Variable Selection</h2>
+                    <p>Select your outcome to predict and features to learn from.</p>
+                </div>
+
+                <div class="pr-grid-2">
+                    <div class="pr-column">
+                        <div class="pr-field">
+                            <label>Problem Type</label>
+                            <div class="pr-segment">
+                                <input type="radio" name="analysisType" id="typeClass" value="classification" checked>
+                                <label for="typeClass">Classification</label>
+                                <input type="radio" name="analysisType" id="typeReg" value="regression">
+                                <label for="typeReg">Regression</label>
+                            </div>
+                        </div>
+
+                        <div class="pr-field">
+                            <label>Outcome Variable (Y)</label>
+                            <select id="yVar" class="pr-select"></select>
+                        </div>
+
+                        <div id="classificationOptions" class="pr-receipt" style="margin-top: 20px;">
+                            <div class="pr-slider-header">
+                                <span class="pr-slider-label">Number of Classes</span>
+                                <span class="pr-slider-value" id="numClassesVal">3</span>
+                            </div>
+                            <input type="range" id="numClasses" class="pr-slider" min="2" max="5" value="3">
+                            <div id="thresholdInputsWrapper" style="margin-top: 25px;">
+                                <div class="pr-field-header">
+                                    <label style="margin:0;">Class Boundaries</label>
+                                    <button id="autoSplitBtn" class="pr-btn pr-btn-outline"
+                                        style="padding: 6px 14px; font-size: 0.75rem; border-radius: 8px;">Auto-Balance
+                                        Classes</button>
+                                </div>
+                                <div id="thresholdInputs"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pr-column">
+                        <div class="pr-field">
+                            <label>Input Features (X)</label>
+                            <div class="pr-features-scroll" id="xVarList">
+                                <!-- Injected via JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 2 Workspace -->
+            <div id="step-2-content" class="pr-card">
+                <div class="pr-card-header">
+                    <h2>Feature Engineering</h2>
+                    <p>Clean and scale your data prior to model training.</p>
+                </div>
+
+                <div class="pr-grid-2">
+                    <div class="pr-column">
+                        <div class="pr-field">
+                            <label>Normalization Strategy</label>
+                            <label class="pr-radio-card">
+                                <input type="radio" name="normalization" value="none" checked>
+                                <div class="pr-radio-content">
+                                    <div class="pr-radio-ring"></div>
+                                    <div>
+                                        <strong>No Scaling</strong>
+                                        <div style="font-size: 0.8rem; color: #64748b; margin-top: 4px;">Keep raw values
+                                        </div>
+                                    </div>
+                                </div>
+                            </label>
+                            <label class="pr-radio-card">
+                                <input type="radio" name="normalization" value="minmax">
+                                <div class="pr-radio-content">
+                                    <div class="pr-radio-ring"></div>
+                                    <div>
+                                        <strong>Min-Max Scaling</strong>
+                                        <div style="font-size: 0.8rem; color: #64748b; margin-top: 4px;">Bound features
+                                            to 0 - 1</div>
+                                    </div>
+                                </div>
+                            </label>
+                            <label class="pr-radio-card">
+                                <input type="radio" name="normalization" value="zscore">
+                                <div class="pr-radio-content">
+                                    <div class="pr-radio-ring"></div>
+                                    <div>
+                                        <strong>Z-Score Standardization</strong>
+                                        <div style="font-size: 0.8rem; color: #64748b; margin-top: 4px;">Mean 0,
+                                            Standard Dev 1</div>
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="pr-column">
+                        <div class="pr-field">
+                            <label>Missing Value Imputation</label>
+                            <select id="imputationMethod" class="pr-select">
+                                <option value="drop">Drop Rows with Missing Data</option>
+                                <option value="mean">Impute using Column Mean</option>
+                                <option value="median">Impute using Column Median</option>
+                            </select>
+                            <p
+                                style="font-size: 0.85rem; color: #64748b; margin-top: 15px; padding: 15px; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
+                                <strong>Note:</strong> Dropping rows provides the most statistically pure model,
+                                provided data loss is minimal.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3 Workspace -->
+            <div id="step-3-content" class="pr-card">
+                <div class="pr-card-header">
+                    <h2>Data Partitioning</h2>
+                    <p>Split your dataset to evaluate model performance fairly.</p>
+                </div>
+
+                <div class="pr-split-viz">
+                    <div class="pr-split-train" id="vizTrain" style="flex: 80;">Training (80%)</div>
+                    <div class="pr-split-test" id="vizTest" style="flex: 20;">Test (20%)</div>
+                </div>
+
+                <div class="pr-slider-container" style="margin-bottom: 25px;">
+                    <div class="pr-slider-header">
+                        <span class="pr-slider-label">Training Data Ratio</span>
+                        <span class="pr-slider-value" id="splitRatioVal">80%</span>
+                    </div>
+                    <input type="range" id="splitRatio" class="pr-slider" min="50" max="95" value="80" step="5">
+                </div>
+
+                <label class="pr-checkbox checked" style="max-width: max-content;">
+                    <input type="checkbox" id="shuffleData" checked>
+                    <div class="pr-chk-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="3">
+                            <path d="M20 6L9 17l-5-5" />
+                        </svg></div>
+                    <strong style="color: var(--pr-dark);">Shuffle rows before splitting</strong>
+                </label>
+            </div>
+
+            <!-- Step 4 Workspace -->
+            <div id="step-4-content" class="pr-card">
+                <div class="pr-card-header">
+                    <h2>Model Selection</h2>
+                    <p>Choose an inference engine and tune its hyperparameters.</p>
+                </div>
+
+                <div class="pr-grid-2">
+                    <div class="pr-column">
+                        <label
+                            style="display: block; font-weight: 700; color: var(--pr-dark); margin-bottom: 10px;">Select
+                            Algorithm</label>
+                        <div id="algorithmGallery" class="pr-algo-grid">
+                            <!-- Injected -->
+                        </div>
+                    </div>
+                    <div class="pr-column">
+                        <label
+                            style="display: block; font-weight: 700; color: var(--pr-dark); margin-bottom: 10px;">Hyperparameters</label>
+                        <div id="hyperparamsContainer" class="pr-receipt">
+                            <p style="color: #64748b; margin:0;">Select a model to view parameters.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 5 Workspace -->
+            <div id="step-5-content" class="pr-card">
+                <div class="pr-card-header">
+                    <h2>Summary & Execution</h2>
+                    <p>Launch the ML Worker thread to begin modeling.</p>
+                </div>
+
+                <div class="pr-receipt">
+                    <div class="pr-receipt-row"><span>Problem Type</span><strong id="sumType">Classification</strong>
+                    </div>
+                    <div class="pr-receipt-row"><span>Target Variable</span><strong id="sumTarget">-</strong></div>
+                    <div class="pr-receipt-row"><span>Input Features</span><strong id="sumX">-</strong></div>
+                    <div class="pr-receipt-row"><span>Algorithm</span><strong id="sumAlgo">-</strong></div>
+                </div>
+
+                <button id="runPipelineBtn" class="pr-btn pr-btn-run">Launch Model Simulation</button>
+            </div>
+
+            <!-- Results Window -->
+            <div id="resultsDisplay" class="pr-card">
+                <div class="pr-card-header"
+                    style="display: flex; justify-content: space-between; align-items: flex-end;">
+                    <div>
+                        <h2>Performance Insights</h2>
+                        <p>Evaluate your model's accuracy on the unseen Test Set.</p>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button id="explainModelBtn" class="pr-btn pr-btn-primary" style="background: var(--pr-primary); font-size: 0.9rem;">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><path d="M12 2a5 5 0 0 1 5 5c0 2.22-1.44 4.11-3.41 4.79C12.43 12.31 11 14 11 16v1"></path><path d="M11 22h2"></path></svg>
+                            Explain Model
+                        </button>
+                        <button class="pr-btn pr-btn-outline" onclick="location.reload()">Reset Pipeline</button>
+                    </div>
+                </div>
+
+                <div class="pr-results-grid" id="metricsSummary">
+                    <!-- Cards here -->
+                </div>
+
+                <div class="pr-data-summary">
+                    <div id="metadataCards" class="pr-metadata-grid"></div>
+                    <div class="pr-chart-section">
+                        <h4>Pipeline Distribution</h4>
+                        <div id="accuracyPie" class="pr-pie-chart"></div>
+                    </div>
+                    <div class="pr-chart-section" id="secondaryChartSection">
+                        <h4 id="secondaryChartTitle">Confusion Matrix</h4>
+                        <div id="confusionMatrix" class="pr-matrix-chart"></div>
+                    </div>
+                    <div class="pr-chart-section" id="spatialBiasSection" style="flex: 2; min-width: 400px;">
+                        <h4>Geographical Error Mapping</h4>
+                        <div id="spatialErrorMap" class="pr-spatial-map" 
+                             style="height: 380px; background: #f8fafc; border-radius: 15px; border: 1px solid var(--pr-border); position: relative; overflow: hidden; margin-top: 10px;">
+                        </div>
+                        <div class="pr-map-legend" style="display: flex; gap: 20px; justify-content: center; margin-top: 15px; padding: 10px; background: white; border-radius: 10px; border: 1px solid #e2e8f0;">
+                            <div style="display: flex; align-items: center; gap: 8px; font-size: 0.75rem; font-weight: 700; color: #64748b;">
+                                <div style="width: 12px; height: 12px; background: #10b981; border-radius: 3px; box-shadow: 0 2px 4px rgba(16,185,129,0.3);"></div> Hit (Correct)
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px; font-size: 0.75rem; font-weight: 700; color: #64748b;">
+                                <div style="width: 12px; height: 12px; background: #ef4444; border-radius: 3px; box-shadow: 0 2px 4px rgba(239,68,68,0.3);"></div> Miss (Mismatch)
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px; font-size: 0.75rem; font-weight: 700; color: #64748b;">
+                                <div style="width: 12px; height: 12px; background: #e2e8f0; border-radius: 3px;"></div> Training Data
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+
+                <div class="pr-table-container">
+                    <table class="pr-table">
+                        <thead>
+                            <tr id="resultsHeader"></tr>
+                        </thead>
+                        <tbody id="resultsBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Navigation Bar (Internal to stepper) -->
+            <div class="pr-nav" id="bottomNav">
+                <button id="prevBtn" class="pr-btn pr-btn-outline" disabled>Previous Phase</button>
+                <button id="nextBtn" class="pr-btn pr-btn-primary">Next Phase</button>
+            </div>
+
+        </section>
+    </main>
+
+    <!-- Overlays -->
+    <div id="initLoader" class="pr-loader-overlay" style="display: none;">
+        <!-- Clean Elegant Loading Animation -->
+        <div class="pr-pulse-container">
+            <div class="pr-pulse-ring"></div>
+            <div class="pr-pulse-dot"></div>
+        </div>
+        <h3 id="loaderText" style="margin-top: 30px;">Loading ML Models...</h3>
+        <div class="pr-progress-wrapper" style="width: 300px; margin-top: 20px;">
+            <div class="pr-progress-track">
+                <div id="loaderProgress" class="pr-progress-fill" style="width: 0%"></div>
+            </div>
+            <div id="progressPercent"
+                style="text-align: center; margin-top: 8px; font-size: 0.85rem; font-weight: 700; opacity: 0.8;">0%
+            </div>
+        </div>
+        <button id="cancelSimulationBtn" class="pr-btn pr-btn-outline"
+            style="margin-top: 20px; border-color: rgba(255,255,255,0.3); color: white; background: rgba(255,255,255,0.1);">Cancel
+            Simulation</button>
+    </div>
+
+    <div id="errorDisplay" class="pr-error-toast">
+        <button class="pr-error-close"
+            onclick="document.getElementById('errorDisplay').style.display='none'">&times;</button>
+        <h4>Analysis Interrupted</h4>
+        <p id="errorMessageText"></p>
+    </div>
+
+    <!-- Premium Warning Dialog -->
+    <div id="prWarningDialog" class="pr-modal-overlay">
+        <div class="pr-modal-content">
+            <div class="pr-modal-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+            </div>
+            <h3 id="prWarningTitle">Action Required</h3>
+            <p id="prWarningMessage">Please complete this step to proceed.</p>
+            <button class="pr-btn pr-btn-primary" onclick="closeWarningDialog()">Understood</button>
+        </div>
+    </div>
+    <!-- XAI Modal -->
+    <div id="xaiModal" class="pr-modal-backdrop">
+        <div class="pr-modal-content" style="max-width: 700px;">
+            <div class="pr-modal-header">
+                <div>
+                    <h2>Explainable AI: Model Insights</h2>
+                    <p>Understanding which socioeconomic factors drove this prediction.</p>
+                </div>
+                <button class="pr-modal-close" id="closeXaiBtn">&times;</button>
+            </div>
+            <div class="pr-modal-body">
+                <div id="featureImportanceChart" class="pr-importance-chart" 
+                     style="height: 400px; background: #f8fafc; border-radius: 15px; border: 1px solid var(--pr-border); position: relative; overflow: hidden; padding: 20px;">
+                </div>
+                <div class="pr-xai-explanation" style="margin-top: 20px; padding: 15px; background: #eff6ff; border-radius: 12px; border: 1px solid #dbeafe;">
+                    <h5 style="color: #1e40af; margin-bottom: 5px;">What does this mean?</h5>
+                    <p style="font-size: 0.85rem; color: #1e3a8a; line-height: 1.5;">
+                        The chart above shows the "Gini Importance" or coefficient weight for each input variable. 
+                        A longer bar indicates that the model relied more heavily on that specific factor to differentiate between locations.
+                        Factors at the top are the strongest predictors for the selected target health outcome.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script Updates Required: We need to bind the logic to these new classes -->
+    <script src="js/predictive_analysis.js"></script>
+</body>
+
+</html>
