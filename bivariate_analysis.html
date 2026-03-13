@@ -11,6 +11,7 @@
     <!-- amCharts 5 -->
     <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
     <script src="https://cdn.amcharts.com/lib/5/map.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/geodata/usaLow.js"></script>
     <script src="https://cdn.amcharts.com/lib/5/geodata/region/usa/usaCountiesLow.js"></script>
     <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
     <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
@@ -198,6 +199,14 @@
 
             <div class="selector-group">
                 <div class="metric-selector">
+                    <label for="geoLevel">Geographic Level</label>
+                    <select id="geoLevel" class="styled-select">
+                        <option value="county">US Counties</option>
+                        <option value="state">US States</option>
+                    </select>
+                </div>
+
+                <div class="metric-selector">
                     <label for="metricX">Metric X (Horizontal Axis)</label>
                     <select id="metricX" class="styled-select"></select>
                 </div>
@@ -216,12 +225,16 @@
             <div class="legend-container">
                 <div class="legend-header">
                     <h3>Bivariate Legend</h3>
+                    <button id="resetFilterBtn" class="reset-filter-btn" title="Clear map filter">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
+                        Clear Filter
+                    </button>
                 </div>
                 <div class="legend-box">
                     <div id="bivariateLegend" class="bivariate-legend">
                         <!-- 3x3 Grid will be injected here -->
                     </div>
-                    
+
                     <!-- Refined Axis System -->
                     <div class="axis-arrow x-axis">
                         <div class="arrow-line"></div>
@@ -303,7 +316,7 @@
                                 <line x1="12" y1="12" x2="12" y2="16"></line>
                                 <line x1="12" y1="8" x2="12.01" y2="8"></line>
                             </svg> Why use this?</h3>
-                        <p>It helps identify spatial correlations. For example, if you see many <strong>dark
+                        <p id="modalExampleText">It helps identify spatial correlations. For example, if you see many <strong>dark
                                 purple</strong> counties, it means those areas struggle with both issues (e.g., high
                             unemployment <em>and</em> high obesity).</p>
                     </div>

@@ -9,29 +9,42 @@
 // =========================================
 
 const colorSchemes = {
-    "teal_purple": [
-        ["#fcf8e3", "#ace4e4", "#5ac8c8"], // Low-Low is light cream
-        ["#dfb0d6", "#a5add3", "#5698b9"],
-        ["#be64ac", "#8c62aa", "#3b4994"]
-    ],
-    "brown_blue": [
-        ["#fcf8e3", "#e4acac", "#c85a5a"],
-        ["#b0d6df", "#adb3a5", "#98b956"],
-        ["#64acbe", "#62aa8c", "#49943b"]
-    ],
-    "pink_yellow": [
-        ["#fcf8e3", "#f3e0d7", "#e1b4a1"],
-        ["#d3d6f3", "#c0c4e1", "#a299c8"],
-        ["#7b87d3", "#6b74c1", "#3b2b94"]
-    ],
-    "blue_orange": [
-        ["#fcf8e3", "#b2d5e5", "#6ea6cd"],
-        ["#eeadad", "#ad9ea5", "#6773a5"],
-        ["#df5e5e", "#a35555", "#4a4c5a"]
-    ]
+    "teal_purple": {
+        colors: [
+            ["#fcf8e3", "#ace4e4", "#5ac8c8"],
+            ["#dfb0d6", "#a5add3", "#5698b9"],
+            ["#be64ac", "#8c62aa", "#3b4994"]
+        ],
+        highColorName: "dark purple/navy"
+    },
+    "brown_blue": {
+        colors: [
+            ["#fcf8e3", "#e4acac", "#c85a5a"],
+            ["#b0d6df", "#adb3a5", "#98b956"],
+            ["#64acbe", "#62aa8c", "#49943b"]
+        ],
+        highColorName: "deep teal/green"
+    },
+    "pink_yellow": {
+        colors: [
+            ["#fcf8e3", "#f3e0d7", "#e1b4a1"],
+            ["#d3d6f3", "#c0c4e1", "#a299c8"],
+            ["#7b87d3", "#6b74c1", "#3b2b94"]
+        ],
+        highColorName: "deep violet"
+    },
+    "blue_orange": {
+        colors: [
+            ["#fcf8e3", "#b2d5e5", "#6ea6cd"],
+            ["#eeadad", "#ad9ea5", "#6773a5"],
+            ["#df5e5e", "#a35555", "#4a4c5a"]
+        ],
+        highColorName: "dark charcoal/grey"
+    }
 };
 
-let bivariateColors = colorSchemes["teal_purple"];
+let currentSchemeKey = "teal_purple";
+let bivariateColors = colorSchemes[currentSchemeKey].colors;
 
 const metricLabels = {
     "pct_unemployment_rate": "Unemployment Rate",
@@ -87,40 +100,55 @@ const metricsList = Object.keys(metricLabels);
 // DATA HANDLING
 // =========================================
 
-let countyData = [];
+let countyData = [], stateData = [];
 let root, chart, polygonSeries;
+let activeFilter = null; // Stores {cX, cY} for current filter
 
-async function loadAndMergeData() {
+async function loadAndMergeData(level = "county") {
     try {
+        const acsPath = level === "county" ? "data/ACS Data/county_acs_flat.json" : "data/ACS Data/state_acs_flat.json";
+        const placesPath = level === "county" ? "data/PLACES Data/county_places_flat.json" : "data/PLACES Data/state_places_flat.json";
+
         const [acsRes, placesRes] = await Promise.all([
-            fetch("data/ACS Data/county_acs_flat.json"),
-            fetch("data/PLACES Data/county_places_flat.json")
+            fetch(acsPath),
+            fetch(placesPath)
         ]);
         const acsData = await acsRes.json();
         const placesData = await placesRes.json();
 
         const placesLookup = {};
         placesData.forEach(d => {
-            if (d.state_abbr && d.name) {
-                const norm = normalizeName(d.name);
-                placesLookup[d.state_abbr.toUpperCase() + "_" + norm] = d;
-            } else if (d.id) {
-                placesLookup[d.id] = d;
+            if (level === "county") {
+                if (d.state_abbr && d.name) {
+                    const norm = normalizeName(d.name);
+                    placesLookup[d.state_abbr.toUpperCase() + "_" + norm] = d;
+                } else if (d.id) {
+                    placesLookup[d.id] = d;
+                }
+            } else {
+                // State level lookup by abbreviation or ID
+                const key = (d.state_abbr || d.id || "").toUpperCase();
+                if (key) placesLookup[key] = d;
             }
         });
 
         return acsData.map(acs => {
             let places = {};
-            if (acs.state_abbr && acs.name) {
-                const norm = normalizeName(acs.name);
-                places = placesLookup[acs.state_abbr.toUpperCase() + "_" + norm] || placesLookup[acs.id] || {};
+            if (level === "county") {
+                if (acs.state_abbr && acs.name) {
+                    const norm = normalizeName(acs.name);
+                    places = placesLookup[acs.state_abbr.toUpperCase() + "_" + norm] || placesLookup[acs.id] || {};
+                } else {
+                    places = placesLookup[acs.id] || {};
+                }
             } else {
-                places = placesLookup[acs.id] || {};
+                const key = (acs.state_abbr || acs.id || "").toUpperCase();
+                places = placesLookup[key] || {};
             }
             return { ...acs, ...places };
         });
     } catch (e) {
-        console.error("Data load failed:", e);
+        console.error(`Data load failed for ${level}:`, e);
         return [];
     }
 }
@@ -145,9 +173,12 @@ function normalizeName(name) {
 
 async function init() {
     showLoading(true);
-    countyData = await loadAndMergeData();
-    console.log("Data merged:", countyData.length, "counties");
-    
+    [countyData, stateData] = await Promise.all([
+        loadAndMergeData("county"),
+        loadAndMergeData("state")
+    ]);
+    console.log("Data loaded:", countyData.length, "counties,", stateData.length, "states");
+
     populateSelectors();
     initMap();
     initModal();
@@ -190,7 +221,7 @@ function showLoading(show) {
 function populateSelectors() {
     const selX = document.getElementById("metricX");
     const selY = document.getElementById("metricY");
-    
+
     metricsList.forEach(m => {
         selX.add(new Option(metricLabels[m], m));
         selY.add(new Option(metricLabels[m], m));
@@ -210,10 +241,29 @@ function populateSelectors() {
         });
 
         selScheme.addEventListener("change", () => {
-            bivariateColors = colorSchemes[selScheme.value];
+            currentSchemeKey = selScheme.value;
+            bivariateColors = colorSchemes[currentSchemeKey].colors;
             renderBivariate();
             renderLegend();
             updateModalContent();
+        });
+    }
+
+    const selGeo = document.getElementById("geoLevel");
+    if (selGeo) {
+        selGeo.addEventListener("change", () => {
+            activeFilter = null; // Clear filter on geo change
+            renderBivariate();
+            renderLegend();
+        });
+    }
+
+    const resetBtn = document.getElementById("resetFilterBtn");
+    if (resetBtn) {
+        resetBtn.addEventListener("click", () => {
+            activeFilter = null;
+            renderBivariate();
+            renderLegend();
         });
     }
 }
@@ -261,7 +311,7 @@ function initMap() {
 // =========================================
 
 function getTertiles(values) {
-    const sorted = values.filter(v => typeof v === "number" && !isNaN(v)).sort((a,b) => a-b);
+    const sorted = values.filter(v => typeof v === "number" && !isNaN(v)).sort((a, b) => a - b);
     if (sorted.length === 0) return [0, 0];
     const n = sorted.length;
     return [
@@ -278,50 +328,83 @@ function getClass(val, tertiles) {
 
 function renderBivariate() {
     if (!polygonSeries) return;
-    
+
+    const level = document.getElementById("geoLevel").value;
     const mX = document.getElementById("metricX").value;
     const mY = document.getElementById("metricY").value;
-    
+
+    const data = level === "county" ? countyData : stateData;
+    const geoJSON = level === "county" ? am5geodata_region_usa_usaCountiesLow : am5geodata_usaLow;
+
+    // Update map scope if level changed
+    if (polygonSeries.get("geoJSON") !== geoJSON) {
+        polygonSeries.set("geoJSON", geoJSON);
+    }
+
     document.getElementById("labelX").textContent = metricLabels[mX];
     document.getElementById("labelY").textContent = metricLabels[mY];
 
-    const valsX = countyData.map(d => d[mX]).filter(v => typeof v === "number" && !isNaN(v));
-    const valsY = countyData.map(d => d[mY]).filter(v => typeof v === "number" && !isNaN(v));
-    
+    const valsX = data.map(d => d[mX]).filter(v => typeof v === "number" && !isNaN(v));
+    const valsY = data.map(d => d[mY]).filter(v => typeof v === "number" && !isNaN(v));
+
     const tertX = getTertiles(valsX);
     const tertY = getTertiles(valsY);
 
     // Build lookup
     const lookup = {};
-    countyData.forEach(d => {
-        if (d.state_abbr && d.name) {
-            const norm = normalizeName(d.name);
-            lookup[d.state_abbr.toUpperCase() + "_" + norm] = d;
-        }
-    });
+    if (level === "county") {
+        data.forEach(d => {
+            if (d.state_abbr && d.name) {
+                const norm = normalizeName(d.name);
+                lookup[d.state_abbr.toUpperCase() + "_" + norm] = d;
+            }
+        });
+    } else {
+        data.forEach(d => {
+            const key = (d.state_abbr || d.id || "").toUpperCase();
+            if (key) lookup[key] = d;
+        });
+    }
 
-    const mapData = am5geodata_region_usa_usaCountiesLow.features.map(f => {
+    const mapData = geoJSON.features.map(f => {
         const pId = f.id;
         const name = f.properties.name;
-        
-        let stateAbbr = "";
-        if (f.properties && f.properties.STATE) {
-            stateAbbr = f.properties.STATE;
+
+        let dataKey = "";
+        if (level === "county") {
+            let stateAbbr = "";
+            if (f.properties && f.properties.STATE) {
+                stateAbbr = f.properties.STATE;
+            } else {
+                const parts = pId.split("-");
+                if (parts.length >= 3) stateAbbr = parts[1];
+            }
+            const norm = normalizeName(name);
+            dataKey = stateAbbr.toUpperCase() + "_" + norm;
         } else {
-            const parts = pId.split("-");
-            if (parts.length >= 3) stateAbbr = parts[1];
+            // State map IDs are usually shorthand like "US-AL"
+            dataKey = (pId || "").replace("US-", "").toUpperCase();
         }
 
-        const norm = normalizeName(name);
-        const d = lookup[stateAbbr.toUpperCase() + "_" + norm];
-
+        const d = lookup[dataKey];
         let color = "#b0b0b0"; // Default: Medium Grey for Missing Data
         let valX = "N/A", valY = "N/A";
 
         if (d && typeof d[mX] === "number" && typeof d[mY] === "number") {
             const cX = getClass(d[mX], tertX);
             const cY = getClass(d[mY], tertY);
-            color = bivariateColors[cY][cX];
+
+            // Check if this matches the active filter
+            if (activeFilter) {
+                if (cX === activeFilter.cX && cY === activeFilter.cY) {
+                    color = bivariateColors[cY][cX];
+                } else {
+                    color = "#f2f2f2"; 
+                }
+            } else {
+                color = bivariateColors[cY][cX];
+            }
+
             valX = d[mX].toFixed(1);
             valY = d[mY].toFixed(1);
         }
@@ -329,7 +412,7 @@ function renderBivariate() {
         return {
             id: pId,
             name: name,
-            state: stateAbbr,
+            state: level === "county" ? (dataKey.split("_")[0] || "") : dataKey,
             fill: am5.color(color),
             valueX: valX,
             valueY: valY,
@@ -344,15 +427,50 @@ function renderBivariate() {
 function renderLegend() {
     const legend = document.getElementById("bivariateLegend");
     legend.innerHTML = "";
+    
+    // Check if we are in filtering mode
+    if (activeFilter) {
+        legend.classList.add("filtering");
+    } else {
+        legend.classList.remove("filtering");
+    }
+
+    // Update Reset Button visibility
+    const resetBtn = document.getElementById("resetFilterBtn");
+    if (resetBtn) {
+        resetBtn.classList.toggle("active", !!activeFilter);
+    }
+
     // Top-to-bottom: Y=2, Y=1, Y=0
     for (let y = 2; y >= 0; y--) {
         for (let x = 0; x < 3; x++) {
             const cell = document.createElement("div");
             cell.className = "legend-cell";
+            if (activeFilter && activeFilter.cX === x && activeFilter.cY === y) {
+                cell.classList.add("active");
+            }
             cell.style.backgroundColor = bivariateColors[y][x];
+            cell.title = `Show counties with X-tertile ${x+1} & Y-tertile ${y+1}`;
+            
+            cell.addEventListener("click", () => toggleFilter(x, y));
+            
             legend.appendChild(cell);
         }
     }
+}
+
+/**
+ * Toggle the map filter based on legend cell clicks
+ */
+function toggleFilter(cX, cY) {
+    if (activeFilter && activeFilter.cX === cX && activeFilter.cY === cY) {
+        activeFilter = null; // Clear filter
+    } else {
+        activeFilter = { cX, cY };
+    }
+    
+    renderBivariate();
+    renderLegend();
 }
 
 /**
@@ -395,6 +513,18 @@ function updateModalContent() {
     `;
 
     container.innerHTML = html;
+
+    // Update the "Why use this?" example text with the current high-high color name
+    const exampleText = document.getElementById("modalExampleText");
+    if (exampleText) {
+        const scheme = colorSchemes[currentSchemeKey];
+        const mX = document.getElementById("metricX").value;
+        const mY = document.getElementById("metricY").value;
+        const labelX = metricLabels[mX].toLowerCase();
+        const labelY = metricLabels[mY].toLowerCase();
+
+        exampleText.innerHTML = `It helps identify spatial correlations. For example, if you see many <strong>${scheme.highColorName}</strong> counties, it means those areas struggle with both issues (e.g., high ${labelX} <em>and</em> high ${labelY}).`;
+    }
 }
 
 document.addEventListener("DOMContentLoaded", init);
