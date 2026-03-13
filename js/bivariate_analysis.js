@@ -8,11 +8,30 @@
 // CONFIGURATION & METRICS
 // =========================================
 
-const bivariateColors = [
-    ["#e8e8e8", "#ace4e4", "#5ac8c8"], // Low Y (bottom to top in grid)
-    ["#dfb0d6", "#a5add3", "#5698b9"], // Med Y
-    ["#be64ac", "#8c62aa", "#3b4994"]  // High Y
-];
+const colorSchemes = {
+    "teal_purple": [
+        ["#fcf8e3", "#ace4e4", "#5ac8c8"], // Low-Low is light cream
+        ["#dfb0d6", "#a5add3", "#5698b9"],
+        ["#be64ac", "#8c62aa", "#3b4994"]
+    ],
+    "brown_blue": [
+        ["#fcf8e3", "#e4acac", "#c85a5a"],
+        ["#b0d6df", "#adb3a5", "#98b956"],
+        ["#64acbe", "#62aa8c", "#49943b"]
+    ],
+    "pink_yellow": [
+        ["#fcf8e3", "#f3e0d7", "#e1b4a1"],
+        ["#d3d6f3", "#c0c4e1", "#a299c8"],
+        ["#7b87d3", "#6b74c1", "#3b2b94"]
+    ],
+    "blue_orange": [
+        ["#fcf8e3", "#b2d5e5", "#6ea6cd"],
+        ["#eeadad", "#ad9ea5", "#6773a5"],
+        ["#df5e5e", "#a35555", "#4a4c5a"]
+    ]
+};
+
+let bivariateColors = colorSchemes["teal_purple"];
 
 const metricLabels = {
     "pct_unemployment_rate": "Unemployment Rate",
@@ -134,6 +153,7 @@ async function init() {
     initModal();
     renderBivariate();
     renderLegend();
+    updateModalContent();
     showLoading(false);
 }
 
@@ -181,6 +201,21 @@ function populateSelectors() {
 
     selX.addEventListener("change", renderBivariate);
     selY.addEventListener("change", renderBivariate);
+
+    const selScheme = document.getElementById("colorScheme");
+    if (selScheme) {
+        Object.keys(colorSchemes).forEach(s => {
+            const label = s.split("_").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+            selScheme.add(new Option(label, s));
+        });
+
+        selScheme.addEventListener("change", () => {
+            bivariateColors = colorSchemes[selScheme.value];
+            renderBivariate();
+            renderLegend();
+            updateModalContent();
+        });
+    }
 }
 
 // =========================================
@@ -280,7 +315,7 @@ function renderBivariate() {
         const norm = normalizeName(name);
         const d = lookup[stateAbbr.toUpperCase() + "_" + norm];
 
-        let color = "#efefef"; // Default
+        let color = "#b0b0b0"; // Default: Medium Grey for Missing Data
         let valX = "N/A", valY = "N/A";
 
         if (d && typeof d[mX] === "number" && typeof d[mY] === "number") {
@@ -318,6 +353,48 @@ function renderLegend() {
             legend.appendChild(cell);
         }
     }
+}
+
+/**
+ * Update the info modal to reflect the current color scheme
+ */
+function updateModalContent() {
+    const container = document.getElementById("modalColorInterpret");
+    if (!container) return;
+
+    // Corner colors for the 3x3 grid
+    const corners = [
+        { title: "Lowest Shared Values", color: bivariateColors[0][0], desc: "Low Metric X & Low Metric Y" },
+        { title: "Highest Shared Values", color: bivariateColors[2][2], desc: "High Metric X & High Metric Y" },
+        { title: "High Y, Low X", color: bivariateColors[2][0], desc: "The metric increasing vertically." },
+        { title: "Low Y, High X", color: bivariateColors[0][2], desc: "The metric increasing horizontally." }
+    ];
+
+    let html = '';
+    corners.forEach(corner => {
+        html += `
+            <div class="modal-interpret-item">
+                <div class="modal-swatch" style="background-color: ${corner.color}"></div>
+                <div class="modal-interpret-text">
+                    <strong>${corner.title} <span class="modal-hex">${corner.color}</span></strong>
+                    ${corner.desc}
+                </div>
+            </div>
+        `;
+    });
+
+    // Add Missing Data static entry
+    html += `
+        <div class="modal-interpret-item">
+            <div class="modal-swatch" style="background-color: #b0b0b0"></div>
+            <div class="modal-interpret-text">
+                <strong>Missing Data <span class="modal-hex">#B0B0B0</span></strong>
+                Data not available for this county.
+            </div>
+        </div>
+    `;
+
+    container.innerHTML = html;
 }
 
 document.addEventListener("DOMContentLoaded", init);

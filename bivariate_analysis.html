@@ -206,6 +206,11 @@
                     <label for="metricY">Metric Y (Vertical Axis)</label>
                     <select id="metricY" class="styled-select"></select>
                 </div>
+
+                <div class="metric-selector">
+                    <label for="colorScheme">Color Scheme</label>
+                    <select id="colorScheme" class="styled-select"></select>
+                </div>
             </div>
 
             <div class="legend-container">
@@ -216,6 +221,18 @@
                     <div id="bivariateLegend" class="bivariate-legend">
                         <!-- 3x3 Grid will be injected here -->
                     </div>
+                    
+                    <!-- Refined Axis System -->
+                    <div class="axis-arrow x-axis">
+                        <div class="arrow-line"></div>
+                        <span class="marker high">HIGH</span>
+                    </div>
+                    <div class="axis-arrow y-axis">
+                        <div class="arrow-line"></div>
+                        <span class="marker high">HIGH</span>
+                    </div>
+                    <span class="marker low-base">LOW</span>
+
                     <div class="legend-labels">
                         <span id="labelX" class="label-x">Metric X</span>
                         <span id="labelY" class="label-y">Metric Y</span>
@@ -274,12 +291,9 @@
                                     d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z">
                                 </path>
                             </svg> Interpreting Colors</h3>
-                        <ul>
-                            <li><strong>Light Grey (Bottom-Left):</strong> Low values for both metrics.</li>
-                            <li><strong>Deep Blue (Top-Left):</strong> High Y metric, Low X metric.</li>
-                            <li><strong>Deep Pink (Bottom-Right):</strong> Low Y metric, High X metric.</li>
-                            <li><strong>Dark Purple (Top-Right):</strong> High values for both metrics (High-High).</li>
-                        </ul>
+                        <div id="modalColorInterpret">
+                            <!-- Dynamic content will be injected here -->
+                        </div>
                     </div>
                     <div class="explainer-section">
                         <h3><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
