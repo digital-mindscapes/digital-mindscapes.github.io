@@ -1726,13 +1726,13 @@ function renderResultsStep(config) {
                             ${res.testName}: ${testState.violation ? 'Significant results with assumption caveats' : (isSig ? 'Significant evidence found' : 'No significant evidence detected')}
                         </div>
                     </div>
-                    <div style="display:flex; align-items:center; gap:20px;">
+                    <div class="dashboard-header-actions">
                         ${testState.violation ? `
-                            <div class="methodology-alert" style="background:#fff7ed; color:#c2410c; padding:6px 12px; border-radius:8px; font-size:0.75rem; font-weight:700; border:1px solid #ffedd5; display:flex; align-items:center; gap:6px;">
+                            <div class="methodology-alert">
                                 ${SVG_ICONS.alert} Assumption Violation: Non-Normal Distribution
                             </div>
                         ` : ''}
-                        <button class="stats-btn secondary" style="padding: 8px 16px; font-size: 0.75rem;" onclick="showInterpretationModal()">
+                        <button class="stats-btn secondary interpret-btn" onclick="showInterpretationModal()">
                             ${SVG_ICONS.info} Interpret Results
                         </button>
                         <div class="p-value-display">
@@ -1772,11 +1772,11 @@ function renderResultsStep(config) {
                     `}
                 </div>
 
-                <div class="dashboard-viz-stack" style="padding: 30px; display:flex; flex-direction:column; gap:40px;">
+                <div class="dashboard-viz-stack">
                     <div class="viz-panel">
                         <div class="viz-title">
                             <span>Statistical Probability Landscape <button class="info-btn" onclick="showInterpretationModal('landscape')">i</button></span>
-                            <div class="chart-legend" style="margin-bottom:0">
+                            <div class="chart-legend">
                                 <div class="legend-item"><span class="legend-color" style="background:var(--stats-primary)"></span> Theoretical Model</div>
                                 <div class="legend-item"><span class="legend-color" style="background:#1e293b; border: 1px dashed #64748b"></span> Observed Statistic</div>
                             </div>
@@ -1784,7 +1784,7 @@ function renderResultsStep(config) {
                         <div id="distributionChartArea" style="height: 280px;"></div>
                     </div>
 
-                    <div style="height:1px; background:#f1f5f9; width:100%;"></div>
+                    <div class="viz-divider"></div>
 
                     <div class="viz-panel">
                         <div class="viz-title">

@@ -239,10 +239,12 @@
 
         @media (max-width: 1024px) {
             .regression-layout {
-                flex-direction: column;
-                height: auto;
-                overflow-y: visible;
-                overflow-x: hidden;
+                flex-direction: column !important;
+                height: auto !important;
+                min-height: auto !important;
+                overflow-y: visible !important;
+                overflow-x: hidden !important;
+                padding: 15px !important;
             }
             
             .regression-layout aside.left-controls,
@@ -251,12 +253,17 @@
                 min-width: 0 !important;
                 max-width: none !important;
                 height: auto !important;
-                max-height: 600px;
+                max-height: none !important;
+                border-bottom: 1px solid #e2e8f0;
+                margin-bottom: 15px;
+                order: 1;
             }
 
             .results-container-wrapper {
-                min-height: 600px;
+                min-height: auto !important;
                 height: auto !important;
+                order: 2;
+                overflow: visible !important;
             }
         }
 
@@ -648,7 +655,7 @@
                 </div>
             </div>
 
-            <div id="pcaEmptyState" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 60vh; text-align: center; color: #64748b; padding: 40px;">
+            <div id="pcaEmptyState" style="display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 60vh; text-align: center; color: #64748b; padding: 60px 20px;">
                 <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 20px;">
                     <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
                     <polyline points="2 17 12 22 22 17"></polyline>

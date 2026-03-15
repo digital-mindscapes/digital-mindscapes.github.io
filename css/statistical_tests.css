@@ -1601,3 +1601,165 @@ body.stats-query-theme {
     border-radius: 4px;
     font-weight: 600;
 }
+
+.dashboard-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.methodology-alert {
+    background: #fff7ed;
+    color: #c2410c;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    border: 1px solid #ffedd5;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.interpret-btn {
+    padding: 10px 18px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+}
+
+.dashboard-viz-stack {
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+}
+
+.viz-divider {
+    height: 1px;
+    background: #f1f5f9;
+    width: 100%;
+}
+
+/* ── Responsive Refinements ── */
+@media (max-width: 1024px) {
+    .stats-page-layout {
+        flex-direction: column;
+    }
+    
+    .stats-sidebar {
+        width: 100%;
+        min-width: 100%;
+        height: auto;
+        border-right: none;
+        border-bottom: 1px solid var(--stats-border);
+        padding: 20px;
+    }
+    
+    .stats-main-content {
+        padding: 24px;
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    .dashboard-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 24px;
+        padding: 24px;
+    }
+    
+    .dashboard-header-actions {
+        flex-direction: column;
+        align-items: flex-start;
+        width: 100%;
+        gap: 16px;
+    }
+    
+    .methodology-alert {
+        width: 100%;
+    }
+    
+    .interpret-btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .p-value-display {
+        text-align: left;
+        width: 100%;
+    }
+    
+    .p-value-val {
+        font-size: 1.75rem;
+    }
+    
+    .dashboard-stats-bar {
+        flex-wrap: wrap;
+        gap: 20px;
+        padding: 24px;
+    }
+    
+    .stat-metric {
+        flex: 1 1 120px;
+    }
+    
+    .analytical-dashboard {
+        border-radius: 16px;
+    }
+    
+    .dashboard-viz-stack {
+        padding: 24px !important;
+        gap: 30px;
+    }
+    
+    .viz-panel {
+        width: 100%;
+    }
+    
+    .stats-stepper-box {
+        padding: 20px;
+    }
+    
+    .stepper-header-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+    
+    .stepper-progress-pills {
+        display: none; /* Hide stepper pills on mobile to save space */
+    }
+    
+    .subtest-card-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .prereq-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .analytical-stepper {
+        padding-left: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .p-value-val {
+        font-size: 1.5rem;
+    }
+    
+    .stats-btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .stepper-navigation {
+        flex-direction: column;
+        gap: 20px;
+    }
+    
+    .step-indicator {
+        order: -1;
+    }
+}
