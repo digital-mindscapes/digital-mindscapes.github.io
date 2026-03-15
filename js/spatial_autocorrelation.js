@@ -7,49 +7,48 @@
 // METRIC DEFINITIONS (Sync with script.js)
 // =========================================
 
-const metrics = [
-    "pct_unemployment_rate", "pct_in_labor_force",
-    "pct_natural_resources_construction",
-    "pct_graduate_professional_degree",
-    "depression_prevalence", "obesity_prevalence", "diabetes_prevalence",
-    "arthritis_prevalence", "asthma_prevalence", "high_blood_pressure_prevalence",
-    "high_cholesterol_prevalence", "coronary_heart_disease_prevalence",
-    "stroke_prevalence", "cancer_prevalence", "copd_prevalence",
-    "mental_health_issues_prevalence", "physical_health_issues_prevalence",
-    "general_health_prevalence", "smoking_prevalence", "binge_drinking_prevalence",
-    "physical_inactivity_prevalence", "checkup_prevalence",
-    "cholesterol_screening_prevalence", "bp_medication_prevalence",
-    "access2_prevalence", "disability_prevalence"
+const HEALTH_METRICS = [
+    { id: 'obesity_prevalence', label: 'Obesity' },
+    { id: 'diabetes_prevalence', label: 'Diabetes' },
+    { id: 'depression_prevalence', label: 'Depression' },
+    { id: 'arthritis_prevalence', label: 'Arthritis' },
+    { id: 'asthma_prevalence', label: 'Asthma' },
+    { id: 'high_blood_pressure_prevalence', label: 'High Blood Pressure' },
+    { id: 'high_cholesterol_prevalence', label: 'High Cholesterol' },
+    { id: 'coronary_heart_disease_prevalence', label: 'Heart Disease' },
+    { id: 'stroke_prevalence', label: 'Stroke' },
+    { id: 'cancer_prevalence', label: 'Cancer' },
+    { id: 'copd_prevalence', label: 'COPD' },
+    { id: 'mental_health_issues_prevalence', label: 'Mental Distress' },
+    { id: 'physical_health_issues_prevalence', label: 'Physical Distress' },
+    { id: 'general_health_prevalence', label: 'Fair/Poor Health' },
+    { id: 'smoking_prevalence', label: 'Smoking' },
+    { id: 'binge_drinking_prevalence', label: 'Binge Drinking' },
+    { id: 'physical_inactivity_prevalence', label: 'Physical Inactivity' },
+    { id: 'checkup_prevalence', label: 'Annual Checkup' },
+    { id: 'cholesterol_screening_prevalence', label: 'Cholesterol Screen' },
+    { id: 'bp_medication_prevalence', label: 'BP Medication' },
+    { id: 'disability_prevalence', label: 'Any Disability' }
 ];
 
-const metricLabels = {
-    "pct_unemployment_rate": "Unemployment Rate",
-    "pct_in_labor_force": "Labor Force %",
-    "pct_natural_resources_construction": "Construction Jobs",
-    "pct_graduate_professional_degree": "Graduate Degree",
-    "depression_prevalence": "Depression",
-    "obesity_prevalence": "Obesity",
-    "diabetes_prevalence": "Diabetes",
-    "arthritis_prevalence": "Arthritis",
-    "asthma_prevalence": "Asthma",
-    "high_blood_pressure_prevalence": "High Blood Pressure",
-    "high_cholesterol_prevalence": "High Cholesterol",
-    "coronary_heart_disease_prevalence": "Heart Disease",
-    "stroke_prevalence": "Stroke",
-    "cancer_prevalence": "Cancer",
-    "copd_prevalence": "COPD",
-    "mental_health_issues_prevalence": "Mental Distress",
-    "physical_health_issues_prevalence": "Physical Distress",
-    "general_health_prevalence": "Fair/Poor Health",
-    "smoking_prevalence": "Smoking",
-    "binge_drinking_prevalence": "Binge Drinking",
-    "physical_inactivity_prevalence": "Physical Inactivity",
-    "checkup_prevalence": "Annual Checkup",
-    "cholesterol_screening_prevalence": "Cholesterol Screen",
-    "bp_medication_prevalence": "BP Medication",
-    "access2_prevalence": "Lack Ins. (18-64)",
-    "disability_prevalence": "Any Disability"
+const ECON_METRICS = [
+    { id: 'pct_unemployment_rate', label: 'Unemployment Rate' },
+    { id: 'pct_in_labor_force', label: 'Labor Force %' },
+    { id: 'pct_natural_resources_construction', label: 'Construction Jobs' },
+    { id: 'pct_graduate_professional_degree', label: 'Graduate Degree' },
+    { id: 'access2_prevalence', label: 'Lack Ins. (18-64)' }
+];
+
+const stateToAbbr = {
+    "Alabama": "AL", "Alaska": "AK", "Arizona": "AZ", "Arkansas": "AR", "California": "CA", "Colorado": "CO", "Connecticut": "CT", "Delaware": "DE", "Florida": "FL", "Georgia": "GA",
+    "Hawaii": "HI", "Idaho": "ID", "Illinois": "IL", "Indiana": "IN", "Iowa": "IA", "Kansas": "KS", "Kentucky": "KY", "Louisiana": "LA", "Maine": "ME", "Maryland": "MD",
+    "Massachusetts": "MA", "Michigan": "MI", "Minnesota": "MN", "Mississippi": "MS", "Missouri": "MO", "Montana": "MT", "Nebraska": "NE", "Nevada": "NV", "New Hampshire": "NH", "New Jersey": "NJ",
+    "New Mexico": "NM", "New York": "NY", "North Carolina": "NC", "North Dakota": "ND", "Ohio": "OH", "Oklahoma": "OK", "Oregon": "OR", "Pennsylvania": "PA", "Rhode Island": "RI", "South Carolina": "SC",
+    "South Dakota": "SD", "Tennessee": "TN", "Texas": "TX", "Utah": "UT", "Vermont": "VT", "Virginia": "VA", "Washington": "WA", "West Virginia": "WV", "Wisconsin": "WI", "Wyoming": "WY"
 };
+
+const metricLabels = {};
+[...HEALTH_METRICS, ...ECON_METRICS].forEach(m => metricLabels[m.id] = m.label);
 
 // =========================================
 // GLOBAL STATE
@@ -82,15 +81,28 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 function initUI() {
     const varList = document.getElementById("xVarList");
-    metrics.forEach(m => {
-        const item = document.createElement("div");
-        item.className = "checkbox-item";
-        item.style.padding = "4px 0";
-        item.innerHTML = `
-            <input type="radio" name="targetVar" value="${m}" id="var-${m}" ${m === currentTargetVar ? 'checked' : ''}>
-            <label for="var-${m}" style="font-size: 0.85rem; margin-left: 8px;">${metricLabels[m] || m}</label>
-        `;
-        varList.appendChild(item);
+    
+    const categories = [
+        { label: "Health Status & Outcomes", metrics: HEALTH_METRICS, color: "#c83830" },
+        { label: "Socioeconomic Factors", metrics: ECON_METRICS, color: "#0f172a" }
+    ];
+
+    categories.forEach(cat => {
+        const header = document.createElement("div");
+        header.innerHTML = `<strong>${cat.label}</strong>`;
+        header.style.cssText = `margin-top: 12px; margin-bottom: 8px; font-size: 0.8rem; color: ${cat.color}; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #f1f5f9; padding-bottom: 4px;`;
+        varList.appendChild(header);
+
+        cat.metrics.forEach(m => {
+            const item = document.createElement("div");
+            item.className = "checkbox-row";
+            item.style.padding = "4px 0";
+            item.innerHTML = `
+                <input type="radio" name="targetVar" value="${m.id}" id="var-${m.id}" ${m.id === currentTargetVar ? 'checked' : ''}>
+                <label for="var-${m.id}" style="font-size: 0.85rem; margin-left: 8px; cursor: pointer;">${m.label}</label>
+            `;
+            varList.appendChild(item);
+        });
     });
 
     document.getElementById("runAnalysisBtn").addEventListener("click", () => {
@@ -284,10 +296,10 @@ function initMap() {
         }));
 
         polygonSeries.mapPolygons.template.setAll({
-            tooltipText: "{name}: {value}",
-            fill: am5.color(0xe2e8f0),
-            stroke: am5.color(0xd1d5db), // Light grey stroke
-            strokeWidth: 0.3,
+            tooltipText: "{name}",
+            fill: am5.color(0xf8fafc), // Premium Light Slate
+            stroke: am5.color(0xffffff), // Clean White Stroke
+            strokeWidth: 0.5,
             interactive: true
         });
 
@@ -347,6 +359,51 @@ function initMap() {
 function updateMapColors() {
     if (!analysisResults) return;
 
+    // Determine target state abbreviation if scope is specific
+    let targetStateAbbr = stateToAbbr[currentScope] || null;
+    
+    // If state scope changed, handle geodata reload if necessary
+    if (targetStateAbbr) {
+        const geoKey = "am5geodata_region_usa_" + targetStateAbbr.toLowerCase() + "Low";
+        if (window[geoKey]) {
+            applyStateGeodata(window[geoKey], targetStateAbbr);
+        } else {
+            // Dynamically load via script
+            const script = document.createElement("script");
+            script.src = `https://cdn.amcharts.com/lib/5/geodata/region/usa/${targetStateAbbr.toLowerCase()}Low.js`;
+            script.onload = () => {
+                if (window[geoKey]) applyStateGeodata(window[geoKey], targetStateAbbr);
+            };
+            document.head.appendChild(script);
+            return; // Exit and wait for onload
+        }
+    } else {
+        // Revert to National if scope is All
+        if (polygonSeries.get("geoJSON") !== am5geodata_region_usa_usaCountiesLow) {
+            polygonSeries.set("geoJSON", am5geodata_region_usa_usaCountiesLow);
+            mapChart.set("projection", am5map.geoAlbersUsa());
+            mapChart.goHome();
+        }
+        applyResultsToMap();
+    }
+}
+
+function applyStateGeodata(geodata, abbr) {
+    polygonSeries.set("geoJSON", geodata);
+    // When using state geodata, AlbersUsa is still fine, or let amCharts handle bounds
+    mapChart.set("projection", am5map.geoAlbersUsa());
+    
+    // Zoom to specific state
+    setTimeout(() => {
+        mapChart.goHome();
+    }, 100);
+    
+    applyResultsToMap();
+}
+
+function applyResultsToMap() {
+    let targetStateAbbr = stateToAbbr[currentScope] || null;
+
     // Create a lookup for fast matching using normalized keys
     const lookup = {};
     analysisResults.local.forEach(res => {
@@ -369,29 +426,39 @@ function updateMapColors() {
         if (feature.properties && feature.properties.STATE) {
             stateAbbr = feature.properties.STATE;
         } else {
-            // Fallback for some geojson versions
+            // In state geodata, it might be just FIPS or ID
             const parts = pId.split("-");
-            if (parts.length >= 2) stateAbbr = parts[1];
+            stateAbbr = targetStateAbbr || (parts.length >= 2 ? parts[1] : "");
         }
 
-        const key = stateAbbr.toUpperCase() + "_" + normalizeCountyName(name);
+        const normalizedState = stateAbbr.toUpperCase();
+        const key = normalizedState + "_" + normalizeCountyName(name);
         const res = lookup[key];
+        
+        // Visibility check: In state-only geodata, all are relevant
+        const isVisible = true; 
 
         if (res) {
             mapData.push({
                 id: pId,
+                name: name,
                 value: res.statistic,
                 type: res.type,
                 isSignificant: res.isSignificant
             });
         } else {
-            mapData.push({ id: pId, value: null, isSignificant: false });
+            mapData.push({ 
+                id: pId, 
+                name: name,
+                value: null, 
+                isSignificant: false
+            });
         }
     });
 
     polygonSeries.data.setAll(mapData);
     
-    // Force refresh of all polygons to apply new data/highlighting
+    // Force refresh of visible polygons to apply colors
     polygonSeries.mapPolygons.each(polygon => {
         polygon.set("fill", polygon.get("fill")); 
     });
@@ -443,6 +510,8 @@ function runAnalysis() {
         
         // Calculate neighbors
         const neighbors = calculateNeighbors(validCounties);
+        const correction = document.getElementById("correctionMethod").value;
+        const permutations = parseInt(document.getElementById("permutationCount").value) || 499;
 
         spatialWorker.postMessage({
             action: 'calculate',
@@ -451,7 +520,10 @@ function runAnalysis() {
                 ids: ids,
                 neighbors: neighbors
             },
-            config: { permutations: 499 }
+            config: { 
+                permutations: permutations,
+                correction: correction
+            }
         });
     }, 100);
 }
@@ -459,7 +531,9 @@ function runAnalysis() {
 function calculateNeighbors(data) {
     const n = data.length;
     const neighbors = new Array(n);
-    const method = document.getElementById("weightMethod").value;
+    const method = document.getElementById("neighborMethod") ? 
+        document.getElementById("neighborMethod").value : 
+        (document.getElementById("weightMethod") ? document.getElementById("weightMethod").value : "queen");
     
     // 1. Get geometry data (centroids and bounding boxes)
     const geometries = getGeometriesFromMap(data);

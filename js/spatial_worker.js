@@ -12,19 +12,14 @@ self.onmessage = function(e) {
             const { permutations = 499 } = config;
 
             self.postMessage({ type: 'progress', percent: 10, status: "Calculating Global Moran's I..." });
-            // 1. Calculate Global Moran's I
             const globalResult = calculateGlobalMoran(values, neighbors, permutations);
 
             self.postMessage({ type: 'progress', percent: 20, status: "Calculating Local Association (LISA)..." });
-            // 2. Calculate Local Moran's I (LISA)
-            const localResults = calculateLocalMoran(values, ids, neighbors, permutations);
+            const localResults = calculateLocalMoran(values, ids, neighbors, permutations, config.correction || 'none');
 
             self.postMessage({
                 success: true,
-                results: {
-                    global: globalResult,
-                    local: localResults
-                }
+                results: { global: globalResult, local: localResults }
             });
         }
     } catch (err) {
@@ -105,7 +100,7 @@ function calculateGlobalMoran(x, neighbors, permutations) {
  * I_i = z_i * Σ w_ij * z_j
  * where z is standardized value
  */
-function calculateLocalMoran(x, ids, neighbors, permutations) {
+function calculateLocalMoran(x, ids, neighbors, permutations, correction) {
     const n = x.length;
     const mean = x.reduce((a, b) => a + b, 0) / n;
     const std = Math.sqrt(x.reduce((a, b) => a + (b - mean) ** 2, 0) / n) || 1;
@@ -156,16 +151,16 @@ function calculateLocalMoran(x, ids, neighbors, permutations) {
         const w_i = nbIndices.length > 0 ? 1 / nbIndices.length : 0;
 
         for (let p = 0; p < permutations; p++) {
-            // Pick random neighbors from indices excluding i
             let perm_lag = 0;
+            // Heavy optimization: use local variable references and avoid repeated division
             for (let k = 0; k < nbIndices.length; k++) {
-                let randomIdx = Math.floor(Math.random() * n);
-                while (randomIdx === i) randomIdx = Math.floor(Math.random() * n);
-                perm_lag += w_i * z[randomIdx];
+                // Pick random index excluding current i
+                let randomIdx = (i + 1 + Math.floor(Math.random() * (n - 1))) % n;
+                perm_lag += z[randomIdx];
             }
-            const perm_i = z[i] * perm_lag;
-            // For Local Moran, p-value is based on how often the permuted statistic 
-            // is more extreme than the observed one.
+            
+            const perm_i = (z[i] * w_i) * perm_lag;
+            
             if (actual >= 0) {
                 if (perm_i >= actual) count++;
             } else {
@@ -174,12 +169,53 @@ function calculateLocalMoran(x, ids, neighbors, permutations) {
         }
         
         results[i].p = (count + 1) / (permutations + 1);
-        // Mark significance
-        results[i].isSignificant = results[i].p < 0.05;
+    }
+
+    // Mark significance after all p-values are calculated
+    const alpha = 0.05;
+
+    if (correction === 'bonferroni') {
+        const adjustedAlpha = alpha / n;
+        results.forEach(res => {
+            res.isSignificant = res.p < adjustedAlpha;
+            res.alpha_used = adjustedAlpha;
+        });
+    } else if (correction === 'sidak') {
+        const adjustedAlpha = 1 - Math.pow(1 - alpha, 1 / n);
+        results.forEach(res => {
+            res.isSignificant = res.p < adjustedAlpha;
+            res.alpha_used = adjustedAlpha;
+        });
+    } else if (correction === 'fdr') {
+        // Benjamini-Hochberg (FDR)
+        const sorted = results.map((r, i) => ({ p: r.p, index: i }))
+                            .sort((a, b) => a.p - b.p);
+        
+        let k = -1;
+        for (let j = 0; j < n; j++) {
+            if (sorted[j].p <= ((j + 1) / n) * alpha) {
+                k = j;
+            }
+        }
+        
+        results.forEach(res => {
+            res.isSignificant = false;
+            res.alpha_used = alpha; // Contextual application
+        });
+        for (let j = 0; j <= k; j++) {
+            results[sorted[j].index].isSignificant = true;
+        }
+    } else {
+        // None
+        results.forEach(res => {
+            res.isSignificant = res.p < alpha;
+            res.alpha_used = alpha;
+        });
     }
 
     return results;
 }
+
 
 function getQuadrant(z, lag) {
     if (z >= 0 && lag >= 0) return 'HH';

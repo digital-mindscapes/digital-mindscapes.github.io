@@ -220,6 +220,93 @@
         .hl { background: #fca5a5; }
         .lh { background: #7dd3fc; }
         .ns { background: #e2e8f0; }
+        
+        /* Premium Select & Control Styling */
+        .control-section {
+            margin-bottom: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .section-label {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 2px;
+        }
+        .premium-select {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            border: 2px solid #e2e8f0;
+            background-color: #f8fafc;
+            color: #0f172a;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 16px center;
+            background-size: 14px;
+        }
+        .premium-select:hover {
+            border-color: #cbd5e1;
+            background-color: #fff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+        }
+        .premium-select:focus {
+            outline: none;
+            border-color: #c83830;
+            background-color: #fff;
+            box-shadow: 0 0 0 4px rgba(200, 56, 48, 0.1);
+        }
+
+        .checkbox-group {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 15px;
+            background: #f8fafc;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin-top: 8px;
+        }
+
+        .checkbox-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 10px;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+        
+        .checkbox-row:hover {
+            background: #fff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+        }
+
+        .checkbox-row input[type="radio"] {
+            margin: 0;
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+            accent-color: #c83830;
+        }
+
+        .checkbox-row label {
+            font-size: 0.85rem;
+            color: #334155;
+            cursor: pointer;
+            line-height: 1.4;
+            flex: 1;
+            font-weight: 500;
+        }
 
         .moran-vitals {
             display: grid;
@@ -571,19 +658,42 @@
                     <p style="margin:0; font-size:0.8rem; color:var(--text-muted);">Set neighbor weights and target metric.</p>
                 </div>
 
-                <div class="control-group">
-                    <label for="weightMethod">Neighbor Method:</label>
-                    <select id="weightMethod" class="modern-select">
-                        <option value="contiguity">Queen Contiguity (Adjacency)</option>
+                <div class="control-section">
+                    <label class="section-label">Neighbor Method</label>
+                    <select id="neighborMethod" class="premium-select">
+                        <option value="queen">Queen Contiguity (Adjacency)</option>
                         <option value="knn">K-Nearest Neighbors (K=8)</option>
-                        <option value="distance">Distance-Based (Fixed radius)</option>
+                        <option value="distance">Distance-Based (100mi)</option>
                     </select>
                 </div>
+
+                <div class="control-section">
+                    <label class="section-label">Statistical Rigor</label>
+                    <select id="correctionMethod" class="premium-select">
+                        <option value="none">None (Alpha = 0.05)</option>
+                        <option value="fdr">FDR (Benjamini-Hochberg)</option>
+                        <option value="bonferroni">Bonferroni Correction</option>
+                        <option value="sidak">Šidák Correction</option>
+                    </select>
+                </div>
+
+                <div class="control-section">
+                    <label class="section-label">Permutations (Precision)</label>
+                    <select id="permutationCount" class="premium-select">
+                        <option value="499">499 (Fast)</option>
+                        <option value="999">999 (Balanced)</option>
+                        <option value="9999">9,999 (High Rigor)</option>
+                        <option value="99999">99,999 (Ultra - Slow)</option>
+                    </select>
+                    <div style="font-size: 0.75rem; color: #64748b; margin-top: 5px;">
+                        Higher precision for MTC clusters.
+                    </div>
+                </div>
                 
-                <div class="control-group">
-                    <label>Target Variables (Select One):</label>
+                <div class="control-section">
+                    <label class="section-label">Target Variables (Select One)</label>
                     <div id="xVarList" class="checkbox-group">
-                       <!-- Checkboxes JS injected -->
+                       <!-- Grouped Radio Buttons JS injected -->
                     </div>
                 </div>
 
@@ -823,6 +933,43 @@
                     </div>
 
                     <p>LISA allows us to decompose Global Moran's I into the contribution of each location, visualizing specifically where significant "Hotspots" or "Outliers" exist.</p>
+                </div>
+
+                <div class="modal-section">
+                    <h3>Multiple Testing & Significance</h3>
+                    <p>When performing LISA analysis on thousands of counties, the probability of finding significant clusters by pure chance increases (the "Multiple Comparisons Problem"). To ensure robustness, we provide two correction methods:</p>
+                    
+                    <ul style="font-size: 0.9rem; margin-bottom: 20px;">
+                        <li>
+                            <strong>Bonferroni Correction:</strong> A very conservative adjustment that controls the family-wise error rate.
+                            <div class="math-block">
+                                $$\alpha_{Bonferroni} = \frac{\alpha}{n}$$
+                            </div>
+                        </li>
+                        <li>
+                            <strong>Šidák Correction:</strong> A slightly less conservative adjustment.
+                            <div class="math-block">
+                                $$\alpha_{\check{S}id\acute{a}k} = 1 - (1 - \alpha)^{1/n}$$
+                            </div>
+                        </li>
+                        <li>
+                            <strong>False Discovery Rate (FDR):</strong> The Benjamini-Hochberg procedure, which controls the expected proportion of false discoveries. It is generally less conservative than Bonferroni and highly recommended for large spatial datasets.
+                            <div class="math-block">
+                                $$P_{(k)} \le \frac{k}{n} \alpha$$
+                            </div>
+                        </li>
+                    </ul>
+                    <p>
+                        High permutation counts (e.g., 99,999) are recommended when using these corrections to ensure the p-value precision is sufficient to meet the lowered significance thresholds.
+                    </p>
+                    <div class="math-label">Multiple Testing Adjustment Formulas</div>
+
+                    <p>Where:</p>
+                    <ul style="font-size: 0.9rem;">
+                        <li>$\alpha$: Nominal significance level ($0.05$).</li>
+                        <li>$n$: Number of spatial units being tested.</li>
+                    </ul>
+                    <p>Applying these adjustments creates much more conservative and statistically rigorous cluster maps, highlighting only the most extreme geographic associations.</p>
                 </div>
 
                 <div class="modal-section">
