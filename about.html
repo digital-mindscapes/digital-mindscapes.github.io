@@ -598,6 +598,18 @@
             </svg>
             Predictive Analysis
         </a>
+        <a href="statistical_tests.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <path d="M8 13h2"></path>
+                <path d="M8 17h2"></path>
+                <path d="M14 13h2"></path>
+                <path d="M14 17h2"></path>
+            </svg>
+            Statistical Tests
+        </a>
         <a href="about.html" class="comparison-pill active-pill">
 
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
@@ -788,20 +800,34 @@
                 Regression Analysis
             </div>
             <div class="about-nav-item" onclick="switchAboutTab('page_pca', this)">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
                     <path d="M2 17l10 5 10-5"></path>
                     <path d="M2 12l10 5 10-5"></path>
                 </svg>
                 Dimensionality Reduction
             </div>
-            <div class="about-nav-item" onclick="switchAboutTab('page_predictive', this)">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+            <div class="about-nav-item" onclick="switchAboutTab('predictive', this)">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M12 2a5 5 0 0 1 5 5c0 2.22-1.44 4.11-3.41 4.79C12.43 12.31 11 14 11 16v1" />
                     <path d="M11 22h2" />
                     <path d="M12 2A5 5 0 0 0 7 7c0 2.22 1.44 4.11 3.41 4.79C11.57 12.31 13 14 13 16v1" />
                 </svg>
                 Predictive Analysis
+            </div>
+            <div class="about-nav-item" onclick="switchAboutTab('statistical_tests', this)">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <path d="M8 13h2"></path>
+                    <path d="M8 17h2"></path>
+                    <path d="M14 13h2"></path>
+                    <path d="M14 17h2"></path>
+                </svg>
+                Statistical Tests
             </div>
         </div>
 
@@ -2055,7 +2081,9 @@
                         style="background: #ffffff; border: 1px solid #e9ecef; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02); margin-bottom: 30px;">
                         <h4
                             style="color: #c83830; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; font-size: 1.25rem;">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"
+                                stroke-linejoin="round">
                                 <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
                                 <line x1="3" y1="9" x2="21" y2="9"></line>
                                 <line x1="3" y1="15" x2="21" y2="15"></line>
@@ -2067,7 +2095,8 @@
 
                         <p
                             style="font-size: 1.1rem; color: #2b2e31; line-height: 1.7; margin-bottom: 20px; font-weight: 500;">
-                            The <strong>Bivariate Analysis</strong> page allows for the simultaneous exploration of two variables, identifying geographic hotspots where health and socioeconomic factors intersect.
+                            The <strong>Bivariate Analysis</strong> page allows for the simultaneous exploration of two
+                            variables, identifying geographic hotspots where health and socioeconomic factors intersect.
                         </p>
 
                         <div
@@ -2076,23 +2105,35 @@
                                 style="margin-top: 0; color: #495057; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.5px;">
                                 Significance</h5>
                             <p style="margin-bottom: 0; color: #495057; line-height: 1.6;">
-                                Traditional maps show one variable at a time, but problems rarely exist in isolation. This view uses a sophisticated 3x3 color matrix to reveal relationships between pairs of metrics (e.g., "Is poor health insurance access physically concentrated in areas with high unemployment?"). By classifying data into tertiles, we expose the underlying spatial correlation, helping researchers spot High-High or Low-Low clusters that would be invisible on standard maps.
+                                Traditional maps show one variable at a time, but problems rarely exist in isolation.
+                                This view uses a sophisticated 3x3 color matrix to reveal relationships between pairs of
+                                metrics (e.g., "Is poor health insurance access physically concentrated in areas with
+                                high unemployment?"). By classifying data into tertiles, we expose the underlying
+                                spatial correlation, helping researchers spot High-High or Low-Low clusters that would
+                                be invisible on standard maps.
                             </p>
                         </div>
 
-                        <h5 style="color: #2b2e31; margin-bottom: 15px; font-weight: 700;">What this information conveys:</h5>
+                        <h5 style="color: #2b2e31; margin-bottom: 15px; font-weight: 700;">What this information
+                            conveys:</h5>
                         <ul style="list-style-type: none; padding-left: 0; margin-bottom: 25px;">
                             <li style="margin-bottom: 12px; display: flex; gap: 10px;">
                                 <span style="color: #c83830; font-weight: bold;">•</span>
-                                <span style="color: #495057; line-height: 1.5;"><strong>Composite Vulnerability:</strong> Identify "High-High" areas where multiple risk factors overlap, signaling a need for integrated policy responses.</span>
+                                <span style="color: #495057; line-height: 1.5;"><strong>Composite
+                                        Vulnerability:</strong> Identify "High-High" areas where multiple risk factors
+                                    overlap, signaling a need for integrated policy responses.</span>
                             </li>
                             <li style="margin-bottom: 12px; display: flex; gap: 10px;">
                                 <span style="color: #c83830; font-weight: bold;">•</span>
-                                <span style="color: #495057; line-height: 1.5;"><strong>Hotspot Analysis:</strong> Use the 3x3 matrix to instantly see which areas deviate from national norms across two axes of data.</span>
+                                <span style="color: #495057; line-height: 1.5;"><strong>Hotspot Analysis:</strong> Use
+                                    the 3x3 matrix to instantly see which areas deviate from national norms across two
+                                    axes of data.</span>
                             </li>
                             <li style="display: flex; gap: 10px;">
                                 <span style="color: #c83830; font-weight: bold;">•</span>
-                                <span style="color: #495057; line-height: 1.5;"><strong>Intersectional Insights:</strong> Discover if socioeconomic gains in a county are effectively trailing behind health outcome improvements or vice versa.</span>
+                                <span style="color: #495057; line-height: 1.5;"><strong>Intersectional
+                                        Insights:</strong> Discover if socioeconomic gains in a county are effectively
+                                    trailing behind health outcome improvements or vice versa.</span>
                             </li>
                         </ul>
 
@@ -2101,18 +2142,25 @@
                             style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
                             <div
                                 style="padding: 15px; background: #fff; border: 1px solid #e9ecef; border-radius: 8px;">
-                                <strong style="display: block; color: #c83830; margin-bottom: 5px;">3x3 Bivariate Matrix</strong>
-                                <span style="font-size: 0.9rem; color: #6c757d;">A custom-designed legend that makes interpreting complex geographic correlations intuitive.</span>
+                                <strong style="display: block; color: #c83830; margin-bottom: 5px;">3x3 Bivariate
+                                    Matrix</strong>
+                                <span style="font-size: 0.9rem; color: #6c757d;">A custom-designed legend that makes
+                                    interpreting complex geographic correlations intuitive.</span>
                             </div>
                             <div
                                 style="padding: 15px; background: #fff; border: 1px solid #e9ecef; border-radius: 8px;">
-                                <strong style="display: block; color: #c83830; margin-bottom: 5px;">Dynamic Tertiles</strong>
-                                <span style="font-size: 0.9rem; color: #6c757d;">Data-driven classification that automatically adjusts the color scale to the distribution of selected metrics.</span>
+                                <strong style="display: block; color: #c83830; margin-bottom: 5px;">Dynamic
+                                    Tertiles</strong>
+                                <span style="font-size: 0.9rem; color: #6c757d;">Data-driven classification that
+                                    automatically adjusts the color scale to the distribution of selected
+                                    metrics.</span>
                             </div>
                             <div
                                 style="padding: 15px; background: #fff; border: 1px solid #e9ecef; border-radius: 8px;">
-                                <strong style="display: block; color: #c83830; margin-bottom: 5px;">Intersection Tooltips</strong>
-                                <span style="font-size: 0.9rem; color: #6c757d;">Hover over any county to see the exact percentage values for both Metrics X and Y simultaneously.</span>
+                                <strong style="display: block; color: #c83830; margin-bottom: 5px;">Intersection
+                                    Tooltips</strong>
+                                <span style="font-size: 0.9rem; color: #6c757d;">Hover over any county to see the exact
+                                    percentage values for both Metrics X and Y simultaneously.</span>
                             </div>
                         </div>
                     </div>
@@ -2185,9 +2233,13 @@
             <div id="content_page_correlation" class="about-content-section">
                 <h2>Correlation Analysis</h2>
                 <div class="content-body">
-                    <div style="background: #ffffff; border: 1px solid #e9ecef; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02); margin-bottom: 30px;">
-                        <h4 style="color: #c83830; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; font-size: 1.25rem;">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" style="color: #c83830;">
+                    <div
+                        style="background: #ffffff; border: 1px solid #e9ecef; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02); margin-bottom: 30px;">
+                        <h4
+                            style="color: #c83830; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; font-size: 1.25rem;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"
+                                stroke-linejoin="round" style="color: #c83830;">
                                 <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
                                 <path d="M3 9h18"></path>
                                 <path d="M9 21V9"></path>
@@ -2195,14 +2247,24 @@
                             Statistical Relationship Discovery
                         </h4>
 
-                        <p style="font-size: 1.1rem; color: #2b2e31; line-height: 1.7; margin-bottom: 20px; font-weight: 500;">
-                            The <strong>Correlation Analysis</strong> page provides an interactive, color-coded grid designed to reveal the statistical strength and direction of relationships between multiple socioeconomic and public health metrics simultaneously.
+                        <p
+                            style="font-size: 1.1rem; color: #2b2e31; line-height: 1.7; margin-bottom: 20px; font-weight: 500;">
+                            The <strong>Correlation Analysis</strong> page provides an interactive, color-coded grid
+                            designed to reveal the statistical strength and direction of relationships between multiple
+                            socioeconomic and public health metrics simultaneously.
                         </p>
 
-                        <div style="background: #f8f9fa; border-radius: 10px; padding: 20px; margin-bottom: 25px; border-left: 4px solid #c83830;">
-                            <h5 style="margin-top: 0; color: #495057; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.5px;">Significance</h5>
+                        <div
+                            style="background: #f8f9fa; border-radius: 10px; padding: 20px; margin-bottom: 25px; border-left: 4px solid #c83830;">
+                            <h5
+                                style="margin-top: 0; color: #495057; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                                Significance</h5>
                             <p style="margin-bottom: 0; color: #495057; line-height: 1.6;">
-                                While maps show us <em>where</em> issues occur, correlations help us understand <em>how</em> issues might be linked. By calculating Pearson correlation coefficients across thousands of counties, this tool quickly highlights robust systemic patterns—such as the strong negative correlation often found between income levels and chronic disease prevalence.
+                                While maps show us <em>where</em> issues occur, correlations help us understand
+                                <em>how</em> issues might be linked. By calculating Pearson correlation coefficients
+                                across thousands of counties, this tool quickly highlights robust systemic patterns—such
+                                as the strong negative correlation often found between income levels and chronic disease
+                                prevalence.
                             </p>
                         </div>
 
@@ -2210,15 +2272,22 @@
                         <ul style="list-style-type: none; padding-left: 0; margin-bottom: 25px;">
                             <li style="margin-bottom: 12px; display: flex; gap: 10px;">
                                 <span style="color: #c83830; font-weight: bold;">•</span>
-                                <span style="color: #495057; line-height: 1.5;"><strong>Customizable Plotting Matrix:</strong> Build your own grids by mixing and matching specific rows and columns of data, tailored to your distinct research inquiries.</span>
+                                <span style="color: #495057; line-height: 1.5;"><strong>Customizable Plotting
+                                        Matrix:</strong> Build your own grids by mixing and matching specific rows and
+                                    columns of data, tailored to your distinct research inquiries.</span>
                             </li>
                             <li style="margin-bottom: 12px; display: flex; gap: 10px;">
                                 <span style="color: #c83830; font-weight: bold;">•</span>
-                                <span style="color: #495057; line-height: 1.5;"><strong>Multiple Layout Styles:</strong> Toggle between traditional numeric squares, visual correlogram circles, or mixed layouts to best represent the density and significance of variables.</span>
+                                <span style="color: #495057; line-height: 1.5;"><strong>Multiple Layout Styles:</strong>
+                                    Toggle between traditional numeric squares, visual correlogram circles, or mixed
+                                    layouts to best represent the density and significance of variables.</span>
                             </li>
                             <li style="display: flex; gap: 10px;">
                                 <span style="color: #c83830; font-weight: bold;">•</span>
-                                <span style="color: #495057; line-height: 1.5;"><strong>Scatterplot Deep-Dive:</strong> Clicking any single square within the matrix dynamically generates a detailed 2D scatterplot revealing the exact distribution of counties making up that specific correlation.</span>
+                                <span style="color: #495057; line-height: 1.5;"><strong>Scatterplot Deep-Dive:</strong>
+                                    Clicking any single square within the matrix dynamically generates a detailed 2D
+                                    scatterplot revealing the exact distribution of counties making up that specific
+                                    correlation.</span>
                             </li>
                         </ul>
                     </div>
@@ -2228,22 +2297,37 @@
             <div id="content_page_regression" class="about-content-section">
                 <h2>Regression Analysis</h2>
                 <div class="content-body">
-                    <div style="background: #ffffff; border: 1px solid #e9ecef; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02); margin-bottom: 30px;">
-                        <h4 style="color: #c83830; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; font-size: 1.25rem;">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" style="color: #c83830;">
+                    <div
+                        style="background: #ffffff; border: 1px solid #e9ecef; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02); margin-bottom: 30px;">
+                        <h4
+                            style="color: #c83830; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; font-size: 1.25rem;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"
+                                stroke-linejoin="round" style="color: #c83830;">
                                 <path d="M2 12h4l3-9 5 18 3-9h5"></path>
                             </svg>
                             Multivariate Predictive Modeling (OLS)
                         </h4>
 
-                        <p style="font-size: 1.1rem; color: #2b2e31; line-height: 1.7; margin-bottom: 20px; font-weight: 500;">
-                            The <strong>Regression Analysis</strong> (OLS Regression Sandbox) enables researchers to move beyond simple correlations to true predictive modeling. Select a dependent variable and multiple independent predictors to build a classic Ordinary Least Squares (OLS) model directly in the browser.
+                        <p
+                            style="font-size: 1.1rem; color: #2b2e31; line-height: 1.7; margin-bottom: 20px; font-weight: 500;">
+                            The <strong>Regression Analysis</strong> (OLS Regression Sandbox) enables researchers to
+                            move beyond simple correlations to true predictive modeling. Select a dependent variable and
+                            multiple independent predictors to build a classic Ordinary Least Squares (OLS) model
+                            directly in the browser.
                         </p>
 
-                        <div style="background: #f8f9fa; border-radius: 10px; padding: 20px; margin-bottom: 25px; border-left: 4px solid #c83830;">
-                            <h5 style="margin-top: 0; color: #495057; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.5px;">Significance</h5>
+                        <div
+                            style="background: #f8f9fa; border-radius: 10px; padding: 20px; margin-bottom: 25px; border-left: 4px solid #c83830;">
+                            <h5
+                                style="margin-top: 0; color: #495057; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                                Significance</h5>
                             <p style="margin-bottom: 0; color: #495057; line-height: 1.6;">
-                                While bivariate correlation shows if two things move together, multivariate regression reveals if those relationships hold true when controlling for other factors. This is critical for policy makers seeking to understand confounding variables—such as whether a link between poverty and health outcomes persists after accounting for regional urbanicity or healthcare access.
+                                While bivariate correlation shows if two things move together, multivariate regression
+                                reveals if those relationships hold true when controlling for other factors. This is
+                                critical for policy makers seeking to understand confounding variables—such as whether a
+                                link between poverty and health outcomes persists after accounting for regional
+                                urbanicity or healthcare access.
                             </p>
                         </div>
 
@@ -2251,15 +2335,22 @@
                         <ul style="list-style-type: none; padding-left: 0; margin-bottom: 25px;">
                             <li style="margin-bottom: 12px; display: flex; gap: 10px;">
                                 <span style="color: #c83830; font-weight: bold;">•</span>
-                                <span style="color: #495057; line-height: 1.5;"><strong>Custom Model Builder:</strong> Select one dependent variable (Y) and as many independent predictors (X) as needed from our comprehensive dataset.</span>
+                                <span style="color: #495057; line-height: 1.5;"><strong>Custom Model Builder:</strong>
+                                    Select one dependent variable (Y) and as many independent predictors (X) as needed
+                                    from our comprehensive dataset.</span>
                             </li>
                             <li style="margin-bottom: 12px; display: flex; gap: 10px;">
                                 <span style="color: #c83830; font-weight: bold;">•</span>
-                                <span style="color: #495057; line-height: 1.5;"><strong>Statistical Output:</strong> Instantly generates a full results table including Coefficients, Standard Errors, t-values, and p-values for every predictor, alongside R-Squared and F-Statistics.</span>
+                                <span style="color: #495057; line-height: 1.5;"><strong>Statistical Output:</strong>
+                                    Instantly generates a full results table including Coefficients, Standard Errors,
+                                    t-values, and p-values for every predictor, alongside R-Squared and
+                                    F-Statistics.</span>
                             </li>
                             <li style="display: flex; gap: 10px;">
                                 <span style="color: #c83830; font-weight: bold;">•</span>
-                                <span style="color: #495057; line-height: 1.5;"><strong>Diagnostic Visuals:</strong> Dynamic Residual vs. Fitted value plots help researchers assess model assumptions and identify potential outliers or heteroscedasticity.</span>
+                                <span style="color: #495057; line-height: 1.5;"><strong>Diagnostic Visuals:</strong>
+                                    Dynamic Residual vs. Fitted value plots help researchers assess model assumptions
+                                    and identify potential outliers or heteroscedasticity.</span>
                             </li>
                         </ul>
                     </div>
@@ -2269,9 +2360,13 @@
             <div id="content_page_pca" class="about-content-section">
                 <h2>Dimensionality Reduction</h2>
                 <div class="content-body">
-                    <div style="background: #ffffff; border: 1px solid #e9ecef; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02); margin-bottom: 30px;">
-                        <h4 style="color: #c83830; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; font-size: 1.25rem;">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" style="color: #c83830;">
+                    <div
+                        style="background: #ffffff; border: 1px solid #e9ecef; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02); margin-bottom: 30px;">
+                        <h4
+                            style="color: #c83830; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; font-size: 1.25rem;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"
+                                stroke-linejoin="round" style="color: #c83830;">
                                 <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
                                 <path d="M2 17l10 5 10-5"></path>
                                 <path d="M2 12l10 5 10-5"></path>
@@ -2279,38 +2374,61 @@
                             Multi-Method Dimensionality Reduction
                         </h4>
 
-                        <p style="font-size: 1.1rem; color: #2b2e31; line-height: 1.7; margin-bottom: 20px; font-weight: 500;">
-                            The <strong>Dimensionality Reduction</strong> page empowers researchers to condense high-dimensional health datasets into interpretable 2D visualizations using both linear and non-linear algorithms, including PCA, t-SNE, and UMAP.
+                        <p
+                            style="font-size: 1.1rem; color: #2b2e31; line-height: 1.7; margin-bottom: 20px; font-weight: 500;">
+                            The <strong>Dimensionality Reduction</strong> page empowers researchers to condense
+                            high-dimensional health datasets into interpretable 2D visualizations using both linear and
+                            non-linear algorithms, including PCA, t-SNE, and UMAP.
                         </p>
 
-                        <div style="background: #f8f9fa; border-radius: 10px; padding: 20px; margin-bottom: 25px; border-left: 4px solid #c83830;">
-                            <h5 style="margin-top: 0; color: #495057; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.5px;">Methodologies</h5>
+                        <div
+                            style="background: #f8f9fa; border-radius: 10px; padding: 20px; margin-bottom: 25px; border-left: 4px solid #c83830;">
+                            <h5
+                                style="margin-top: 0; color: #495057; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                                Methodologies</h5>
                             <p style="margin-bottom: 0; color: #495057; line-height: 1.6;">
-                                <strong>PCA:</strong> A linear technique that identifies the "Principal Components" (super-metrics) that capture the maximum variance in the data.<br>
-                                <strong>t-SNE & UMAP:</strong> Advanced non-linear techniques that excel at preserving local clusters, allowing researchers to see how counties with similar multi-metric profiles naturally group together, even when those relationships are highly complex.
+                                <strong>PCA:</strong> A linear technique that identifies the "Principal Components"
+                                (super-metrics) that capture the maximum variance in the data.<br>
+                                <strong>t-SNE & UMAP:</strong> Advanced non-linear techniques that excel at preserving
+                                local clusters, allowing researchers to see how counties with similar multi-metric
+                                profiles naturally group together, even when those relationships are highly complex.
                             </p>
                         </div>
 
                         <h5 style="color: #2b2e31; margin-bottom: 15px; font-weight: 700;">Analytic Views:</h5>
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 25px;">
-                            <div style="padding: 15px; background: #fff; border: 1px solid #e9ecef; border-radius: 8px; border-top: 3px solid #c83830;">
-                                <strong style="display: block; color: #2b2e31; margin-bottom: 10px;">Interactive Projections</strong>
-                                <span style="font-size: 0.9rem; color: #6c757d;">Explore the "latent space" of American public health. Counties are plotted as individual points; their proximity on the map represents their statistical similarity across all selected socioeconomic and health factors.</span>
+                        <div
+                            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 25px;">
+                            <div
+                                style="padding: 15px; background: #fff; border: 1px solid #e9ecef; border-radius: 8px; border-top: 3px solid #c83830;">
+                                <strong style="display: block; color: #2b2e31; margin-bottom: 10px;">Interactive
+                                    Projections</strong>
+                                <span style="font-size: 0.9rem; color: #6c757d;">Explore the "latent space" of American
+                                    public health. Counties are plotted as individual points; their proximity on the map
+                                    represents their statistical similarity across all selected socioeconomic and health
+                                    factors.</span>
                             </div>
-                            <div style="padding: 15px; background: #fff; border: 1px solid #e9ecef; border-radius: 8px; border-top: 3px solid #c83830;">
-                                <strong style="display: block; color: #2b2e31; margin-bottom: 10px;">PCA Biplot & Scree</strong>
-                                <span style="font-size: 0.9rem; color: #6c757d;">Specifically for PCA, these allow you to see both the "Principal Components" themselves and the exact contribution vectors for every raw variable, revealing what each axis "means" in real-world terms.</span>
+                            <div
+                                style="padding: 15px; background: #fff; border: 1px solid #e9ecef; border-radius: 8px; border-top: 3px solid #c83830;">
+                                <strong style="display: block; color: #2b2e31; margin-bottom: 10px;">PCA Biplot &
+                                    Scree</strong>
+                                <span style="font-size: 0.9rem; color: #6c757d;">Specifically for PCA, these allow you
+                                    to see both the "Principal Components" themselves and the exact contribution vectors
+                                    for every raw variable, revealing what each axis "means" in real-world terms.</span>
                             </div>
                         </div>
 
                         <ul style="list-style-type: none; padding-left: 0;">
                             <li style="margin-bottom: 12px; display: flex; gap: 10px;">
                                 <span style="color: #c83830; font-weight: bold;">•</span>
-                                <span style="color: #495057; line-height: 1.5;"><strong>Regional Discovery:</strong> Use the interactive map and chart selection to see how state-level policies or geographic clusters emerge from complex health data.</span>
+                                <span style="color: #495057; line-height: 1.5;"><strong>Regional Discovery:</strong> Use
+                                    the interactive map and chart selection to see how state-level policies or
+                                    geographic clusters emerge from complex health data.</span>
                             </li>
                             <li style="display: flex; gap: 10px;">
                                 <span style="color: #c83830; font-weight: bold;">•</span>
-                                <span style="color: #495057; line-height: 1.5;"><strong>Hyperparameter Tuning:</strong> Manually adjust Perplexity (t-SNE) or Neighbors (UMAP) to refine how local vs. global structures are prioritized in the visual representation.</span>
+                                <span style="color: #495057; line-height: 1.5;"><strong>Hyperparameter Tuning:</strong>
+                                    Manually adjust Perplexity (t-SNE) or Neighbors (UMAP) to refine how local vs.
+                                    global structures are prioritized in the visual representation.</span>
                             </li>
                         </ul>
                     </div>
@@ -2320,46 +2438,157 @@
             <div id="content_page_predictive" class="about-content-section">
                 <h2>Predictive Analysis</h2>
                 <div class="content-body">
-                    <div style="background: #ffffff; border: 1px solid #e9ecef; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02); margin-bottom: 30px;">
-                        <h4 style="color: #c83830; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; font-size: 1.25rem;">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" style="color: #c83830;">
+                    <div
+                        style="background: #ffffff; border: 1px solid #e9ecef; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02); margin-bottom: 30px;">
+                        <h4
+                            style="color: #c83830; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; font-size: 1.25rem;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"
+                                stroke-linejoin="round" style="color: #c83830;">
                                 <path d="M12 2a5 5 0 0 1 5 5c0 2.22-1.44 4.11-3.41 4.79C12.43 12.31 11 14 11 16v1" />
                                 <path d="M11 22h2" />
                             </svg>
                             Intelligent Forecasting & Machine Learning
                         </h4>
 
-                        <p style="font-size: 1.1rem; color: #2b2e31; line-height: 1.7; margin-bottom: 20px; font-weight: 500;">
-                            The <strong>Predictive Analysis</strong> page leverages advanced Machine Learning algorithms to build robust forecasting models that predict health outcomes based on socioeconomic and environmental factors.
+                        <p
+                            style="font-size: 1.1rem; color: #2b2e31; line-height: 1.7; margin-bottom: 20px; font-weight: 500;">
+                            The <strong>Predictive Analysis</strong> page leverages advanced Machine Learning algorithms
+                            to build robust forecasting models that predict health outcomes based on socioeconomic and
+                            environmental factors.
                         </p>
 
-                        <div style="background: #f8f9fa; border-radius: 10px; padding: 20px; margin-bottom: 25px; border-left: 4px solid #c83830;">
-                            <h5 style="margin-top: 0; color: #495057; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.5px;">Methodology</h5>
+                        <div
+                            style="background: #f8f9fa; border-radius: 10px; padding: 20px; margin-bottom: 25px; border-left: 4px solid #c83830;">
+                            <h5
+                                style="margin-top: 0; color: #495057; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                                Methodology</h5>
                             <p style="margin-bottom: 0; color: #495057; line-height: 1.6;">
-                                We employ a variety of state-of-the-art models including Random Forest, XGBoost, and Neural Networks. The system automatically handles data preprocessing, feature scaling, and model evaluation using nested cross-validation to ensure the most accurate and reliable results.
+                                We employ a variety of state-of-the-art models including Random Forest, XGBoost, and
+                                Neural Networks. The system automatically handles data preprocessing, feature scaling,
+                                and model evaluation using nested cross-validation to ensure the most accurate and
+                                reliable results.
                             </p>
                         </div>
 
                         <h5 style="color: #2b2e31; margin-bottom: 15px; font-weight: 700;">Key Features:</h5>
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 25px;">
-                            <div style="padding: 15px; background: #fff; border: 1px solid #e9ecef; border-radius: 8px; border-top: 3px solid #c83830;">
-                                <strong style="display: block; color: #2b2e31; margin-bottom: 10px;">Model Comparison</strong>
-                                <span style="font-size: 0.9rem; color: #6c757d;">Compare performance across multiple algorithms (Regression vs. Classification) using metrics like R-squared, RMSE, Accuracy, and F1-score.</span>
+                        <div
+                            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 25px;">
+                            <div
+                                style="padding: 15px; background: #fff; border: 1px solid #e9ecef; border-radius: 8px; border-top: 3px solid #c83830;">
+                                <strong style="display: block; color: #2b2e31; margin-bottom: 10px;">Model
+                                    Comparison</strong>
+                                <span style="font-size: 0.9rem; color: #6c757d;">Compare performance across multiple
+                                    algorithms (Regression vs. Classification) using metrics like R-squared, RMSE,
+                                    Accuracy, and F1-score.</span>
                             </div>
-                            <div style="padding: 15px; background: #fff; border: 1px solid #e9ecef; border-radius: 8px; border-top: 3px solid #c83830;">
-                                <strong style="display: block; color: #2b2e31; margin-bottom: 10px;">Feature Importance</strong>
-                                <span style="font-size: 0.9rem; color: #6c757d;">Visualize which socioeconomic variables are the strongest predictors for specific health outcomes using interactive Sunburst charts and importance rankings.</span>
+                            <div
+                                style="padding: 15px; background: #fff; border: 1px solid #e9ecef; border-radius: 8px; border-top: 3px solid #c83830;">
+                                <strong style="display: block; color: #2b2e31; margin-bottom: 10px;">Feature
+                                    Importance</strong>
+                                <span style="font-size: 0.9rem; color: #6c757d;">Visualize which socioeconomic variables
+                                    are the strongest predictors for specific health outcomes using interactive Sunburst
+                                    charts and importance rankings.</span>
                             </div>
                         </div>
 
                         <ul style="list-style-type: none; padding-left: 0;">
                             <li style="margin-bottom: 12px; display: flex; gap: 10px;">
                                 <span style="color: #c83830; font-weight: bold;">•</span>
-                                <span style="color: #495057; line-height: 1.5;"><strong>Interactive Pipelines:</strong> Visualize the entire data science workflow, from data ingestion to final prediction.</span>
+                                <span style="color: #495057; line-height: 1.5;"><strong>Interactive Pipelines:</strong>
+                                    Visualize the entire data science workflow, from data ingestion to final
+                                    prediction.</span>
                             </li>
                             <li style="display: flex; gap: 10px;">
                                 <span style="color: #c83830; font-weight: bold;">•</span>
-                                <span style="color: #495057; line-height: 1.5;"><strong>In-Browser Computation:</strong> All ML models run locally in your browser using Web Workers, ensuring data privacy and immediate feedback.</span>
+                                <span style="color: #495057; line-height: 1.5;"><strong>In-Browser Computation:</strong>
+                                    All ML models run locally in your browser using Web Workers, ensuring data privacy
+                                    and immediate feedback.</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div id="content_statistical_tests" class="about-content-section">
+                <h2>Statistical Tests</h2>
+                <div class="content-body">
+                    <div
+                        style="background: #ffffff; border: 1px solid #e9ecef; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02); margin-bottom: 30px;">
+                        <h4
+                            style="color: #c83830; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; font-size: 1.25rem;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"
+                                stroke-linejoin="round" style="color: #c83830;">
+                                <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <path d="M8 13h2"></path>
+                                <path d="M8 17h2"></path>
+                                <path d="M14 13h2"></path>
+                                <path d="M14 17h2"></path>
+                            </svg>
+                            Rigorous Hypothesis Testing & Validation
+                        </h4>
+
+                        <p
+                            style="font-size: 1.1rem; color: #2b2e31; line-height: 1.7; margin-bottom: 20px; font-weight: 500;">
+                            The <strong>Statistical Tests</strong> engine provides a structured environment for
+                            scientific inquiry, allowing users to validate geographic hypotheses using formal
+                            mathematical frameworks.
+                        </p>
+
+                        <div
+                            style="background: #f8f9fa; border-radius: 10px; padding: 20px; margin-bottom: 25px; border-left: 4px solid #c83830;">
+                            <h5
+                                style="margin-top: 0; color: #495057; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                                Significance</h5>
+                            <p style="margin-bottom: 0; color: #495057; line-height: 1.6;">
+                                Scientific discovery requires more than visualization; it requires validation. This
+                                suite provides a step-by-step pipeline for executing formal hypothesis tests—such as
+                                Independent T-Tests, Pearson’s Correlation, and Shapiro-Wilk—while automatically
+                                verifying the critical mathematical assumptions (normality and variance) required for
+                                high-confidence research results.
+                            </p>
+                        </div>
+
+                        <h5 style="color: #2b2e31; margin-bottom: 15px; font-weight: 700;">Key Methodologies:</h5>
+                        <div
+                            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 25px;">
+                            <div
+                                style="padding: 15px; background: #fff; border: 1px solid #e9ecef; border-radius: 8px; border-top: 3px solid #c83830;">
+                                <strong style="display: block; color: #2b2e31; margin-bottom: 10px;">Comparative
+                                    Analysis</strong>
+                                <span style="font-size: 0.9rem; color: #6c757d;">Determine if two groups (e.g., High
+                                    vs. Low Poverty counties) have statistically significant differences in health
+                                    outcomes using the Independent T-Test.</span>
+                            </div>
+                            <div
+                                style="padding: 15px; background: #fff; border: 1px solid #e9ecef; border-radius: 8px; border-top: 3px solid #c83830;">
+                                <strong style="display: block; color: #2b2e31; margin-bottom: 10px;">Distribution Analysis</strong>
+                                <span style="font-size: 0.9rem; color: #6c757d;">Verify the normality of your dataset
+                                    using the Shapiro-Wilk test, complete with interactive probability plots and
+                                    skewness analysis.</span>
+                            </div>
+                        </div>
+
+                        <ul style="list-style-type: none; padding-left: 0;">
+                            <li style="margin-bottom: 12px; display: flex; gap: 10px;">
+                                <span style="color: #c83830; font-weight: bold;">•</span>
+                                <span style="color: #495057; line-height: 1.5;"><strong>Automated Signal Extraction:</strong>
+                                    The engine automatically identifies and aligns valid geographic observations across
+                                    ACS and PLACES datasets.</span>
+                            </li>
+                            <li style="margin-bottom: 12px; display: flex; gap: 10px;">
+                                <span style="color: #c83830; font-weight: bold;">•</span>
+                                <span style="color: #495057; line-height: 1.5;"><strong>Assumption Checkmarks:</strong>
+                                    Every calculation is preceded by a validation phase that checks for parametric
+                                    assumptions, providing checkmarks and p-values for transparency.</span>
+                            </li>
+                            <li style="display: flex; gap: 10px;">
+                                <span style="color: #c83830; font-weight: bold;">•</span>
+                                <span style="color: #495057; line-height: 1.5;"><strong>Evidence Synthesis:</strong>
+                                    Results are summarized in human-readable language, explaining the significance of
+                                    rejecting or failing to reject the null hypothesis.</span>
                             </li>
                         </ul>
                     </div>
@@ -2425,4 +2654,4 @@
     </script>
 </body>
 
-</html>
+</html>
