@@ -589,6 +589,14 @@
             </svg>
             Dimensionality Reduction
         </a>
+        <a href="spatial_autocorrelation.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+            </svg>
+            Spatial Autocorrelation
+        </a>
         <a href="predictive_analysis.html" class="comparison-pill">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
@@ -798,6 +806,14 @@
                     <path d="M2 12h4l3-9 5 18 3-9h5"></path>
                 </svg>
                 Regression Analysis
+            </div>
+            <div class="about-nav-item" onclick="switchAboutTab('page_spatial', this)">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                    <circle cx="12" cy="10" r="3"></circle>
+                </svg>
+                Spatial Autocorrelation
             </div>
             <div class="about-nav-item" onclick="switchAboutTab('page_pca', this)">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
@@ -2351,6 +2367,59 @@
                                 <span style="color: #495057; line-height: 1.5;"><strong>Diagnostic Visuals:</strong>
                                     Dynamic Residual vs. Fitted value plots help researchers assess model assumptions
                                     and identify potential outliers or heteroscedasticity.</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div id="content_page_spatial" class="about-content-section">
+                <h2>Spatial Autocorrelation</h2>
+                <div class="content-body">
+                    <div
+                        style="background: #ffffff; border: 1px solid #e9ecef; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02); margin-bottom: 30px;">
+                        <h4
+                            style="color: #c83830; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; font-size: 1.25rem;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"
+                                stroke-linejoin="round" style="color: #c83830;">
+                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                <circle cx="12" cy="10" r="3"></circle>
+                            </svg>
+                            Geographic Dependency & Cluster Detection
+                        </h4>
+
+                        <p
+                            style="font-size: 1.1rem; color: #2b2e31; line-height: 1.7; margin-bottom: 20px; font-weight: 500;">
+                            The <strong>Spatial Autocorrelation</strong> page provides advanced tools to determine if health and socioeconomic variables are geographically dependent. By calculating <strong>Moran's I</strong>, researchers can identify whether high or low values cluster together (Hotspots and Coldspots) or are randomly distributed across the landscape.
+                        </p>
+
+                        <div
+                            style="background: #f8f9fa; border-radius: 10px; padding: 20px; margin-bottom: 25px; border-left: 4px solid #c83830;">
+                            <h5
+                                style="margin-top: 0; color: #495057; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                                Statistical Precision</h5>
+                            <p style="margin-bottom: 0; color: #495057; line-height: 1.6;">
+                                Spatial autocorrelation is fundamental to geographic research. It addresses the first law of geography: "Everything is related to everything else, but near things are more related than distant things." This module calculates Global Moran's I for national trends and Local Indicators of Spatial Association (LISA) to pinpoint specific regional clusters that may require targeted policy interventions.
+                            </p>
+                        </div>
+
+                        <h5 style="color: #2b2e31; margin-bottom: 15px; font-weight: 700;">Key Features:</h5>
+                        <ul style="list-style-type: none; padding-left: 0; margin-bottom: 25px;">
+                            <li style="margin-bottom: 12px; display: flex; gap: 10px;">
+                                <span style="color: #c83830; font-weight: bold;">•</span>
+                                <span style="color: #495057; line-height: 1.5;"><strong>Flexible Neighborhood Definitions:</strong>
+                                    Define spatial relationships using Queen Contiguity (adjacency), K-Nearest Neighbors (K=8), or Distance-Based thresholds.</span>
+                            </li>
+                            <li style="margin-bottom: 12px; display: flex; gap: 10px;">
+                                <span style="color: #c83830; font-weight: bold;">•</span>
+                                <span style="color: #495057; line-height: 1.5;"><strong>LISA Cluster Mapping:</strong>
+                                    Visualize High-High Hotspots, Low-Low Coldspots, and spatial outliers on an interactive US county map.</span>
+                            </li>
+                            <li style="margin-bottom: 12px; display: flex; gap: 10px;">
+                                <span style="color: #c83830; font-weight: bold;">•</span>
+                                <span style="color: #495057; line-height: 1.5;"><strong>Moran Scatterplot:</strong>
+                                    Analyze the relationship between a unit's value and the average value of its neighbors to identify global trends.</span>
                             </li>
                         </ul>
                     </div>
