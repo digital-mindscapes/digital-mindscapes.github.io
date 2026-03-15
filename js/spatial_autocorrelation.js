@@ -63,6 +63,7 @@ let neighborsMatrix = null;
 let spatialWorker = null;
 let analysisResults = null;
 let currentHighlight = null; // 'HH', 'LL', 'HL', 'LH' or null
+let currentMapMode = "cluster"; // "cluster" or "significance"
 
 // =========================================
 // INITIALIZATION
@@ -143,32 +144,34 @@ function initUI() {
         if (e.target === infoModal) infoModal.classList.remove("active");
     };
     
-    // Legend Interaction
-    const legend = document.getElementById("quadrantLegend");
-    if (legend) {
-        legend.querySelectorAll(".legend-item").forEach(item => {
-            item.addEventListener("click", () => {
-                const type = item.getAttribute("data-type");
-                
-                // Toggle highlight
-                if (currentHighlight === type) {
-                    currentHighlight = null;
-                } else {
-                    currentHighlight = type;
-                }
-                
-                // Update Legend UI
-                legend.querySelectorAll(".legend-item").forEach(li => {
-                    li.classList.toggle("active", li.getAttribute("data-type") === currentHighlight);
-                });
-                
-                // Refresh Visuals
-                renderScatterplot();
-                updateMapColors();
-                updateSignificantTable();
+    // Legend Interaction (Handles both map and scatterplot legends)
+    document.querySelectorAll(".quadrant-legend .legend-item").forEach(item => {
+        item.addEventListener("click", () => {
+            const type = item.getAttribute("data-type");
+            
+            // Toggle highlight
+            currentHighlight = (currentHighlight === type) ? null : type;
+            
+            // Update all relevant Legend UIs
+            document.querySelectorAll(".quadrant-legend .legend-item").forEach(li => {
+                li.classList.toggle("active", li.getAttribute("data-type") === currentHighlight);
             });
+            
+            // Refresh Visuals
+            renderScatterplot();
+            updateMapColors();
+            updateSignificantTable();
         });
-    }
+    });
+
+    // Map Mode Toggle
+    document.querySelectorAll('input[name="mapMode"]').forEach(el => {
+        el.addEventListener("change", (e) => {
+            currentMapMode = e.target.value;
+            updateLegendUI();
+            updateMapColors();
+        });
+    });
 
     // Handle Window Resize
     window.addEventListener("resize", () => {
@@ -317,6 +320,16 @@ function initMap() {
                 return currentHighlight ? am5.color(0xf8fafc) : am5.color(0xe2e8f0);
             }
 
+            if (currentMapMode === "significance") {
+                // Significance Map logic (per Lab 6a)
+                const p = d.p || 1;
+                if (p < 0.001) return am5.color(0x166534); // Dark Green
+                if (p < 0.01) return am5.color(0x22c55e);  // Medium Green
+                if (p < 0.05) return am5.color(0x86efac);  // Light Green
+                return am5.color(0xe2e8f0);
+            }
+
+            // Cluster Map logic
             let color;
             switch(d.type) {
                 case 'HH': color = am5.color(0xc83830); break;
@@ -444,6 +457,7 @@ function applyResultsToMap() {
                 name: name,
                 value: res.statistic,
                 type: res.type,
+                p: res.p,
                 isSignificant: res.isSignificant
             });
         } else {
@@ -451,6 +465,7 @@ function applyResultsToMap() {
                 id: pId, 
                 name: name,
                 value: null, 
+                p: 1,
                 isSignificant: false
             });
         }
@@ -768,10 +783,23 @@ function updateSignificantTable() {
             <td>${d.lag.toFixed(2)}</td>
             <td>${d.statistic.toFixed(4)}</td>
             <td><span class="legend-color ${d.type.toLowerCase()}" style="display:inline-block; width:10px; height:10px; margin-right:5px;"></span> ${d.type}</td>
-            <td>${d.p.toFixed(4)}</td>
+            <td>${d.p < 0.001 ? '< 0.001' : d.p.toFixed(4)}</td>
         `;
         tbody.appendChild(row);
     });
+}
+
+function updateLegendUI() {
+    const mapClusterLegend = document.getElementById("mapClusterLegend");
+    const sigLegend = document.getElementById("significanceLegend");
+    
+    if (currentMapMode === "cluster") {
+        if (mapClusterLegend) mapClusterLegend.style.display = "flex";
+        if (sigLegend) sigLegend.style.display = "none";
+    } else {
+        if (mapClusterLegend) mapClusterLegend.style.display = "none";
+        if (sigLegend) sigLegend.style.display = "flex";
+    }
 }
 
 function showTooltip(event, d) {

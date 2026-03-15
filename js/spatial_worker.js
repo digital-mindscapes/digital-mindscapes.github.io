@@ -152,15 +152,20 @@ function calculateLocalMoran(x, ids, neighbors, permutations, correction) {
 
         for (let p = 0; p < permutations; p++) {
             let perm_lag = 0;
-            // Heavy optimization: use local variable references and avoid repeated division
+            // Heavy optimization: use local variable references
             for (let k = 0; k < nbIndices.length; k++) {
                 // Pick random index excluding current i
-                let randomIdx = (i + 1 + Math.floor(Math.random() * (n - 1))) % n;
+                // Anselin (1995) conditional permutation: hold z_i fixed, permute others
+                let randomIdx = Math.floor(Math.random() * (n - 1));
+                if (randomIdx >= i) randomIdx++; // Skip self
                 perm_lag += z[randomIdx];
             }
             
             const perm_i = (z[i] * w_i) * perm_lag;
             
+            // For a pseudo p-value, we count how many times the permuted statistic 
+            // is as extreme or more extreme than the observed one.
+            // Lab 6a mentions "smallest pseudo p-value is 0.001" for 999 permutations.
             if (actual >= 0) {
                 if (perm_i >= actual) count++;
             } else {
@@ -168,6 +173,7 @@ function calculateLocalMoran(x, ids, neighbors, permutations, correction) {
             }
         }
         
+        // Lab 6a: (count + 1) / (permutations + 1)
         results[i].p = (count + 1) / (permutations + 1);
     }
 

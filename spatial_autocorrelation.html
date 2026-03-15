@@ -220,6 +220,40 @@
         .hl { background: #fca5a5; }
         .lh { background: #7dd3fc; }
         .ns { background: #e2e8f0; }
+        .sig-dark { background: #166534; }
+        .sig-med { background: #22c55e; }
+        .sig-light { background: #86efac; }
+        
+        .map-mode-toggle {
+            display: flex;
+            background: #f1f5f9;
+            padding: 4px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            gap: 4px;
+        }
+        .map-mode-option {
+            flex: 1;
+        }
+        .map-mode-option input {
+            display: none;
+        }
+        .map-mode-option label {
+            display: block;
+            padding: 8px 12px;
+            text-align: center;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            border-radius: 8px;
+            color: #64748b;
+            transition: all 0.2s ease;
+        }
+        .map-mode-option input:checked + label {
+            background: #fff;
+            color: #c83830;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
         
         /* Premium Select & Control Styling */
         .control-section {
@@ -813,7 +847,7 @@
                             </h3>
                         </div>
                         <div class="chart-area" id="scatterplotContainer"></div>
-                        <div class="quadrant-legend" id="quadrantLegend">
+                        <div class="quadrant-legend" id="scatterplotLegend">
                             <div class="legend-item" data-type="HH"><div class="legend-color hh"></div> HH (Hotspot)</div>
                             <div class="legend-item" data-type="LL"><div class="legend-color ll"></div> LL (Coldspot)</div>
                             <div class="legend-item" data-type="HL"><div class="legend-color hl"></div> HL (Outlier)</div>
@@ -829,10 +863,38 @@
                                     <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
                                     <circle cx="12" cy="10" r="3"></circle>
                                 </svg>
-                                LISA Cluster Map
+                                Local Spatial Association (LISA)
                             </h3>
                         </div>
+                        
+                        <div class="map-mode-toggle">
+                            <div class="map-mode-option">
+                                <input type="radio" name="mapMode" id="modeCluster" value="cluster" checked>
+                                <label for="modeCluster">Cluster Map</label>
+                            </div>
+                            <div class="map-mode-option">
+                                <input type="radio" name="mapMode" id="modeSignificance" value="significance">
+                                <label for="modeSignificance">Significance Map</label>
+                            </div>
+                        </div>
+
                         <div class="chart-area" id="mapContainer"></div>
+                        
+                        <!-- Cluster Legend -->
+                        <div class="quadrant-legend" id="mapClusterLegend">
+                            <div class="legend-item" data-type="HH"><div class="legend-color hh"></div> HH (High-High)</div>
+                            <div class="legend-item" data-type="LL"><div class="legend-color ll"></div> LL (Low-Low)</div>
+                            <div class="legend-item" data-type="HL"><div class="legend-color hl"></div> HL (High-Low)</div>
+                            <div class="legend-item" data-type="LH"><div class="legend-color lh"></div> LH (Low-High)</div>
+                        </div>
+
+                        <!-- Significance Legend (Hidden by default) -->
+                        <div class="quadrant-legend" id="significanceLegend" style="display: none;">
+                            <div class="legend-item"><div class="legend-color sig-dark"></div> p < 0.001</div>
+                            <div class="legend-item"><div class="legend-color sig-med"></div> p < 0.01</div>
+                            <div class="legend-item"><div class="legend-color sig-light"></div> p < 0.05</div>
+                            <div class="legend-item"><div class="legend-color ns"></div> Not Sig.</div>
+                        </div>
                     </div>
 
                     <!-- Significant Units Table -->
@@ -973,29 +1035,25 @@
                 </div>
 
                 <div class="modal-section">
-                    <h3>Plot Interpretation</h3>
+                    <h3>Spatial Clusters and Outliers (LISA)</h3>
+                    <p>Local Moran's I identifies two types of spatial association:</p>
                     <div class="guide-grid">
                         <div class="guide-item">
                             <div class="quadrant-box hh">HH: High-High</div>
-                            <strong>Hotspots</strong>
-                            Counties with high values surrounded by neighbors who also have high values.
-                        </div>
-                        <div class="guide-item">
                             <div class="quadrant-box ll">LL: Low-Low</div>
-                            <strong>Coldspots</strong>
-                            Counties with low values surrounded by neighbors who also have low values.
+                            <strong>Spatial Clusters (Cores)</strong>
+                            Regions with similar values grouped together. HH are "Hotspots" (high units near high units), and LL are "Coldspots". Strictly speaking, these are the <em>cores</em> of clusters.
                         </div>
                         <div class="guide-item">
                             <div class="quadrant-box hl">HL: High-Low</div>
-                            <strong>Spatial Outlier</strong>
-                            A high-value county isolated in a low-value neighborhood.
-                        </div>
-                        <div class="guide-item">
                             <div class="quadrant-box lh">LH: Low-High</div>
-                            <strong>Spatial Outlier</strong>
-                            A low-value county isolated in a high-value neighborhood.
+                            <strong>Spatial Outliers</strong>
+                            Individual units that differ significantly from their neighbors. A HL outlier has a high value in a low-value neighborhood, while LH is the inverse.
                         </div>
                     </div>
+                    <p style="margin-top: 15px;">
+                        <em>Note:</em> The "Significance Map" shows the stability of these patterns via pseudo p-values. Darker green indicates higher statistical confidence (less likely to occur under spatial randomness).
+                    </p>
                 </div>
 
                 <div class="modal-section" style="margin-bottom:0;">
