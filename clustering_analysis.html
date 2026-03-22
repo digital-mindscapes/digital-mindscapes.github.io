@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clustering Analysis - Digital Mindscapes</title>
+    <link rel="stylesheet" href="css/style.css?v=6">
+    <link rel="stylesheet" href="css/responsive.css">
+    <link rel="stylesheet" href="css/correlation_matrix.css">
+    <link rel="stylesheet" href="css/regression_sandbox.css">
+    
+    <!-- D3.js -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <!-- Math.js for Matrix Algebra -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/12.0.0/math.js"></script>
+    <!-- jStat for distributions if needed -->
+    <script src="https://cdn.jsdelivr.net/npm/jstat@latest/dist/jstat.min.js"></script>
+    <!-- t-SNE for non-linear projection -->
+    <script src="https://cdn.jsdelivr.net/gh/karpathy/tsnejs@master/tsne.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/umap-js@1.3.3/lib/umap-js.min.js"></script>
+
+    <!-- amCharts 5 for Map Visualization -->
+    <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/map.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/geodata/region/usa/usaCountiesLow.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+
+    <style>
+        .pca-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        @media (min-width: 1400px) {
+            .pca-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        .full-width-card {
+            grid-column: 1 / -1;
+        }
+        .chart-card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            border: 1px solid #f1f5f9;
+        }
+        .chart-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .chart-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .chart-area {
+            height: 400px;
+            width: 100%;
+            position: relative;
+        }
+        .loading-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(255,255,255,0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+        .pca-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+        .pca-table th, .pca-table td {
+            padding: 12px;
+            border-bottom: 1px solid #f1f5f9;
+            text-align: left;
+        }
+        .pca-table th {
+            color: #64748b;
+            font-weight: 600;
+        }
+        .pca-table tr:hover {
+            background-color: #f8fafc;
+        }
+        
+        /* Premium Range Slider Styles */
+        .premium-range-group {
+            margin-bottom: 18px;
+        }
+        .premium-range-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .premium-range-label {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #334155;
+            letter-spacing: 0.3px;
+        }
+        .premium-value-badge {
+            background: #c83830;
+            color: #fff;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            font-weight: 800;
+            min-width: 36px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(200, 56, 48, 0.2);
+        }
+        .premium-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 4px;
+            background: #e2e8f0;
+            border-radius: 10px;
+            outline: none;
+            margin: 8px 0;
+            border: none !important;
+        }
+        .premium-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #fff;
+            cursor: pointer;
+            border-radius: 50%;
+            border: 3px solid #c83830;
+            box-shadow: 0 0 8px rgba(0,0,0,0.2);
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .premium-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            background: #c83830;
+            border-color: #fff;
+        }
+
+        /* Force Sidebar Layout */
+        .regression-layout {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: nowrap;
+            width: 100%;
+            background: #f8fafc;
+            height: calc(100vh - 120px);
+            padding: 20px 40px;
+            gap: 20px;
+            overflow: hidden;
+        }
+        .results-container-wrapper {
+            flex: 1;
+            min-width: 0;
+            height: 100%;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0;
+            gap: 25px;
+        }
+
+        @media (max-width: 1024px) {
+            .regression-layout {
+                flex-direction: column !important;
+                height: auto !important;
+                min-height: auto !important;
+                overflow-y: visible !important;
+                overflow-x: hidden !important;
+                padding: 15px !important;
+            }
+            .regression-layout aside.left-controls,
+            .regression-layout aside.right-sidebar {
+                width: 100% !important;
+                min-width: 0 !important;
+                max-width: none !important;
+                height: auto !important;
+                max-height: none !important;
+                border-bottom: 1px solid #e2e8f0;
+                margin-bottom: 15px;
+                order: 1;
+            }
+            .results-container-wrapper {
+                min-height: auto !important;
+                height: auto !important;
+                order: 2;
+                overflow: visible !important;
+            }
+        }
+
+        @media (max-width: 1200px) {
+            .regression-layout {
+                padding: 20px;
+                gap: 15px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .regression-layout {
+                padding: 15px;
+                gap: 15px;
+            }
+            .top-nav {
+                padding: 15px 20px;
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+            .chart-card {
+                padding: 15px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .regression-layout {
+                padding: 10px;
+            }
+            .results-container-wrapper {
+                padding: 15px;
+                border-radius: 12px;
+            }
+            .chart-title {
+                font-size: 1rem;
+            }
+        }
+        
+        /* Sidebar Table Styles */
+        #clusterResultsTableBody tr:hover {
+            background-color: #f1f5f9;
+        }
+        #clusterResultsTableBody td {
+            transition: all 0.2s;
+        }
+        #clusterResultsSidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+        #clusterResultsSidebar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        #clusterResultsSidebar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        #clusterResultsSidebar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        
+        .sidebar-header {
+            background: linear-gradient(135deg, #c83830 0%, #a02820 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .header-icon {
+            background: rgba(255, 255, 255, 0.2);
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .sidebar-section h4 {
+            margin: 20px 0 10px 0;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #64748b;
+        }
+        .control-group {
+            margin-bottom: 20px;
+        }
+        .control-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #334155;
+        }
+        .modern-select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            background: #f8fafc;
+            font-size: 0.9rem;
+            color: #0f172a;
+            outline: none;
+            transition: all 0.2s;
+        }
+        .modern-select:focus {
+            border-color: #c83830;
+            box-shadow: 0 0 0 3px rgba(200, 56, 48, 0.1);
+        }
+        .primary-btn {
+            background: #c83830;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-weight: 700;
+            width: 100%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.2s;
+        }
+        .primary-btn:hover {
+            background: #a02820;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(200, 56, 48, 0.2);
+        }
+        .premium-btn {
+            background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin: 0;
+            transition: all 0.2s;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .premium-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+            background: linear-gradient(135deg, #1e293b 0%, #475569 100%);
+        }
+        .checkbox-group {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 10px;
+            background: #f8fafc;
+        }
+        .checkbox-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 0;
+            font-size: 0.85rem;
+        }
+        
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal-content {
+            background: #fff;
+            padding: 40px;
+            border-radius: 24px;
+            position: relative;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <div class="header-content">
+            <div class="app-logo-container">
+                <a href="index.html">
+                    <img src="assets/app_logo.png" alt="App Logo" class="app-logo">
+                </a>
+            </div>
+            <div class="header-text-container">
+                <h1>Digital Mindscapes: An Interactive Public Health & Socioeconomic Data Visualization Platform</h1>
+                <p class="authors">
+                    <strong>Arpita Datta</strong><sup>*</sup>,
+                    <strong>Dr. Sabirat Rubiya</strong><sup>*</sup>,
+                    <strong>Dr. Avik Chakrabarti</strong><sup>†</sup>,
+                    <strong>Dr. Anjishnu Banerjee</strong><sup>‡</sup>
+                </p>
+                <p class="affiliations">
+                    <sup>*</sup>Marquette University &nbsp;|&nbsp; <sup>†</sup>University of Wisconsin-Milwaukee (UWM)
+                    &nbsp;|&nbsp; <sup>‡</sup>Medical College of Wisconsin (MCW)
+                </p>
+            </div>
+            <div class="banner-logos-row">
+                <div class="banner-logos-top">
+                    <img src="assets/marquette_logo.png" id="marquetteLogo" alt="Marquette University Logo" class="banner-logo">
+                    <img src="assets/mcw_logo.png" id="mcwLogo" alt="MCW Logo" class="banner-logo">
+                </div>
+                <div class="banner-logos-bottom">
+                    <img src="assets/uwm_logo.png" id="uwmLogo" alt="UWM Logo" class="banner-logo">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="navigation-bar">
+        <a href="index.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+            </svg> Main Dashboard
+        </a>
+        <a href="comparison.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="20" x2="18" y2="10"></line>
+                <line x1="12" y1="20" x2="12" y2="4"></line>
+                <line x1="6" y1="20" x2="6" y2="14"></line>
+            </svg> States Comparison
+        </a>
+        <a href="county_comparison.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="7" height="7"></rect>
+                <rect x="14" y="3" width="7" height="7"></rect>
+                <rect x="14" y="14" width="7" height="7"></rect>
+                <rect x="3" y="14" width="7" height="7"></rect>
+            </svg> Counties Comparison
+        </a>
+        <a href="urban_rural_comparison.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 4h16v16H4z"></path>
+                <path d="M4 12h16"></path>
+                <path d="M12 4v16"></path>
+            </svg> Urban-Rural Comparison
+        </a>
+        <a href="county_distribution.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3" />
+                <circle cx="6" cy="16" r="3" />
+                <circle cx="18" cy="16" r="3" />
+                <circle cx="9" cy="8" r="3" />
+                <circle cx="15" cy="8" r="3" />
+            </svg> County Distribution
+        </a>
+        <a href="multi_metric.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path>
+                <path d="M22 12A10 10 0 0 0 12 2v10z"></path>
+            </svg> State Multi-Metric Comparison
+        </a>
+        <a href="metric_visualization.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 20V10M12 20V4M6 20v-6" />
+            </svg> Metric Insights
+        </a>
+        <a href="bivariate_analysis.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="12" y1="3" x2="12" y2="21"></line>
+            </svg> Bivariate Analysis
+        </a>
+        <a href="query.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg> Semi-Structured Query
+        </a>
+        <a href="correlation_matrix.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                <path d="M3 9h18"></path>
+                <path d="M9 21V9"></path>
+            </svg> Correlation Analysis
+        </a>
+        <a href="regression_sandbox.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+            </svg> Regression Analysis
+        </a>
+        <a href="dimensionality_reduction.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+                <path d="M2 17l10 5 10-5"></path>
+                <path d="M2 12l10 5 10-5"></path>
+            </svg> Dimensionality Reduction
+        </a>
+        <a href="clustering_analysis.html" class="comparison-pill active-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+                <rect width="12" height="12" x="7" y="5" rx="2"/><path d="M15 13H5a2 2 0 0 1-2-2V5"/>
+            </svg> Clustering Analysis
+        </a>
+        <a href="spatial_autocorrelation.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+            </svg> Spatial Autocorrelation
+        </a>
+        <a href="predictive_analysis.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2a5 5 0 0 1 5 5c0 2.22-1.44 4.11-3.41 4.79C12.43 12.31 11 14 11 16v1" />
+                <path d="M11 22h2" />
+                <path d="M12 2A5 5 0 0 0 7 7c0 2.22 1.44 4.11 3.41 4.79C11.57 12.31 13 14 13 16v1" />
+            </svg> Predictive Analysis
+        </a>
+        <a href="statistical_tests.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <path d="M8 13h2"></path>
+                <path d="M8 17h2"></path>
+                <path d="M14 13h2"></path>
+                <path d="M14 17h2"></path>
+            </svg> Statistical Tests
+        </a>
+        <a href="about.html" class="comparison-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg> About
+        </a>
+    </div>
+
+    <main class="regression-layout">
+        <aside class="left-controls" style="min-width: 320px; background: #fff; border-radius: 20px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05); border: 1px solid #e2e8f0; overflow: hidden; display: flex; flex-direction: column;">
+            <div class="sidebar-header">
+                <div class="header-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <rect width="12" height="12" x="7" y="5" rx="2"/><path d="M15 13H5a2 2 0 0 1-2-2V5"/>
+                    </svg>
+                </div>
+                <div>
+                    <h3 style="margin: 0; font-size: 1.1rem; line-height:1.2;">Clustering Explorer</h3>
+                    <p style="margin: 4px 0 0 0; font-size: 0.8rem; opacity: 0.85;">Discover patterns & groups</p>
+                </div>
+                <button id="infoBtn" aria-label="Methodology Info" style="background: transparent; border: none; color: white; cursor: pointer; margin-left: auto; display: flex; align-items: center; justify-content: center; opacity: 0.8; transition: opacity 0.2s;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="sidebar-content" style="flex: 1; overflow-y: auto; padding: 0 20px 20px 20px;">
+                <div class="sidebar-section" style="margin-top: 5px;">
+                    <h4>Algorithm & Features</h4>
+                    <p style="margin:0; font-size:0.8rem; color:var(--text-muted);">Choose clustering method and variables.</p>
+                </div>
+
+                <div class="control-group">
+                    <label for="clusterMethod">Algorithm:</label>
+                    <select id="clusterMethod" class="modern-select">
+                        <option value="kmeans">K-Means</option>
+                        <option value="dbscan">DBSCAN</option>
+                        <option value="hierarchical">Hierarchical</option>
+                    </select>
+                </div>
+
+                <!-- Algorithm-specific Parameters -->
+                <div id="kmeansParams" class="method-params" style="background: #fff; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #e2e8f0; border-left: 4px solid #c83830; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
+                    <div class="premium-range-group">
+                        <div class="premium-range-header">
+                            <span class="premium-range-label">Number of Clusters (K)</span>
+                            <span id="kVal" class="premium-value-badge">4</span>
+                        </div>
+                        <input type="range" id="kmeansK" min="2" max="10" value="4" step="1" class="premium-slider">
+                    </div>
+                </div>
+
+                <div id="dbscanParams" class="method-params" style="display: none; background: #fff; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #e2e8f0; border-left: 4px solid #c83830; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
+                    <div class="premium-range-group">
+                        <div class="premium-range-header">
+                            <span class="premium-range-label">Epsilon (Distance)</span>
+                            <span id="epsilonVal" class="premium-value-badge">0.5</span>
+                        </div>
+                        <input type="range" id="dbscanEpsilon" min="0.1" max="5.0" value="0.5" step="0.1" class="premium-slider">
+                    </div>
+                    <div class="premium-range-group" style="margin-bottom: 0;">
+                        <div class="premium-range-header">
+                            <span class="premium-range-label">Min Points</span>
+                            <span id="minPointsVal" class="premium-value-badge">15</span>
+                        </div>
+                        <input type="range" id="dbscanMinPoints" min="2" max="50" value="15" step="1" class="premium-slider">
+                    </div>
+                </div>
+
+                <div id="hierarchicalParams" class="method-params" style="display: none; background: #fff; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #e2e8f0; border-left: 4px solid #c83830; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
+                    <div class="control-group">
+                        <label for="linkage">Linkage Criterion:</label>
+                        <select id="linkage" class="modern-select">
+                            <option value="ward">Ward</option>
+                            <option value="complete">Complete</option>
+                            <option value="average">Average</option>
+                            <option value="single">Single</option>
+                        </select>
+                    </div>
+                    <div class="premium-range-group">
+                        <div class="premium-range-header">
+                            <span class="premium-range-label">Number of Clusters</span>
+                            <span id="hKVal" class="premium-value-badge">4</span>
+                        </div>
+                        <input type="range" id="hierarchicalK" min="2" max="10" value="4" step="1" class="premium-slider">
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <label>Input Features:</label>
+                    <div id="xVarList" class="checkbox-group">
+                       <!-- Checkboxes JS injected -->
+                    </div>
+                </div>
+
+                <div class="sidebar-section" style="margin-top: 15px;">
+                    <h4>Filtering</h4>
+                    <p style="margin:0; font-size:0.8rem; color:var(--text-muted);">Subset data for regional analysis.</p>
+                </div>
+                
+                <div class="control-group">
+                    <label for="regionFilter">Region:</label>
+                    <select id="regionFilter" class="modern-select">
+                        <option value="All">All U.S. Regions</option>
+                        <option value="Northeast">Northeast</option>
+                        <option value="Midwest">Midwest</option>
+                        <option value="South">South</option>
+                        <option value="West">West</option>
+                    </select>
+                </div>
+                
+                <div class="control-group">
+                    <label for="stateFilter">State:</label>
+                    <select id="stateFilter" class="modern-select">
+                        <option value="All">All States</option>
+                    </select>
+                </div>
+
+                <button id="runAnalysisBtn" class="primary-btn calculate-btn">
+                    <i class="fas fa-play"></i>
+                    Run Clustering Analysis
+                </button>
+
+                <!-- Map Visualization Button -->
+                <button id="visualizeMapBtnSidebar" class="primary-btn calculate-btn visualize-map-btn" style="margin-top: 10px; background: #64748b; display: none;">
+                    <i class="fas fa-map-marked-alt"></i>
+                    Visualize on Map
+                </button>
+
+                <div class="loading-status" id="initLoader" style="display:none; margin-top: 15px; align-items: center; gap: 10px;">
+                    <div class="loader-small" style="width: 20px; height: 20px; border: 2px solid #f3f3f3; border-top: 2px solid #c83830; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                    <span id="loaderText" style="font-size: 0.85rem; color: #64748b;">Preparing data...</span>
+                </div>
+            </div>
+        </aside>
+        
+        <div class="results-container-wrapper">
+            <div id="pcaEmptyState" style="display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 60vh; text-align: center; color: #64748b; padding: 60px 20px;">
+                <i class="fas fa-object-group" style="font-size: 4rem; color: #e2e8f0; margin-bottom: 20px;"></i>
+                <h2 style="color: #334155; font-size: 1.5rem; margin-bottom: 12px; font-weight: 600;">Uncover Hidden Groups</h2>
+                <p style="font-size: 1.05rem; max-width: 500px; line-height: 1.6; margin-bottom: 25px;">
+                    Select health and economic predictors, choose a clustering algorithm, and identify natural groupings in the data across US counties.
+                </p>
+
+                <div style="background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 6px; padding: 15px 25px; text-align: left; width: 100%; max-width: 450px; margin-bottom: 25px;">
+                    <strong style="display: block; color: #475569; margin-bottom: 8px; font-size: 0.95rem;">Quick Guide:</strong>
+                    <ul style="margin: 0; padding-left: 20px; font-size: 0.9rem; color: #64748b; line-height: 1.5;">
+                        <li><strong>K-Means:</strong> Good for finding a fixed number of spherical clusters.</li>
+                        <li><strong>DBSCAN:</strong> Finds clusters of arbitrary shape and identifies outliers.</li>
+                        <li><strong>Hierarchical:</strong> Builds a hierarchy of clusters.</li>
+                        <li><strong>Elbow Plot:</strong> Use for K-Means to find the optimal number of clusters.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div id="resultsDisplay" style="display: none;">
+                <div class="pca-grid">
+                    <!-- Elbow Plot Card (Specific to K-Means) -->
+                    <div id="elbowPlotCard" class="chart-card full-width-card" style="display: none;">
+                        <div class="chart-header">
+                            <h3 class="chart-title">
+                                <i class="fas fa-chart-line" style="color: #c83830;"></i>
+                                Elbow Plot (Optimal K Selection)
+                            </h3>
+                        </div>
+                        <div class="chart-area" id="elbowPlotContainer"></div>
+                        <p style="font-size: 0.85rem; color: #64748b; margin-top: 15px;">
+                            The "elbow" of the curve indicates the optimal number of clusters where adding more clusters doesn't significantly improve the within-cluster sum of squares.
+                        </p>
+                    </div>
+
+                    <!-- 2D Projection Plot -->
+                    <div class="chart-card full-width-card">
+                        <div class="chart-header">
+                            <h3 class="chart-title">
+                                <i class="fas fa-project-diagram" style="color: #c83830;"></i>
+                                Cluster Visualization (2D Projection)
+                            </h3>
+                            <div style="display: flex; align-items: center; gap: 15px;">
+                                <button id="visualizeMapBtnMain" class="premium-btn visualize-map-btn">
+                                    <i class="fas fa-map-marked-alt"></i> Visualize on Map
+                                </button>
+                                <div style="width: 1px; height: 20px; background: #e2e8f0;"></div>
+                                <label style="font-size: 0.85rem; font-weight: 700; color: #64748b;">Visualization Basis:</label>
+                                <select id="vizBasis" class="modern-select" style="min-width: 150px; padding: 6px 12px; margin: 0;">
+                                    <option value="pca">PCA (Linear)</option>
+                                    <option value="tsne">t-SNE (Non-linear)</option>
+                                    <option value="umap">UMAP (Non-linear)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="chart-area" id="clusterPlotContainer" style="height: 600px;"></div>
+                    </div>
+
+                    <!-- Statistics Card -->
+                    <div class="chart-card full-width-card">
+                        <div class="chart-header">
+                            <h3 class="chart-title">
+                                <i class="fas fa-table" style="color: #c83830;"></i>
+                                Cluster Summary
+                            </h3>
+                        </div>
+                        <div style="overflow-x: auto;">
+                            <table class="pca-table">
+                                <thead>
+                                    <tr>
+                                        <th>Cluster ID</th>
+                                        <th>Count</th>
+                                        <th>% of Data</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="clusterSummaryBody">
+                                    <!-- JS injected -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Right Sidebar for Cluster Results Table -->
+        <aside class="right-sidebar" id="clusterResultsSidebar" style="width: 340px; flex-shrink: 0; background: #fff; border-radius: 20px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05); border: 1px solid #e2e8f0; padding: 0; overflow: hidden; height: 100%; display: flex; flex-direction: column;">
+             <div style="background: #fff; z-index: 10; padding: 25px 25px 20px 25px; border-bottom: 1px solid #e2e8f0;">
+                 <h3 style="margin: 0; font-size: 1.15rem; color: #0f172a; display: flex; align-items: center; gap: 8px;">
+                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c83830" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                         <line x1="8" y1="6" x2="21" y2="6"></line>
+                         <line x1="8" y1="12" x2="21" y2="12"></line>
+                         <line x1="8" y1="18" x2="21" y2="18"></line>
+                         <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                         <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                         <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                     </svg>
+                     County Assignments
+                 </h3>
+                 <p style="margin: 6px 0 0 0; font-size: 0.85rem; color: #64748b; line-height: 1.4;">Explore the geographical composition of your mathematical clusters.</p>
+             </div>
+             
+             <div class="sidebar-content" style="padding: 20px 25px; flex: 1; overflow-y: auto;">
+                 
+                 <div class="control-group" style="margin-bottom: 15px;">
+                     <label for="sidebarClusterFilter" style="font-size: 0.85rem; color: #475569; font-weight: 700;">Filter by Cluster:</label>
+                     <select id="sidebarClusterFilter" class="modern-select" style="padding: 8px; font-size: 0.85rem;">
+                         <option value="all">All Clusters</option>
+                         <!-- Dynamic options -->
+                     </select>
+                 </div>
+
+                 <!-- Sidebar Search Bar -->
+                 <div style="position: relative; margin-bottom: 15px;">
+                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%);">
+                         <circle cx="11" cy="11" r="8"></circle>
+                         <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                     </svg>
+                     <input type="text" id="sidebarCountySearch" placeholder="Search counties..." 
+                         style="width: 100%; padding: 10px 15px 10px 32px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 0.85rem; outline: none; transition: all 0.2s;"
+                         onfocus="this.style.borderColor='#c83830'; this.style.boxShadow='0 0 0 3px rgba(200, 56, 48, 0.1)';"
+                         onblur="this.style.borderColor='#e2e8f0'; this.style.boxShadow='none';">
+                 </div>
+                 
+                 <table id="clusterResultsTable" style="width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.85rem; text-align: left;">
+                     <thead style="position: sticky; top: -1px; background: #fff; z-index: 9;">
+                         <tr id="clusterTableHeadRow">
+                             <th style="padding: 10px 6px; font-weight: 600; color: #475569; border-bottom: 2px solid #cbd5e1; width: 65%;">County</th>
+                             <th style="padding: 10px 6px; font-weight: 600; color: #475569; border-bottom: 2px solid #cbd5e1; text-align: center;">Cluster</th>
+                         </tr>
+                     </thead>
+                     <tbody id="clusterResultsTableBody">
+                         <tr><td colspan="2" style="text-align:center; padding:30px; color:#64748b; font-size:0.85rem;"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" style="margin: 0 auto 8px; opacity:0.5; display:block;"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/></svg>Run analysis to view assignments</td></tr>
+                     </tbody>
+                 </table>
+            </div>
+        </aside>
+    </main>
+
+    <div id="regTooltip" class="regression-tooltip"></div>
+
+    <!-- Methodology Modal -->
+    <div id="infoModal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 750px;">
+            <button class="close-modal" id="closeModalBtn" style="position: absolute; top: 20px; right: 20px; background: transparent; border: none; font-size: 28px; cursor: pointer; color: #64748b; line-height: 1; transition: color 0.2s;" onmouseover="this.style.color='#0f172a'" onmouseout="this.style.color='#64748b'">&times;</button>
+            <h2 id="infoModalTitle" style="margin-top: 0; color: #c83830; font-size: 1.5rem; margin-bottom: 20px;">Clustering Methodology & Interpretation</h2>
+            
+            <div id="infoModalBody" style="color: #334155; font-size: 0.95rem; line-height: 1.6; max-height: 70vh; overflow-y: auto; padding-right: 10px;">
+                <h4 style="color: #0f172a; margin-top: 0;">What is Clustering?</h4>
+                <p>Clustering is an unsupervised machine learning technique that groups similar data points together. In this analysis, we use it to identify counties with similar health and socioeconomic profiles.</p>
+                
+                <h4 style="color: #0f172a;">Algorithms Explained</h4>
+                
+                <div style="margin-bottom: 15px;">
+                    <strong style="color: #c83830;">1. K-Means Clustering</strong>
+                    <p style="margin-top: 5px;">Partitioning data into <em>K</em> distinct, non-overlapping clusters. It works by minimizing the variance within each cluster.
+                       <ul style="margin-left: 20px;">
+                           <li><strong>Best for:</strong> Finding spherical, well-separated groups.</li>
+                           <li><strong>The Elbow Method:</strong> Helps determine the optimal <em>K</em> by looking for the point where adding more clusters provides diminishing returns in variance reduction.</li>
+                       </ul>
+                    </p>
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <strong style="color: #c83830;">2. DBSCAN (Density-Based Spatial Clustering of Applications with Noise)</strong>
+                    <p style="margin-top: 5px;">Groups together points that are close to each other based on a distance measurement (Epsilon) and a minimum number of points (Min Points).
+                       <ul style="margin-left: 20px;">
+                           <li><strong>Best for:</strong> Finding clusters of arbitrary shapes and identifying outliers (Noise).</li>
+                           <li><strong>Noise:</strong> Points that do not belong to any cluster are labeled as -1.</li>
+                       </ul>
+                    </p>
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <strong style="color: #c83830;">3. Hierarchical Clustering (Agglomerative)</strong>
+                    <p style="margin-top: 5px;">Builds a hierarchy of clusters by starting with each point as its own cluster and merging the closest pairs until the desired number of clusters is reached.
+                       <ul style="margin-left: 20px;">
+                           <li><strong>Linkage Criteria:</strong> Determines how "distance" is measured between groups (e.g., Ward's method minimizes variance, Single linkage uses the closest points).</li>
+                       </ul>
+                    </p>
+                </div>
+
+                <h4 style="color: #0f172a;">Interpreting Visualizations</h4>
+                <ul style="margin-left: 20px;">
+                    <li><strong>Scatter Plot:</strong> A 2D projection (PCA or t-SNE) of high-dimensional data. Points close together have similar feature values.</li>
+                    <li><strong>Cluster Summary:</strong> Shows the size and distribution of each identified group.</li>
+                    <li><strong>County Assignments:</strong> Use the right sidebar to search for specific counties and see their cluster membership.</li>
+                </ul>
+            </div>
+        </div>
+        <!-- Map Modal -->
+    <div id="mapModal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 95vw; height: 95vh; display: flex; flex-direction: column;">
+            <button class="close-modal" id="closeMapModalBtn" style="position: absolute; top: 20px; right: 20px; background: transparent; border: none; font-size: 28px; cursor: pointer; color: #64748b; line-height: 1; transition: color 0.2s; z-index: 10;" onmouseover="this.style.color='#0f172a'" onmouseout="this.style.color='#64748b'">&times;</button>
+            <div style="margin-bottom: 15px;">
+                <h2 id="mapModalTitle" style="margin-top: 0; color: #c83830; font-size: 1.5rem; margin-bottom: 5px;">Geographic Cluster Distribution</h2>
+                <p style="margin: 0; color: #64748b; font-size: 0.9rem;">Map view of identified county groupings. Counties with missing data (NaN) for selected features are shown in grey.</p>
+            </div>
+            <div style="flex: 1; position: relative;">
+                <div id="mapContainer" style="width: 100%; height: 100%;"></div>
+                
+                <!-- Map Legend -->
+                <div style="position: absolute; bottom: 30px; left: 30px; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; max-width: 250px;">
+                    <h4 style="margin: 0 0 10px 0; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">Cluster Legend</h4>
+                    <div id="mapLegendItems">
+                        <!-- JS injected -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/clustering_analysis.js?v=17"></script>
+    <style>
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</body>
+</html>
+</html>
