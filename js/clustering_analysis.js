@@ -112,31 +112,23 @@ async function initClusteringSandbox() {
             }
         });
 
-        const infoBtn = document.getElementById('infoBtn');
-        const infoModal = document.getElementById('infoModal');
-        const closeModalBtn = document.getElementById('closeModalBtn');
-
-        if (infoBtn && infoModal) {
-            infoBtn.addEventListener('click', () => {
-                infoModal.classList.add('active');
-            });
-        }
-
-        if (closeModalBtn && infoModal) {
-            closeModalBtn.addEventListener('click', () => {
-                infoModal.classList.remove('active');
-            });
-        }
-
-        // Close modal when clicking outside content
-        window.addEventListener('click', (event) => {
-            if (event.target === infoModal) {
-                infoModal.classList.remove('active');
-            }
-        });
-
         document.getElementById('runAnalysisBtn').addEventListener('click', runAnalysis);
-        document.querySelectorAll('.visualize-map-btn').forEach(btn => btn.addEventListener('click', showMapModal));
+        
+        // Modal Event Listeners
+        document.getElementById('closeClusteringMapModalBtn').addEventListener('click', () => {
+            document.getElementById('clusteringMapModal').classList.remove('active');
+        });
+        
+        document.getElementById('closeModalBtn').addEventListener('click', () => {
+            document.getElementById('infoModal').classList.remove('active');
+        });
+        // Use a more robust way to attach the map listener
+        const mapBtnMain = document.getElementById('visualizeMapBtnMain');
+        const mapBtnSidebar = document.getElementById('visualizeMapBtnSidebar');
+        
+        if (mapBtnMain) mapBtnMain.addEventListener('click', showMapModal);
+        if (mapBtnSidebar) mapBtnSidebar.addEventListener('click', showMapModal);
+
         document.getElementById('closeMapModalBtn').addEventListener('click', () => {
             document.getElementById('mapModal').classList.remove('active');
         });
@@ -671,17 +663,35 @@ function renderCountyClusterTable(data, clusters, meta) {
     filterSelect.onchange = applyFilters;
 }
 
-// Map Logic
-let amRoot = null;
-function showMapModal() {
-    document.getElementById('mapModal').classList.add('active');
-    if (!amRoot) initMap();
-    else updateMap();
+// Global Modal Handlers
+function toggleInfoModal() {
+    console.log("[Clustering] Toggling info modal");
+    const modal = document.getElementById('infoModal');
+    if (modal) modal.classList.add('active');
 }
+
+function showMapModal() {
+    console.log("[Clustering] showMapModal triggered");
+    const modal = document.getElementById('clusteringMapModal');
+    if (modal) {
+        modal.classList.add('active');
+        if (!amRoot) {
+            console.log("[Clustering] Initializing map...");
+            initMap();
+        } else {
+            console.log("[Clustering] Updating map data...");
+            updateMap();
+        }
+    } else {
+        console.error("[Clustering] clusteringMapModal element not found!");
+    }
+}
+
+let amRoot = null;
 
 function initMap() {
     am5.ready(() => {
-        const root = am5.Root.new("mapContainer");
+        const root = am5.Root.new("clusteringMapContainer");
         amRoot = root;
         root.setThemes([am5themes_Animated.new(root)]);
 
@@ -738,9 +748,16 @@ function updateMap() {
     if (!amRoot || !currentResults) return;
     const series = amRoot.container.children.getIndex(0).series.getIndex(0);
     
-    // Create quick lookup from currentResults matching map naming (State_NormalizedName)
+    // Create quick lookup from currentResults using FIPS and fall-back to state/name
     const lookup = {};
     currentResults.meta.forEach((m, i) => {
+        // Primary lookup by FIPS
+        if (m.fips) {
+            lookup[m.fips] = {
+                cluster: currentResults.clusters[i]
+            };
+        }
+        // Fallback lookup by State_Name
         if (m.name && m.state_abbr) {
             lookup[m.state_abbr.toUpperCase() + "_" + normalizeCountyNameMap(m.name)] = {
                 cluster: currentResults.clusters[i]
@@ -766,7 +783,17 @@ function updateMap() {
         }
 
         const name = feature.properties.NAME || feature.properties.name || "";
-        const dataObj = lookup[stateAbbr + "_" + normalizeCountyNameMap(name)];
+        
+        // Try matching by FIPS first (most robust)
+        // Feature IDs are often like "US-01001" or just "01001"
+        const fipsFromId = pId.includes('-') ? pId.split('-').pop() : pId;
+        
+        let dataObj = lookup[fipsFromId];
+        
+        // Fallback to name-based matching if FIPS fails
+        if (!dataObj) {
+            dataObj = lookup[stateAbbr + "_" + normalizeCountyNameMap(name)];
+        }
 
         if (dataObj) {
             const cId = dataObj.cluster;
@@ -792,7 +819,7 @@ function updateMap() {
     series.data.setAll(mapData);
 
     // Legend
-    const legendBody = document.getElementById('mapLegendItems');
+    const legendBody = document.getElementById('clusteringMapLegendItems');
     const unique = [...new Set(currentResults.clusters)].sort((a,b) => a-b);
     legendBody.innerHTML = unique.map(c => {
         const color = getClusterColor(c);
